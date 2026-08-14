@@ -11,13 +11,14 @@
   <meta name="apple-mobile-web-app-title" content="Stuff To Buy">
   <meta name="mobile-web-app-capable" content="yes">
   
-  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%252024%252024%2527%253E%253Ctext%2520y%253D%252720%2527%2520font-size%253D%252720%2527%253E%25F0%259F%259D%2591%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+  <!-- Combined Grocery + Bike App Icon for iOS & Android -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%3E%3Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27110%27%20fill%3D%27%23111827%27%2F%3E%3Ctext%20x%3D%27256%27%20y%3D%27210%27%20font-size%3D%27160%27%20text-anchor%3D%27middle%27%3E%F0%9F%9D%91%3C%2Ftext%3E%3Ctext%20x%3D%27256%27%20y%3D%27380%27%20font-size%3D%27160%27%20text-anchor%3D%27middle%27%3E%F0%9F%9A%B2%3C%2Ftext%3E%3C%2Fsvg%3E">
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%2527110%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527210%2527%2520font-size%253D%2527160%2527%2520text-anchor%253D%2527middle%2527%253E%25F0%259F%259D%2591%253C%252Ftext%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527380%2527%2520font-size%253D%2527160%2527%2520text-anchor%253D%2527middle%2527%253E%25F0%259F%259A%25B2%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    /* New UI Elements Styling */
     .tabs {
       display: flex;
       gap: 10px;
@@ -39,7 +40,6 @@
       background: #111827;
       color: #ffffff;
     }
-    
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -70,7 +70,6 @@
       font-weight: 800;
       color: #111827;
     }
-    
     .bike-list {
       display: flex;
       flex-direction: column;
@@ -218,31 +217,15 @@
 ========================================================= */
 
 const CONFIG = {
-
-  clientId:
-    "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
-
-  spreadsheetId:
-    "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
-
-  sheetName:
-    "grocery run",
-    
-  bikeSheetName:
-    "Days I biked in",
-
-  scope:
-    "https://www.googleapis.com/auth/spreadsheets",
-
-  // Check Google Sheets every 2 seconds.
+  clientId: "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
+  spreadsheetId: "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
+  sheetName: "grocery run",
+  bikeSheetName: "Days I biked in",
+  scope: "https://www.googleapis.com/auth/spreadsheets",
   syncInterval: 2000
-
 };
 
-
-const API =
-  "https://sheets.googleapis.com/v4/spreadsheets";
-
+const API = "https://sheets.googleapis.com/v4/spreadsheets";
 
 /* =========================================================
    STATE
@@ -257,130 +240,48 @@ let bikeDates = [];
 let syncTimer = null;
 let syncInProgress = false;
 let rateLimitBackoff = 0;
-
 let currentTab = 'groceries';
-
 
 /* =========================================================
    DOM
 ========================================================= */
 
-const $ = id =>
-  document.getElementById(id);
-
-const loginCard =
-  $("loginCard");
-
-const appPanel =
-  $("appPanel");
-
+const $ = id => document.getElementById(id);
+const loginCard = $("loginCard");
+const appPanel = $("appPanel");
 
 /* =========================================================
-   CATEGORIES
+   CATEGORIES & RULES
 ========================================================= */
 
 const CATEGORY_ORDER = [
-  "Produce",
-  "Dairy & Eggs",
-  "Meat & Fish",
-  "Bakery",
-  "Pantry",
-  "Frozen",
-  "Drinks",
-  "Snacks",
-  "Household",
-  "Personal Care",
-  "Other"
+  "Produce", "Dairy & Eggs", "Meat & Fish", "Bakery", "Pantry",
+  "Frozen", "Drinks", "Snacks", "Household", "Personal Care", "Other"
 ];
 
-
 const CATEGORY_ICONS = {
-  "Produce": "🥬",
-  "Dairy & Eggs": "🥛",
-  "Meat & Fish": "🥩",
-  "Bakery": "🥖",
-  "Pantry": "🥫",
-  "Frozen": "🧊",
-  "Drinks": "🥤",
-  "Snacks": "🍿",
-  "Household": "🧹",
-  "Personal Care": "🧴",
-  "Other": "🛒"
+  "Produce": "🥬", "Dairy & Eggs": "🥛", "Meat & Fish": "🥩", "Bakery": "🥖",
+  "Pantry": "🥫", "Frozen": "🧊", "Drinks": "🥤", "Snacks": "🍿",
+  "Household": "🧹", "Personal Care": "🧴", "Other": "🛒"
 };
-
 
 const CATEGORY_KEYWORDS = {
-  "Produce": [
-    "apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons",
-    "lime", "limes", "avocado", "avocados", "tomato", "tomatoes", "potato", "potatoes",
-    "onion", "onions", "garlic", "lettuce", "spinach", "kale", "broccoli", "cauliflower",
-    "carrot", "carrots", "celery", "cucumber", "cucumbers", "pepper", "peppers", "mushroom",
-    "mushrooms", "zucchini", "eggplant", "cabbage", "corn", "peas", "berries", "strawberry",
-    "strawberries", "blueberry", "blueberries", "raspberry", "raspberries", "cranberry",
-    "cranberries", "grape", "grapes", "watermelon", "melon", "pineapple", "mango", "peach",
-    "peaches", "pear", "pears", "plum", "plums", "cilantro", "parsley", "basil", "mint", "herbs"
-  ],
-  "Dairy & Eggs": [
-    "milk", "cream", "half and half", "half-and-half", "cheese", "cheddar", "mozzarella",
-    "parmesan", "yogurt", "yoghurt", "butter", "eggs", "egg", "sour cream", "cottage cheese",
-    "cream cheese", "whipped cream"
-  ],
-  "Meat & Fish": [
-    "chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork", "ham",
-    "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish", "salmon",
-    "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"
-  ],
-  "Bakery": [
-    "bread", "bagel", "bagels", "roll", "rolls", "bun", "buns", "croissant", "croissants",
-    "muffin", "muffins", "tortilla", "tortillas", "pita", "pitas", "cake", "cakes", "cookie",
-    "cookies", "donut", "donuts"
-  ],
-  "Pantry": [
-    "rice", "pasta", "noodles", "flour", "sugar", "salt", "pepper", "oil", "olive oil",
-    "vinegar", "sauce", "tomato sauce", "marinara", "ketchup", "mustard", "mayonnaise",
-    "mayo", "relish", "soy sauce", "hot sauce", "spices", "cereal", "oatmeal", "oats",
-    "beans", "lentils", "chickpeas", "peanut butter", "jelly", "jam", "honey", "maple syrup",
-    "baking soda", "baking powder", "canned", "can of", "soup", "broth", "stock", "crackers"
-  ],
-  "Frozen": [
-    "frozen", "ice cream", "icecream", "frozen pizza", "frozen vegetables", "frozen fruit",
-    "frozen chicken", "frozen fries", "fries", "tater tots", "frozen waffles", "frozen pancakes"
-  ],
-  "Drinks": [
-    "water", "sparkling water", "seltzer", "soda", "juice", "orange juice", "apple juice",
-    "coffee", "tea", "iced tea", "lemonade", "sports drink", "energy drink", "drink", "drinks"
-  ],
-  "Snacks": [
-    "chips", "pretzels", "popcorn", "nuts", "almonds", "cashews", "peanuts", "trail mix",
-    "granola bar", "granola bars", "protein bar", "protein bars", "candy", "chocolate",
-    "gummy", "gummies", "snack", "snacks"
-  ],
-  "Household": [
-    "paper towel", "paper towels", "toilet paper", "tissues", "napkins", "trash bag",
-    "trash bags", "garbage bag", "garbage bags", "foil", "aluminum foil", "plastic wrap",
-    "ziplock", "ziploc", "dish soap", "dishwasher", "detergent", "laundry", "bleach",
-    "cleaner", "cleaning", "sponge", "sponges", "broom", "mop", "vacuum", "light bulb",
-    "batteries"
-  ],
-  "Personal Care": [
-    "shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss",
-    "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash", "diapers",
-    "wipes", "baby wipes", "baby lotion", "baby soap"
-  ]
+  "Produce": ["apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons", "lime", "limes", "avocado", "avocados", "tomato", "tomatoes", "potato", "potatoes", "onion", "onions", "garlic", "lettuce", "spinach", "kale", "broccoli", "cauliflower", "carrot", "carrots", "celery", "cucumber", "cucumbers", "pepper", "peppers", "mushroom", "mushrooms", "zucchini", "eggplant", "cabbage", "corn", "peas", "berries", "strawberry", "strawberries", "blueberry", "blueberries", "raspberry", "raspberries", "cranberry", "cranberries", "grape", "grapes", "watermelon", "melon", "pineapple", "mango", "peach", "peaches", "pear", "pears", "plum", "plums", "cilantro", "parsley", "basil", "mint", "herbs"],
+  "Dairy & Eggs": ["milk", "cream", "half and half", "half-and-half", "cheese", "cheddar", "mozzarella", "parmesan", "yogurt", "yoghurt", "butter", "eggs", "egg", "sour cream", "cottage cheese", "cream cheese", "whipped cream"],
+  "Meat & Fish": ["chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork", "ham", "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish", "salmon", "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"],
+  "Bakery": ["bread", "bagel", "bagels", "roll", "rolls", "bun", "buns", "croissant", "croissants", "muffin", "muffins", "tortilla", "tortillas", "pita", "pitas", "cake", "cakes", "cookie", "cookies", "donut", "donuts"],
+  "Pantry": ["rice", "pasta", "noodles", "flour", "sugar", "salt", "pepper", "oil", "olive oil", "vinegar", "sauce", "tomato sauce", "marinara", "ketchup", "mustard", "mayonnaise", "mayo", "relish", "soy sauce", "hot sauce", "spices", "cereal", "oatmeal", "oats", "beans", "lentils", "chickpeas", "peanut butter", "jelly", "jam", "honey", "maple syrup", "baking soda", "baking powder", "canned", "can of", "soup", "broth", "stock", "crackers"],
+  "Frozen": ["frozen", "ice cream", "icecream", "frozen pizza", "frozen vegetables", "frozen fruit", "frozen chicken", "frozen fries", "fries", "tater tots", "frozen waffles", "frozen pancakes"],
+  "Drinks": ["water", "sparkling water", "seltzer", "soda", "juice", "orange juice", "apple juice", "coffee", "tea", "iced tea", "lemonade", "sports drink", "energy drink", "drink", "drinks"],
+  "Snacks": ["chips", "pretzels", "popcorn", "nuts", "almonds", "cashews", "peanuts", "trail mix", "granola bar", "granola bars", "protein bar", "protein bars", "candy", "chocolate", "gummy", "gummies", "snack", "snacks"],
+  "Household": ["paper towel", "paper towels", "toilet paper", "tissues", "napkins", "trash bag", "trash bags", "garbage bag", "garbage bags", "foil", "aluminum foil", "plastic wrap", "ziplock", "ziploc", "dish soap", "dishwasher", "detergent", "laundry", "bleach", "cleaner", "cleaning", "sponge", "sponges", "broom", "mop", "vacuum", "light bulb", "batteries"],
+  "Personal Care": ["shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss", "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash", "diapers", "wipes", "baby wipes", "baby lotion", "baby soap"]
 };
 
-
-/* =========================================================
-   FOOD LOOKUP RULES (ICONS & COLORS)
-========================================================= */
-
 const ITEM_RULES = [
-  // Yellow - Banana, Lemon, Corn, Butter, Cheese
   { pattern: /banana|lemon|corn|squash/i, icon: "🍌", bg: "#fef9c3", color: "#854d0e" },
   { pattern: /butter|margarine/i, icon: "🧈", bg: "#fef9c3", color: "#854d0e" },
   { pattern: /cheese|cheddar|swiss|parmesan|mozzarella/i, icon: "🧀", bg: "#fef9c3", color: "#854d0e" },
-
-  // Red / Cranberry / Berries
   { pattern: /cranberr/i, icon: "🍒", bg: "#ffe4e6", color: "#881337" },
   { pattern: /cherry|cherries|pomegranate/i, icon: "🍒", bg: "#ffe4e6", color: "#9f1239" },
   { pattern: /apple/i, icon: "🍎", bg: "#fee2e2", color: "#991b1b" },
@@ -388,29 +289,21 @@ const ITEM_RULES = [
   { pattern: /raspberr/i, icon: "🍓", bg: "#ffe4e6", color: "#be123c" },
   { pattern: /tomato|ketchup|marinara|salsa/i, icon: "🍅", bg: "#fee2e2", color: "#991b1b" },
   { pattern: /chili|hot sauce|pepperoni/i, icon: "🌶️", bg: "#fee2e2", color: "#991b1b" },
-
-  // White / Light Cream - Milk, Cream, Garlic, Onion, Yogurt
   { pattern: /milk|half and half|half-and-half|heavy cream|whipped cream/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
   { pattern: /yogurt|yoghurt/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
   { pattern: /egg|eggs/i, icon: "🥚", bg: "#fef3c7", color: "#78350f" },
   { pattern: /onion|garlic|shallot/i, icon: "🧄", bg: "#f8fafc", color: "#334155" },
   { pattern: /coconut/i, icon: "🥥", bg: "#f8fafc", color: "#334155" },
-
-  // Coffee / Chocolate / Brown
   { pattern: /coffee|espresso|latte|cappuccino|mocha|java/i, icon: "☕", bg: "#efebe9", color: "#4e342e" },
   { pattern: /chocolate|cocoa|fudge|brownie/i, icon: "🍫", bg: "#efebe9", color: "#3e2723" },
   { pattern: /nut|nuts|almond|cashew|peanut|walnut|pecan|pistachio/i, icon: "🥜", bg: "#efebe9", color: "#4e342e" },
   { pattern: /potato|potatoes/i, icon: "🥔", bg: "#f5f5f4", color: "#44403c" },
-
-  // Orange / Peach / Carrot
   { pattern: /orange|tangerine|clementine|mandarin/i, icon: "🍊", bg: "#ffedd5", color: "#9a3412" },
   { pattern: /carrot/i, icon: "🥕", bg: "#ffedd5", color: "#9a3412" },
   { pattern: /peach|apricot|nectarine/i, icon: "🍑", bg: "#ffedd5", color: "#9a3412" },
   { pattern: /sweet potato|yam|pumpkin/i, icon: "🎃", bg: "#ffedd5", color: "#9a3412" },
   { pattern: /mango/i, icon: "🥭", bg: "#fef3c7", color: "#92400e" },
   { pattern: /papaya|cantaloupe/i, icon: "🍈", bg: "#ffedd5", color: "#9a3412" },
-
-  // Greens
   { pattern: /avocado/i, icon: "🥑", bg: "#dcfce7", color: "#166534" },
   { pattern: /broccoli|cauliflower/i, icon: "🥦", bg: "#dcfce7", color: "#166534" },
   { pattern: /spinach|kale|lettuce|cabbage|greens|salad|arugula/i, icon: "🥬", bg: "#dcfce7", color: "#166534" },
@@ -419,15 +312,11 @@ const ITEM_RULES = [
   { pattern: /pepper|peppers|bell pepper/i, icon: "🫑", bg: "#dcfce7", color: "#166534" },
   { pattern: /pea|peas|edamame/i, icon: "🫛", bg: "#dcfce7", color: "#166534" },
   { pattern: /basil|cilantro|parsley|mint|rosemary|thyme|herb/i, icon: "🌿", bg: "#dcfce7", color: "#166534" },
-
-  // Purple / Blueberry / Grape / Eggplant
   { pattern: /blueberr/i, icon: "🫐", bg: "#e0e7ff", color: "#3730a3" },
   { pattern: /grape|raisin/i, icon: "🍇", bg: "#f3e8ff", color: "#6b21a8" },
   { pattern: /eggplant|aubergine/i, icon: "🍆", bg: "#f3e8ff", color: "#6b21a8" },
   { pattern: /plum|prune/i, icon: "🫐", bg: "#f3e8ff", color: "#6b21a8" },
   { pattern: /blackberr/i, icon: "🫐", bg: "#f3e8ff", color: "#581c87" },
-
-  // Bakery / Grains
   { pattern: /bread|toast|loaf|baguette/i, icon: "🍞", bg: "#fff8e1", color: "#5d4037" },
   { pattern: /bagel|bagels/i, icon: "🥯", bg: "#fff8e1", color: "#5d4037" },
   { pattern: /croissant|pastry/i, icon: "🥐", bg: "#fff8e1", color: "#5d4037" },
@@ -438,30 +327,22 @@ const ITEM_RULES = [
   { pattern: /rice|flour|sugar|salt/i, icon: "🍚", bg: "#f5f5f5", color: "#424242" },
   { pattern: /pasta|noodle|spaghetti|macaroni|penne|ramen/i, icon: "🍝", bg: "#fffde7", color: "#f57f17" },
   { pattern: /pizza/i, icon: "🍕", bg: "#fff3e0", color: "#e65100" },
-
-  // Meat & Seafood
   { pattern: /steak|beef|hamburger|burger|ground beef/i, icon: "🥩", bg: "#ffebee", color: "#c62828" },
   { pattern: /chicken|turkey|poultry|wings|breast/i, icon: "🍗", bg: "#fff3e0", color: "#d84315" },
   { pattern: /bacon|pork|ham|sausage|hot dog|salami/i, icon: "🥓", bg: "#ffebee", color: "#b71c1c" },
   { pattern: /fish|salmon|tuna|cod|tilapia/i, icon: "🐟", bg: "#e0f7fa", color: "#006064" },
   { pattern: /shrimp|prawn|lobster|crab|seafood/i, icon: "🍤", bg: "#ffe0b2", color: "#e65100" },
-
-  // Drinks
   { pattern: /water|sparkling water|seltzer/i, icon: "💧", bg: "#e0f7fa", color: "#006064" },
   { pattern: /soda|coke|pepsi|sprite|pop/i, icon: "🥤", bg: "#ffebee", color: "#c62828" },
   { pattern: /juice|cider|lemonade/i, icon: "🧃", bg: "#fff8e1", color: "#f57f17" },
   { pattern: /tea|matcha|chai/i, icon: "🍵", bg: "#e8f5e9", color: "#1b5e20" },
   { pattern: /beer|ale|lager/i, icon: "🍺", bg: "#fff8e1", color: "#f57f17" },
   { pattern: /wine|champagne|prosecco/i, icon: "🍷", bg: "#f3e5f5", color: "#4a148c" },
-
-  // Frozen / Snacks
   { pattern: /ice cream|icecream|gelato|sorbet/i, icon: "🍦", bg: "#fce4ec", color: "#880e4f" },
   { pattern: /chip|chips|crisps|doritos|lays/i, icon: "🥔", bg: "#fff8e1", color: "#f57f17" },
   { pattern: /pretzel|pretzels/i, icon: "🥨", bg: "#efebe9", color: "#4e342e" },
   { pattern: /popcorn/i, icon: "🍿", bg: "#fffde7", color: "#f57f17" },
   { pattern: /candy|gummy|gummies|marshmallow/i, icon: "🍬", bg: "#fce4ec", color: "#880e4f" },
-
-  // Household & Personal Care
   { pattern: /paper towel|toilet paper|tissue|tissues|napkin/i, icon: "🧻", bg: "#f5f5f5", color: "#37474f" },
   { pattern: /trash|garbage bag|ziploc|foil|wrap/i, icon: "🗑️", bg: "#eceff1", color: "#37474f" },
   { pattern: /dish soap|detergent|cleaner|cleaning|bleach|soap|sponge/i, icon: "🧽", bg: "#e0f2f1", color: "#004d40" },
@@ -471,92 +352,39 @@ const ITEM_RULES = [
   { pattern: /battery|batteries|light bulb/i, icon: "🔋", bg: "#fffde7", color: "#f57f17" }
 ];
 
-
 /* =========================================================
-   CATEGORY LOOKUP
+   HELPERS
 ========================================================= */
 
 function categorizeItem(item) {
   const text = item.toLowerCase().trim();
-
-  const priority = [
-    "Meat & Fish",
-    "Dairy & Eggs",
-    "Frozen",
-    "Bakery",
-    "Produce",
-    "Drinks",
-    "Snacks",
-    "Personal Care",
-    "Household",
-    "Pantry"
-  ];
-
+  const priority = ["Meat & Fish", "Dairy & Eggs", "Frozen", "Bakery", "Produce", "Drinks", "Snacks", "Personal Care", "Household", "Pantry"];
   for (const category of priority) {
-    const keywords = CATEGORY_KEYWORDS[category];
-    if (keywords.some(keyword => text.includes(keyword))) {
-      return category;
-    }
+    if (CATEGORY_KEYWORDS[category].some(kw => text.includes(kw))) return category;
   }
-
   return "Other";
 }
 
-
-/* =========================================================
-   ITEM DETAILS (COLOR & ICON)
-========================================================= */
-
 function getItemDetails(itemText) {
   const text = itemText.toLowerCase().trim();
-
   for (const rule of ITEM_RULES) {
-    if (rule.pattern.test(text)) {
-      return rule;
-    }
+    if (rule.pattern.test(text)) return rule;
   }
-
   const cat = categorizeItem(itemText);
-
-  return {
-    icon: CATEGORY_ICONS[cat] || "🛒",
-    bg: "#f3f4f6",
-    color: "#1f2937"
-  };
+  return { icon: CATEGORY_ICONS[cat] || "🛒", bg: "#f3f4f6", color: "#1f2937" };
 }
 
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function setLoginStatus(message) {
-  $("loginStatus").textContent = message || "";
-}
-
-function setStatus(message, error = false) {
-  $("status").textContent = message || "";
+function setLoginStatus(msg) { $("loginStatus").textContent = msg || ""; }
+function setStatus(msg, error = false) {
+  $("status").textContent = msg || "";
   $("status").className = "status" + (error ? " error" : "");
 }
-
-
-/* =========================================================
-   LAST UPDATED
-========================================================= */
-
 function updateLastUpdated() {
-  const now = new Date();
-  $("lastUpdated").textContent = "Last updated: " +
-    now.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit"
-    });
+  $("lastUpdated").textContent = "Last updated: " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
 }
 
-
 /* =========================================================
-   TAB SWITCHING LOGIC
+   TABS
 ========================================================= */
 
 $("tabGroceries").onclick = () => switchTab('groceries');
@@ -564,27 +392,31 @@ $("tabBike").onclick = () => switchTab('bike');
 
 function switchTab(tab) {
   currentTab = tab;
-  
   $("tabGroceries").classList.toggle("active", tab === 'groceries');
   $("tabBike").classList.toggle("active", tab === 'bike');
-  
   $("groceryView").hidden = (tab !== 'groceries');
   $("bikeView").hidden = (tab !== 'bike');
-
-  if (tab === 'groceries') {
-    $("headerTitle").textContent = "What do we need?";
-  } else {
-    $("headerTitle").textContent = "Bike Log";
-  }
-
-  setStatus(""); // Clear any leftover status messages
+  $("headerTitle").textContent = (tab === 'groceries') ? "What do we need?" : "Bike Log";
+  setStatus("");
   load();
 }
 
-
 /* =========================================================
-   GOOGLE LOGIN
+   GOOGLE LOGIN & TOKEN PERSISTENCE
 ========================================================= */
+
+function handleTokenReceived(token, expiresInSeconds = 3600) {
+  accessToken = token;
+  const expiryTime = Date.now() + (expiresInSeconds * 1000) - 60000; // 1 min buffer
+  localStorage.setItem("google_access_token", token);
+  localStorage.setItem("google_token_expiry", expiryTime);
+  localStorage.setItem("autoLogin", "true");
+
+  loginCard.hidden = true;
+  appPanel.hidden = false;
+  load();
+  startAutoSync();
+}
 
 function startGoogle() {
   if (!window.google?.accounts?.oauth2) {
@@ -593,88 +425,58 @@ function startGoogle() {
   }
 
   tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CONFIG.clientId,
-      scope: CONFIG.scope,
-      callback: async response => {
-        if (response.error) {
-          setLoginStatus("Google authorization failed.");
-          return;
-        }
-
-        accessToken = response.access_token;
-        localStorage.setItem("autoLogin", "true");
-        loginCard.hidden = true;
-        appPanel.hidden = false;
-
-        await load();
-        startAutoSync();
+    client_id: CONFIG.clientId,
+    scope: CONFIG.scope,
+    callback: response => {
+      if (response.error) {
+        setLoginStatus("Google authorization failed.");
+        return;
       }
-    });
-
-  tokenClient.requestAccessToken({
-    prompt: ""
+      handleTokenReceived(response.access_token, response.expires_in || 3600);
+    }
   });
+
+  tokenClient.requestAccessToken({ prompt: "" });
 }
 
 $("loginBtn").onclick = startGoogle;
 
-
-/* =========================================================
-   AUTH HEADERS
-========================================================= */
-
 function authHeaders() {
-  if (!accessToken) {
-    throw new Error("Please sign in with Google.");
-  }
-
-  return {
-    Authorization: "Bearer " + accessToken
-  };
+  if (!accessToken) throw new Error("Please sign in with Google.");
+  return { Authorization: "Bearer " + accessToken };
 }
-
 
 /* =========================================================
    SHEETS API
 ========================================================= */
 
 async function sheetsFetch(path, options = {}) {
-  const response = await fetch(
-      API + "/" + CONFIG.spreadsheetId + path,
-      {
-        ...options,
-        headers: {
-          ...authHeaders(),
-          ...(options.headers || {})
-        }
-      }
-    );
+  const response = await fetch(API + "/" + CONFIG.spreadsheetId + path, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) }
+  });
 
   if (response.status === 401) {
     accessToken = null;
+    localStorage.removeItem("google_access_token");
+    localStorage.removeItem("google_token_expiry");
     localStorage.removeItem("autoLogin");
     stopAutoSync();
     throw new Error("Your Google authorization expired. Please sign in again.");
   }
 
-  if (response.status === 429) {
-    throw new Error("RATE_LIMIT");
-  }
+  if (response.status === 429) throw new Error("RATE_LIMIT");
 
   if (!response.ok) {
     let message = response.statusText;
     try {
       const data = await response.json();
       message = data.error?.message || message;
-    }
-    catch {}
-
+    } catch {}
     throw new Error(message);
   }
-
   return response.json();
 }
-
 
 /* =========================================================
    LOAD
@@ -682,16 +484,9 @@ async function sheetsFetch(path, options = {}) {
 
 async function load(options = {}) {
   const silent = options.silent === true;
-
-  if (syncInProgress) return;
-  if (!accessToken) return;
-
+  if (syncInProgress || !accessToken) return;
   syncInProgress = true;
-
-  if (!silent) {
-    setStatus("Loading…");
-  }
-
+  if (!silent) setStatus("Loading…");
   $("refreshBtn").disabled = true;
 
   try {
@@ -701,25 +496,14 @@ async function load(options = {}) {
       const values = data.values || [];
 
       const newItems = values
-        .map((row, index) => ({
-          row: index + 1,
-          value: String(row[0] ?? "").trim()
-        }))
+        .map((row, index) => ({ row: index + 1, value: String(row[0] ?? "").trim() }))
         .filter(item => item.value);
 
-      const changed =
-        newItems.length !== items.length ||
-        newItems.some((item, index) => item.value !== items[index]?.value);
-
+      const changed = newItems.length !== items.length || newItems.some((item, index) => item.value !== items[index]?.value);
       items = newItems;
 
-      if (changed) {
-        renderGroceries();
-      }
-      
-      if (!silent) {
-        setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
-      }
+      if (changed) renderGroceries();
+      if (!silent) setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
 
     } else if (currentTab === 'bike') {
       const range = encodeURIComponent(`${CONFIG.bikeSheetName}!A:D`);
@@ -727,14 +511,10 @@ async function load(options = {}) {
       const rows = data.values || [];
 
       let newBikeDates = [];
-      
       rows.forEach((row, index) => {
         const dateVal = String(row[0] ?? "").trim();
-        if (dateVal) {
-          newBikeDates.push({ row: index + 1, value: dateVal });
-        }
+        if (dateVal) newBikeDates.push({ row: index + 1, value: dateVal });
 
-        // Set Stats from Columns C and D
         if (index === 0) {
           $("statLabel1").textContent = row[2] !== undefined && row[2] !== "" ? row[2] : "Subway money saved";
           $("statValue1").textContent = row[3] !== undefined && row[3] !== "" ? row[3] : "0";
@@ -751,35 +531,27 @@ async function load(options = {}) {
 
       bikeDates = newBikeDates;
       renderBikeList();
-      
-      if (!silent) {
-        setStatus("");
-      }
+      if (!silent) setStatus("");
     }
 
     updateLastUpdated();
     rateLimitBackoff = 0;
-
   }
   catch (error) {
     if (error.message === "RATE_LIMIT") {
       rateLimitBackoff = Math.min(rateLimitBackoff + 1, 5);
-      const delay = Math.pow(2, rateLimitBackoff) * 1000;
-
       setTimeout(() => {
-        if (accessToken && !document.hidden) {
-          load({ silent: true });
-        }
-      }, delay);
-    }
-    else {
+        if (accessToken && !document.hidden) load({ silent: true });
+      }, Math.pow(2, rateLimitBackoff) * 1000);
+    } else {
       if (/authorization expired|sign in/i.test(error.message)) {
         stopAutoSync();
+        localStorage.removeItem("google_access_token");
+        localStorage.removeItem("google_token_expiry");
         localStorage.removeItem("autoLogin");
         appPanel.hidden = true;
         loginCard.hidden = false;
-      }
-      else {
+      } else {
         setStatus(error.message, true);
       }
     }
@@ -790,20 +562,15 @@ async function load(options = {}) {
   }
 }
 
-
 /* =========================================================
-   AUTO SYNC
+   AUTO SYNC & VISIBILITY
 ========================================================= */
 
 function startAutoSync() {
   stopAutoSync();
-  if (!accessToken) return;
-  if (document.hidden) return;
-
+  if (!accessToken || document.hidden) return;
   syncTimer = setInterval(() => {
-    if (!accessToken) return;
-    if (document.hidden) return;
-    if (syncInProgress) return;
+    if (!accessToken || document.hidden || syncInProgress) return;
     load({ silent: true });
   }, CONFIG.syncInterval);
 }
@@ -815,23 +582,14 @@ function stopAutoSync() {
   }
 }
 
-
-/* =========================================================
-   VISIBILITY
-========================================================= */
-
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     stopAutoSync();
-    return;
-  }
-
-  if (accessToken) {
+  } else if (accessToken) {
     load({ silent: true });
     startAutoSync();
   }
 });
-
 
 /* =========================================================
    CONFETTI
@@ -842,9 +600,8 @@ function confettiExplosion(button) {
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
   const colors = ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93", "#ff70a6", "#00c2a8"];
-  const pieces = 80;
-
-  for (let i = 0; i < pieces; i++) {
+  
+  for (let i = 0; i < 80; i++) {
     const piece = document.createElement("div");
     piece.style.position = "fixed";
     piece.style.left = centerX + "px";
@@ -860,27 +617,22 @@ function confettiExplosion(button) {
     const velocity = 100 + Math.random() * 220;
     const x = Math.cos(angle) * velocity;
     const y = Math.sin(angle) * velocity;
-    const rotation = Math.random() * 720 - 360;
 
-    piece.animate(
-      [
-        { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1 },
-        { transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y + 140}px)) rotate(${rotation}deg)`, opacity: 0 }
-      ],
-      {
-        duration: 700 + Math.random() * 600,
-        easing: "cubic-bezier(.15,.8,.3,1)"
-      }
-    );
+    piece.animate([
+      { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y + 140}px)) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0 }
+    ], {
+      duration: 700 + Math.random() * 600,
+      easing: "cubic-bezier(.15,.8,.3,1)"
+    });
 
     document.body.appendChild(piece);
     setTimeout(() => piece.remove(), 1400);
   }
 }
 
-
 /* =========================================================
-   RENDER GROCERIES
+   RENDERING
 ========================================================= */
 
 function renderGroceries() {
@@ -891,18 +643,11 @@ function renderGroceries() {
     $("empty").hidden = false;
     return;
   }
-
   $("empty").hidden = true;
+
   const groups = {};
-
-  CATEGORY_ORDER.forEach(category => {
-    groups[category] = [];
-  });
-
-  items.forEach(item => {
-    const category = categorizeItem(item.value);
-    groups[category].push(item);
-  });
+  CATEGORY_ORDER.forEach(cat => groups[cat] = []);
+  items.forEach(item => groups[categorizeItem(item.value)].push(item));
 
   CATEGORY_ORDER.forEach(category => {
     const categoryItems = groups[category];
@@ -926,7 +671,6 @@ function renderGroceries() {
 
     categoryItems.forEach(item => {
       const details = getItemDetails(item.value);
-
       const row = document.createElement("div");
       row.className = "item";
       row.style.backgroundColor = details.bg;
@@ -939,13 +683,11 @@ function renderGroceries() {
       row.style.justifyContent = "space-between";
 
       const itemIcon = document.createElement("span");
-      itemIcon.className = "item-icon";
       itemIcon.textContent = details.icon;
       itemIcon.style.marginRight = "10px";
       itemIcon.style.fontSize = "1.2rem";
 
       const name = document.createElement("span");
-      name.className = "item-name";
       name.textContent = item.value;
       name.style.color = details.color;
       name.style.fontWeight = "600";
@@ -954,7 +696,6 @@ function renderGroceries() {
       const done = document.createElement("button");
       done.className = "remove";
       done.textContent = "Done";
-
       done.onclick = () => {
         done.disabled = true;
         confettiExplosion(done);
@@ -969,23 +710,14 @@ function renderGroceries() {
   });
 }
 
-
-/* =========================================================
-   RENDER BIKE LIST
-========================================================= */
-
 function renderBikeList() {
   const list = $("bikeList");
   list.innerHTML = "";
 
   const today = new Date();
   const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+  $("addTodayBtn").hidden = bikeDates.some(d => d.value === todayStr);
 
-  // Hide Add Today button if today is already logged
-  const alreadyBikedToday = bikeDates.some(d => d.value === todayStr);
-  $("addTodayBtn").hidden = alreadyBikedToday;
-
-  // Render list in reverse chronological order (newest first)
   [...bikeDates].reverse().forEach(item => {
     const div = document.createElement("div");
     div.className = "bike-date-row";
@@ -994,226 +726,136 @@ function renderBikeList() {
   });
 }
 
-
 /* =========================================================
-   ADD GROCERY ITEM
+   ACTIONS
 ========================================================= */
 
 async function addGroceryItem(value) {
   setStatus("Adding…");
-
   try {
-    const values = await sheetsFetch(
-        `/values/${encodeURIComponent(CONFIG.sheetName + "!A:A")}?majorDimension=ROWS`
-      );
-
+    const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A:A")}?majorDimension=ROWS`);
     const rows = values.values || [];
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
     const rangeA1 = `${CONFIG.sheetName}!A${target + 1}`;
-    const range = encodeURIComponent(rangeA1);
-
-    await sheetsFetch(
-      `/values/${range}?valueInputOption=USER_ENTERED`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          range: rangeA1,
-          majorDimension: "ROWS",
-          values: [[value]]
-        })
-      }
-    );
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value]] })
+    });
 
     $("itemInput").value = "";
     await load();
-
-  }
-  catch (error) {
-    setStatus(
-      error.message === "RATE_LIMIT"
-        ? "Google rate limit reached. Please try again in a moment."
-        : error.message,
-      true
-    );
+  } catch (error) {
+    setStatus(error.message === "RATE_LIMIT" ? "Google rate limit reached. Please try again." : error.message, true);
   }
 }
-
-
-/* =========================================================
-   ADD BIKE DAY (TODAY)
-========================================================= */
 
 $("addTodayBtn").onclick = async () => {
   setStatus("Adding today's ride...");
   $("addTodayBtn").disabled = true;
-
   try {
     const today = new Date();
     const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-
-    const values = await sheetsFetch(
-      `/values/${encodeURIComponent(CONFIG.bikeSheetName + "!A:A")}?majorDimension=ROWS`
-    );
-
+    const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.bikeSheetName + "!A:A")}?majorDimension=ROWS`);
     const rows = values.values || [];
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
     const rangeA1 = `${CONFIG.bikeSheetName}!A${target + 1}`;
-    
-    await sheetsFetch(
-      `/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          range: rangeA1,
-          majorDimension: "ROWS",
-          values: [[todayStr]]
-        })
-      }
-    );
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[todayStr]] })
+    });
 
     confettiExplosion($("addTodayBtn"));
     await load();
-  }
-  catch (error) {
-    setStatus(
-      error.message === "RATE_LIMIT"
-        ? "Google rate limit reached. Please try again in a moment."
-        : "Error saving ride: " + error.message,
-      true
-    );
-  }
-  finally {
+  } catch (error) {
+    setStatus("Error saving ride: " + error.message, true);
+  } finally {
     $("addTodayBtn").disabled = false;
   }
 };
 
-
-/* =========================================================
-   REMOVE GROCERY ITEM
-========================================================= */
-
 async function removeGroceryItem(item) {
   if (!item) return;
-
   setStatus("Removing…");
-
   const previousItems = [...items];
   items = items.filter(current => current !== item);
   renderGroceries();
 
   try {
-    const rangeA1 = `${CONFIG.sheetName}!A${item.row}`;
-    await sheetsFetch(
-      `/values/${encodeURIComponent(rangeA1)}:clear`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}"
-      }
-    );
-
+    await sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + item.row)}:clear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    });
     await load();
-  }
-  catch (error) {
+  } catch (error) {
     items = previousItems;
     renderGroceries();
-
-    setStatus(
-      error.message === "RATE_LIMIT"
-        ? "Google rate limit reached. The item was not deleted."
-        : "Couldn't delete the item: " + error.message,
-      true
-    );
+    setStatus("Couldn't delete the item: " + error.message, true);
   }
 }
 
-
-/* =========================================================
-   FORM SUBMIT (GROCERIES)
-========================================================= */
-
 $("addForm").onsubmit = event => {
   event.preventDefault();
-
   const value = $("itemInput").value.trim();
-  if (value) {
-    addGroceryItem(value);
-  }
+  if (value) addGroceryItem(value);
 };
 
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-$("refreshBtn").onclick = () => {
-  load();
-};
-
-
-/* =========================================================
-   SIGN OUT
-========================================================= */
+$("refreshBtn").onclick = () => load();
 
 $("signOutBtn").onclick = () => {
   stopAutoSync();
-
   if (accessToken && google?.accounts?.oauth2) {
     google.accounts.oauth2.revoke(accessToken, () => {});
   }
-
   accessToken = null;
+  localStorage.removeItem("google_access_token");
+  localStorage.removeItem("google_token_expiry");
   localStorage.removeItem("autoLogin");
   appPanel.hidden = true;
   loginCard.hidden = false;
   $("lastUpdated").textContent = "Last updated: —";
-
   setLoginStatus("Signed out.");
 };
 
-
 /* =========================================================
-   INITIAL SETUP & AUTO-LOGIN
+   INITIAL LOAD & SESSION CHECK
 ========================================================= */
 
 window.addEventListener("load", () => {
   setTimeout(() => {
-    if (CONFIG.clientId.includes("PASTE_YOUR")) {
-      setLoginStatus("Set your Google OAuth Web Client ID in index.html first.");
-      $("loginBtn").disabled = true;
+    const cachedToken = localStorage.getItem("google_access_token");
+    const tokenExpiry = localStorage.getItem("google_token_expiry");
+
+    // If we have a cached token that hasn't expired yet, reuse it immediately!
+    if (cachedToken && tokenExpiry && Date.now() < parseInt(tokenExpiry, 10)) {
+      accessToken = cachedToken;
+      loginCard.hidden = true;
+      appPanel.hidden = false;
+      load();
+      startAutoSync();
       return;
     }
 
-    // Check if user was previously logged in
-    if (localStorage.getItem("autoLogin") === "true") {
-      if (window.google?.accounts?.oauth2) {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: CONFIG.clientId,
-          scope: CONFIG.scope,
-          callback: async response => {
-            if (!response.error) {
-              accessToken = response.access_token;
-              loginCard.hidden = true;
-              appPanel.hidden = false;
-              await load();
-              startAutoSync();
-            } else {
-              localStorage.removeItem("autoLogin");
-            }
+    // Otherwise, try background silent login if user was logged in before
+    if (localStorage.getItem("autoLogin") === "true" && window.google?.accounts?.oauth2) {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CONFIG.clientId,
+        scope: CONFIG.scope,
+        callback: response => {
+          if (!response.error) {
+            handleTokenReceived(response.access_token, response.expires_in || 3600);
+          } else {
+            localStorage.removeItem("autoLogin");
           }
-        });
-
-        // Request token silently in the background
-        tokenClient.requestAccessToken({
-          prompt: ""
-        });
-      }
+        }
+      });
+      tokenClient.requestAccessToken({ prompt: "" });
     }
   }, 500);
 });
