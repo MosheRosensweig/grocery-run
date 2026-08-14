@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
 <main class="app">
 
@@ -16,19 +17,37 @@
       <p class="eyebrow">GROCERY RUN</p>
       <h1>What do we need?</h1>
     </div>
-    <button class="icon-button" id="refreshBtn" aria-label="Refresh">↻</button>
+
+    <button class="icon-button" id="refreshBtn" aria-label="Refresh">
+      ↻
+    </button>
   </header>
+
+
+  <!-- LOGIN -->
 
   <section id="loginCard" class="card login-card">
     <h2>Connect your Google account</h2>
-    <p>You and your wife can use your own Google accounts. The app only requests access to this spreadsheet.</p>
-    <button id="loginBtn" class="primary">Sign in with Google</button>
+
+    <p>
+      You and your wife can use your own Google accounts.
+      The app only requests access to this spreadsheet.
+    </p>
+
+    <button id="loginBtn" class="primary">
+      Sign in with Google
+    </button>
+
     <p id="loginStatus" class="small"></p>
   </section>
+
+
+  <!-- APP -->
 
   <section id="appPanel" hidden>
 
     <form id="addForm" class="add-form">
+
       <input
         id="itemInput"
         autocomplete="off"
@@ -37,23 +56,44 @@
         aria-label="New grocery item"
         required
       >
-      <button type="submit" class="primary">Add</button>
+
+      <button type="submit" class="primary">
+        Add
+      </button>
+
     </form>
+
 
     <div id="status" class="status"></div>
 
-    <section id="list" class="list" aria-live="polite"></section>
 
-    <p id="empty" class="empty" hidden>Your grocery list is empty.</p>
+    <section
+      id="list"
+      class="list"
+      aria-live="polite">
+    </section>
 
-    <p id="lastUpdated" class="small last-updated">
+
+    <p id="empty" class="empty" hidden>
+      Your grocery list is empty.
+    </p>
+
+
+    <p
+      id="lastUpdated"
+      class="small last-updated">
       Last updated: —
     </p>
 
-    <button id="signOutBtn" class="signout">Sign out</button>
+
+    <button id="signOutBtn" class="signout">
+      Sign out
+    </button>
+
   </section>
 
 </main>
+
 
 <script>
 
@@ -62,6 +102,7 @@
 ========================================================= */
 
 const CONFIG = {
+
   clientId:
     "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
 
@@ -76,7 +117,9 @@ const CONFIG = {
 
   // Check Google Sheets every 2 seconds.
   syncInterval: 2000
+
 };
+
 
 const API =
   "https://sheets.googleapis.com/v4/spreadsheets";
@@ -88,6 +131,7 @@ const API =
 
 let tokenClient = null;
 let accessToken = null;
+
 let items = [];
 
 let syncTimer = null;
@@ -96,7 +140,7 @@ let rateLimitBackoff = 0;
 
 
 /* =========================================================
-   DOM HELPERS
+   DOM
 ========================================================= */
 
 const $ = id =>
@@ -110,12 +154,8 @@ const appPanel =
 
 
 /* =========================================================
-   GROCERY CATEGORIES
+   CATEGORIES
 ========================================================= */
-
-/*
- * The order here is the order in which sections appear.
- */
 
 const CATEGORY_ORDER = [
   "Produce",
@@ -133,6 +173,7 @@ const CATEGORY_ORDER = [
 
 
 const CATEGORY_ICONS = {
+
   "Produce": "🥬",
   "Dairy & Eggs": "🥛",
   "Meat & Fish": "🥩",
@@ -144,60 +185,70 @@ const CATEGORY_ICONS = {
   "Household": "🧹",
   "Personal Care": "🧴",
   "Other": "🛒"
+
 };
 
-
-/*
- * Words used to automatically classify grocery items.
- *
- * This is intentionally forgiving. For example:
- *
- * "red apples" -> Produce
- * "2% milk" -> Dairy & Eggs
- * "chicken breast" -> Meat & Fish
- */
 
 const CATEGORY_KEYWORDS = {
 
   "Produce": [
-    "apple", "apples",
-    "banana", "bananas",
-    "orange", "oranges",
-    "lemon", "lemons",
-    "lime", "limes",
-    "avocado", "avocados",
-    "tomato", "tomatoes",
-    "potato", "potatoes",
-    "onion", "onions",
+    "apple",
+    "apples",
+    "banana",
+    "bananas",
+    "orange",
+    "oranges",
+    "lemon",
+    "lemons",
+    "lime",
+    "limes",
+    "avocado",
+    "avocados",
+    "tomato",
+    "tomatoes",
+    "potato",
+    "potatoes",
+    "onion",
+    "onions",
     "garlic",
     "lettuce",
     "spinach",
     "kale",
     "broccoli",
     "cauliflower",
-    "carrot", "carrots",
+    "carrot",
+    "carrots",
     "celery",
-    "cucumber", "cucumbers",
-    "pepper", "peppers",
-    "mushroom", "mushrooms",
+    "cucumber",
+    "cucumbers",
+    "pepper",
+    "peppers",
+    "mushroom",
+    "mushrooms",
     "zucchini",
     "eggplant",
     "cabbage",
     "corn",
     "peas",
-    "beans",
     "berries",
-    "strawberry", "strawberries",
-    "blueberry", "blueberries",
-    "raspberry", "raspberries",
-    "grape", "grapes",
+    "strawberry",
+    "strawberries",
+    "blueberry",
+    "blueberries",
+    "raspberry",
+    "raspberries",
+    "grape",
+    "grapes",
     "watermelon",
     "melon",
     "pineapple",
     "mango",
-    "peach", "peaches",
-    "pear", "pears",
-    "plum", "plums",
+    "peach",
+    "peaches",
+    "pear",
+    "pears",
+    "plum",
+    "plums",
     "cilantro",
     "parsley",
     "basil",
@@ -233,7 +284,6 @@ const CATEGORY_KEYWORDS = {
     "hamburger",
     "burger",
     "turkey",
-    "turkey breast",
     "pork",
     "ham",
     "bacon",
@@ -312,7 +362,6 @@ const CATEGORY_KEYWORDS = {
     "jam",
     "honey",
     "maple syrup",
-    "flour",
     "baking soda",
     "baking powder",
     "canned",
@@ -429,17 +478,66 @@ const CATEGORY_KEYWORDS = {
     "baby lotion",
     "baby soap"
   ]
+
 };
 
 
 /* =========================================================
-   ITEM ICONS
+   CATEGORY
+========================================================= */
+
+function categorizeItem(item) {
+
+  const text =
+    item.toLowerCase().trim();
+
+
+  const priority = [
+    "Meat & Fish",
+    "Dairy & Eggs",
+    "Frozen",
+    "Bakery",
+    "Produce",
+    "Drinks",
+    "Snacks",
+    "Personal Care",
+    "Household",
+    "Pantry"
+  ];
+
+
+  for (const category of priority) {
+
+    const keywords =
+      CATEGORY_KEYWORDS[category];
+
+
+    if (
+      keywords.some(keyword =>
+        text.includes(keyword)
+      )
+    ) {
+
+      return category;
+
+    }
+
+  }
+
+
+  return "Other";
+}
+
+
+/* =========================================================
+   ITEM ICON
 ========================================================= */
 
 function getItemIcon(item) {
 
   const text =
     item.toLowerCase();
+
 
   const icons = [
 
@@ -515,7 +613,6 @@ function getItemIcon(item) {
     [/popcorn/, "🍿"],
     [/chocolate/, "🍫"],
     [/candy/, "🍬"],
-    [/cookie/, "🍪"],
     [/nuts|almonds|cashews|peanuts/, "🥜"],
 
     [/paper towel|toilet paper|tissues|napkin/, "🧻"],
@@ -546,57 +643,6 @@ function getItemIcon(item) {
   return CATEGORY_ICONS[
     categorizeItem(item)
   ] || "🛒";
-}
-
-
-/* =========================================================
-   CATEGORIZE ITEM
-========================================================= */
-
-function categorizeItem(item) {
-
-  const text =
-    item.toLowerCase().trim();
-
-
-  /*
-   * Check more specific categories first.
-   */
-
-  const priority = [
-    "Meat & Fish",
-    "Dairy & Eggs",
-    "Frozen",
-    "Bakery",
-    "Produce",
-    "Drinks",
-    "Snacks",
-    "Personal Care",
-    "Household",
-    "Pantry"
-  ];
-
-
-  for (const category of priority) {
-
-    const keywords =
-      CATEGORY_KEYWORDS[category];
-
-
-    if (
-      keywords.some(keyword =>
-        text.includes(keyword)
-      )
-    ) {
-
-      return category;
-
-    }
-
-  }
-
-
-  return "Other";
 }
 
 
@@ -646,7 +692,7 @@ function updateLastUpdated() {
 
 
 /* =========================================================
-   GOOGLE AUTH
+   GOOGLE LOGIN
 ========================================================= */
 
 function startGoogle() {
@@ -739,7 +785,7 @@ function authHeaders() {
 
 
 /* =========================================================
-   GOOGLE SHEETS API
+   SHEETS API
 ========================================================= */
 
 async function sheetsFetch(
@@ -826,7 +872,7 @@ async function sheetsFetch(
 
 
 /* =========================================================
-   LOAD LIST
+   LOAD
 ========================================================= */
 
 async function load(options = {}) {
@@ -900,11 +946,6 @@ async function load(options = {}) {
         );
 
 
-    /*
-     * Determine whether the actual
-     * grocery list changed.
-     */
-
     const changed =
       newItems.length !== items.length ||
 
@@ -920,15 +961,12 @@ async function load(options = {}) {
 
 
     if (changed) {
-
       render();
-
     }
 
 
     /*
-     * This changes on EVERY successful
-     * sync, even if nothing changed.
+     * Successful API call = connection is alive.
      */
 
     updateLastUpdated();
@@ -1096,7 +1134,7 @@ function stopAutoSync() {
 
 
 /* =========================================================
-   TAB VISIBILITY
+   VISIBILITY
 ========================================================= */
 
 document.addEventListener(
@@ -1157,7 +1195,8 @@ function confettiExplosion(button) {
   ];
 
 
-  const pieces = 80;
+  const pieces =
+    80;
 
 
   for (let i = 0; i < pieces; i++) {
@@ -1306,16 +1345,15 @@ function render() {
     true;
 
 
-  /*
-   * Group items by store section.
-   */
-
   const groups = {};
 
 
   CATEGORY_ORDER.forEach(
     category => {
-      groups[category] = [];
+
+      groups[category] =
+        [];
+
     }
   );
 
@@ -1334,10 +1372,6 @@ function render() {
 
   });
 
-
-  /*
-   * Draw each category.
-   */
 
   CATEGORY_ORDER.forEach(
     category => {
@@ -1451,17 +1485,39 @@ function render() {
             "Done";
 
 
+          /*
+           * IMPORTANT:
+           *
+           * Pass the actual item object rather
+           * than looking up its array index.
+           */
+
           done.onclick =
             () => {
+
+              /*
+               * Prevent double clicks.
+               */
+
+              done.disabled =
+                true;
+
+
+              /*
+               * Confetti first.
+               */
 
               confettiExplosion(
                 done
               );
 
+
+              /*
+               * Delete the exact item.
+               */
+
               removeItem(
-                items.indexOf(
-                  item
-                )
+                item
               );
 
             };
@@ -1589,10 +1645,16 @@ async function addItem(value) {
   catch (error) {
 
     setStatus(
-      error.message === "RATE_LIMIT"
+
+      error.message ===
+      "RATE_LIMIT"
+
         ? "Google rate limit reached. Please try again in a moment."
+
         : error.message,
+
       true
+
     );
 
   }
@@ -1604,11 +1666,14 @@ async function addItem(value) {
    REMOVE ITEM
 ========================================================= */
 
-async function removeItem(index) {
+async function removeItem(item) {
 
-  const item =
-    items[index];
-
+  /*
+   * We receive the actual item object.
+   *
+   * This means item.row is the exact
+   * spreadsheet row we need to clear.
+   */
 
   if (!item) {
     return;
@@ -1618,6 +1683,25 @@ async function removeItem(index) {
   setStatus(
     "Removing…"
   );
+
+
+  /*
+   * Optimistically remove it from the
+   * local screen immediately.
+   */
+
+  const previousItems =
+    [...items];
+
+
+  items =
+    items.filter(
+      current =>
+        current !== item
+    );
+
+
+  render();
 
 
   try {
@@ -1638,8 +1722,10 @@ async function removeItem(index) {
           "POST",
 
         headers: {
+
           "Content-Type":
             "application/json"
+
         },
 
         body:
@@ -1650,16 +1736,39 @@ async function removeItem(index) {
     );
 
 
+    /*
+     * Re-read Google Sheets so our local
+     * state is guaranteed to match it.
+     */
+
     await load();
 
   }
   catch (error) {
 
+    /*
+     * If deletion failed, restore the item.
+     */
+
+    items =
+      previousItems;
+
+
+    render();
+
+
     setStatus(
-      error.message === "RATE_LIMIT"
-        ? "Google rate limit reached. Please try again in a moment."
-        : error.message,
+
+      error.message ===
+      "RATE_LIMIT"
+
+        ? "Google rate limit reached. The item was not deleted."
+
+        : "Couldn't delete the item: " +
+          error.message,
+
       true
+
     );
 
   }
@@ -1695,7 +1804,7 @@ $("addForm").onsubmit =
 
 
 /* =========================================================
-   MANUAL REFRESH
+   REFRESH
 ========================================================= */
 
 $("refreshBtn").onclick =
@@ -1783,6 +1892,5 @@ window.addEventListener(
 );
 
 </script>
-
 </body>
 </html>
