@@ -31,9 +31,13 @@
              placeholder="Add an item…" aria-label="New grocery item" required>
       <button type="submit" class="primary">Add</button>
     </form>
+
     <div id="status" class="status"></div>
+
     <section id="list" class="list" aria-live="polite"></section>
+
     <p id="empty" class="empty" hidden>Your grocery list is empty.</p>
+
     <button id="signOutBtn" class="signout">Sign out</button>
   </section>
 </main>
@@ -43,176 +47,497 @@ const CONFIG = {
   clientId: "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
   spreadsheetId: "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
   sheetName: "grocery run",
-  scope: "https://www.googleapis.com/auth/spreadsheets"
+  scope: "https://www.googleapis.com/auth/spreadsheets",
+
+  // Automatically check for changes every 3 seconds.
+  syncInterval: 3000
 };
 
 const API = "https://sheets.googleapis.com/v4/spreadsheets";
+
 let tokenClient;
 let accessToken = null;
 let items = [];
+let syncTimer = null;
+let syncInProgress = false;
+let lastSyncTime = 0;
 
 const $ = id => document.getElementById(id);
+
 const loginCard = $("loginCard");
 const appPanel = $("appPanel");
 
-function setLoginStatus(msg) { $("loginStatus").textContent = msg || ""; }
-function setStatus(msg, error=false) {
+
+/* ---------------------------------------------------------
+   STATUS
+--------------------------------------------------------- */
+
+function setLoginStatus(msg) {
+  $("loginStatus").textContent = msg || "";
+}
+
+function setStatus(msg, error = false) {
   $("status").textContent = msg || "";
   $("status").className = "status" + (error ? " error" : "");
 }
+
+
+/* ---------------------------------------------------------
+   GOOGLE AUTH
+--------------------------------------------------------- */
 
 function startGoogle() {
   if (!window.google?.accounts?.oauth2) {
     setLoginStatus("Google sign-in is still loading. Try again in a moment.");
     return;
   }
+
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.clientId,
     scope: CONFIG.scope,
+
     callback: async response => {
       if (response.error) {
         setLoginStatus("Google authorization failed.");
         return;
       }
+
       accessToken = response.access_token;
+
       loginCard.hidden = true;
       appPanel.hidden = false;
+
       await load();
+
+      // Start automatic syncing.
+      startAutoSync();
     }
   });
-  tokenClient.requestAccessToken({prompt: ""});
+
+  tokenClient.requestAccessToken({ prompt: "" });
 }
 
 $("loginBtn").onclick = startGoogle;
 
+
+/* ---------------------------------------------------------
+   API
+--------------------------------------------------------- */
+
 function authHeaders() {
-  if (!accessToken) throw new Error("Please sign in with Google.");
-  return {Authorization: "Bearer " + accessToken};
+  if (!accessToken) {
+    throw new Error("Please sign in with Google.");
+  }
+
+  return {
+    Authorization: "Bearer " + accessToken
+  };
 }
 
-async function sheetsFetch(path, options={}) {
-  const response = await fetch(API + "/" + CONFIG.spreadsheetId + path, {
-    ...options,
-    headers: {
-      ...authHeaders(),
-      ...(options.headers || {})
+async function sheetsFetch(path, options = {}) {
+  const response = await fetch(
+    API + "/" + CONFIG.spreadsheetId + path,
+    {
+      ...options,
+
+      headers: {
+        ...authHeaders(),
+        ...(options.headers || {})
+      }
     }
-  });
+  );
+
   if (response.status === 401) {
     accessToken = null;
-    throw new Error("Your Google authorization expired. Please sign in again.");
+    stopAutoSync();
+
+    throw new Error(
+      "Your Google authorization expired. Please sign in again."
+    );
   }
+
+  if (response.status === 429) {
+    throw new Error(
+      "Google rate limit reached. I'll automatically try again shortly."
+    );
+  }
+
   if (!response.ok) {
     let message = response.statusText;
+
     try {
       const data = await response.json();
       message = data.error?.message || message;
     } catch {}
+
     throw new Error(message);
   }
+
   return response.json();
 }
 
-async function load() {
-  setStatus("Loading…");
+
+/* ---------------------------------------------------------
+   LOAD DATA
+--------------------------------------------------------- */
+
+async function load(options = {}) {
+  const {
+    silent = false
+  } = options;
+
+  // Don't start another request if one is already running.
+  if (syncInProgress) {
+    return;
+  }
+
+  if (!accessToken) {
+    return;
+  }
+
+  syncInProgress = true;
+
+  if (!silent) {
+    setStatus("Loading…");
+  }
+
   $("refreshBtn").disabled = true;
+
   try {
-    const range = encodeURIComponent(`${CONFIG.sheetName}!A:A`);
-    const data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
+    const range = encodeURIComponent(
+      `${CONFIG.sheetName}!A:A`
+    );
+
+    const data = await sheetsFetch(
+      `/values/${range}?majorDimension=ROWS`
+    );
+
     const values = data.values || [];
-    items = values.map((r, i) => ({
-      row: i + 1,
-      value: String(r[0] ?? "").trim()
-    })).filter(x => x.value);
-    render();
-    setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
+
+    const newItems = values
+      .map((r, i) => ({
+        row: i + 1,
+        value: String(r[0] ?? "").trim()
+      }))
+      .filter(x => x.value);
+
+    /*
+     * Only redraw the list if something actually changed.
+     */
+    const changed =
+      newItems.length !== items.length ||
+      newItems.some(
+        (item, index) =>
+          item.value !== items[index]?.value
+      );
+
+    items = newItems;
+
+    if (changed) {
+      render();
+    }
+
+    lastSyncTime = Date.now();
+
+    if (!silent) {
+      setStatus(
+        items.length
+          ? `${items.length} item${items.length === 1 ? "" : "s"}`
+          : ""
+      );
+    }
+
   } catch (e) {
-    setStatus(e.message, true);
+
+    /*
+     * Don't constantly flash an error while background
+     * syncing. Only show it for normal/manual loads.
+     */
+    if (!silent || !/rate limit/i.test(e.message)) {
+      setStatus(e.message, true);
+    }
+
     if (/authorization expired|sign in/i.test(e.message)) {
+      stopAutoSync();
+
       appPanel.hidden = true;
       loginCard.hidden = false;
     }
+
   } finally {
+    syncInProgress = false;
     $("refreshBtn").disabled = false;
   }
 }
 
+
+/* ---------------------------------------------------------
+   AUTOMATIC SYNC
+--------------------------------------------------------- */
+
+function startAutoSync() {
+  stopAutoSync();
+
+  /*
+   * Don't sync while the page is hidden.
+   */
+  if (document.hidden) {
+    return;
+  }
+
+  syncTimer = setInterval(() => {
+
+    if (!accessToken) {
+      return;
+    }
+
+    if (document.hidden) {
+      return;
+    }
+
+    /*
+     * Background sync is silent.
+     * It won't constantly change the status message.
+     */
+    load({
+      silent: true
+    });
+
+  }, CONFIG.syncInterval);
+}
+
+
+function stopAutoSync() {
+  if (syncTimer !== null) {
+    clearInterval(syncTimer);
+    syncTimer = null;
+  }
+}
+
+
+/*
+ * When the user comes back to the browser/tab,
+ * immediately check for changes.
+ */
+document.addEventListener("visibilitychange", () => {
+
+  if (document.hidden) {
+    stopAutoSync();
+    return;
+  }
+
+  if (accessToken) {
+    load({
+      silent: true
+    });
+
+    startAutoSync();
+  }
+});
+
+
+/* ---------------------------------------------------------
+   RENDER
+--------------------------------------------------------- */
+
 function render() {
   $("list").innerHTML = "";
+
   $("empty").hidden = items.length !== 0;
+
   items.forEach((item, index) => {
+
     const row = document.createElement("div");
     row.className = "item";
+
     const name = document.createElement("span");
     name.textContent = item.value;
+
     const done = document.createElement("button");
     done.className = "remove";
     done.textContent = "Done";
+
     done.onclick = () => removeItem(index);
+
     row.append(name, done);
+
     $("list").append(row);
   });
 }
 
+
+/* ---------------------------------------------------------
+   ADD ITEM
+--------------------------------------------------------- */
+
 async function addItem(value) {
   setStatus("Adding…");
-  try {
-    const values = await sheetsFetch(
-      `/values/${encodeURIComponent(CONFIG.sheetName + "!A:A")}?majorDimension=ROWS`
-    );
-    const rows = values.values || [];
-    let target = rows.findIndex(r => !String(r[0] ?? "").trim());
-    if (target < 0) target = rows.length;
 
-    const rangeA1 = `${CONFIG.sheetName}!A${target + 1}`;
+  try {
+
+    const values = await sheetsFetch(
+      `/values/${encodeURIComponent(
+        CONFIG.sheetName + "!A:A"
+      )}?majorDimension=ROWS`
+    );
+
+    const rows = values.values || [];
+
+    let target = rows.findIndex(
+      r => !String(r[0] ?? "").trim()
+    );
+
+    if (target < 0) {
+      target = rows.length;
+    }
+
+    const rangeA1 =
+      `${CONFIG.sheetName}!A${target + 1}`;
+
     const range = encodeURIComponent(rangeA1);
-    await sheetsFetch(`/values/${range}?valueInputOption=USER_ENTERED`, {
-      method: "PUT",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({range: rangeA1, majorDimension:"ROWS", values:[[value]]})
-    });
+
+    await sheetsFetch(
+      `/values/${range}?valueInputOption=USER_ENTERED`,
+      {
+        method: "PUT",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          range: rangeA1,
+          majorDimension: "ROWS",
+          values: [[value]]
+        })
+      }
+    );
+
     $("itemInput").value = "";
+
+    /*
+     * Immediately update our own screen.
+     * Don't make the user wait for the next poll.
+     */
     await load();
-  } catch (e) { setStatus(e.message, true); }
+
+  } catch (e) {
+    setStatus(e.message, true);
+  }
 }
+
+
+/* ---------------------------------------------------------
+   REMOVE ITEM
+--------------------------------------------------------- */
 
 async function removeItem(index) {
   const item = items[index];
-  if (!item) return;
+
+  if (!item) {
+    return;
+  }
+
   setStatus("Removing…");
+
   try {
-    const rangeA1 = `${CONFIG.sheetName}!A${item.row}`;
-    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}:clear`, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: "{}"
-    });
+
+    const rangeA1 =
+      `${CONFIG.sheetName}!A${item.row}`;
+
+    await sheetsFetch(
+      `/values/${encodeURIComponent(rangeA1)}:clear`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: "{}"
+      }
+    );
+
+    /*
+     * Immediately refresh our own screen.
+     */
     await load();
-  } catch (e) { setStatus(e.message, true); }
+
+  } catch (e) {
+    setStatus(e.message, true);
+  }
 }
+
+
+/* ---------------------------------------------------------
+   FORM
+--------------------------------------------------------- */
 
 $("addForm").onsubmit = e => {
   e.preventDefault();
-  const value = $("itemInput").value.trim();
-  if (value) addItem(value);
-};
-$("refreshBtn").onclick = load;
-$("signOutBtn").onclick = () => {
-  if (accessToken && google?.accounts?.oauth2) {
-    google.accounts.oauth2.revoke(accessToken, () => {});
+
+  const value =
+    $("itemInput").value.trim();
+
+  if (value) {
+    addItem(value);
   }
+};
+
+
+/* ---------------------------------------------------------
+   MANUAL REFRESH
+--------------------------------------------------------- */
+
+$("refreshBtn").onclick = () => {
+  load();
+};
+
+
+/* ---------------------------------------------------------
+   SIGN OUT
+--------------------------------------------------------- */
+
+$("signOutBtn").onclick = () => {
+
+  stopAutoSync();
+
+  if (
+    accessToken &&
+    google?.accounts?.oauth2
+  ) {
+    google.accounts.oauth2.revoke(
+      accessToken,
+      () => {}
+    );
+  }
+
   accessToken = null;
+
   appPanel.hidden = true;
   loginCard.hidden = false;
+
   setLoginStatus("Signed out.");
 };
 
+
+/* ---------------------------------------------------------
+   INITIAL SETUP
+--------------------------------------------------------- */
+
 window.addEventListener("load", () => {
+
   setTimeout(() => {
+
     if (CONFIG.clientId.includes("PASTE_YOUR")) {
-      setLoginStatus("Set your Google OAuth Web Client ID in index.html first.");
+
+      setLoginStatus(
+        "Set your Google OAuth Web Client ID in index.html first."
+      );
+
       $("loginBtn").disabled = true;
     }
+
   }, 500);
 });
 </script>
