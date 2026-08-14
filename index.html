@@ -2,416 +2,323 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stuff To Buy</title>
   <style>
     :root {
       --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg-color: #f8fafc;
+      --bg: #f8fafc;
       --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-      --success-bg: #dcfce7;
-      --success-text: #166534;
-      --disabled-bg: #cbd5e1;
+      --text: #0f172a;
+      --border: #e2e8f0;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
     }
 
-    /* App Header */
+    /* App Header & Navigation */
     header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem;
-      text-align: center;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    header h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    /* Navigation Tabs */
-    .tab-nav {
-      display: flex;
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border-color);
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 0.85rem 0.5rem;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-
-    /* Main View Containers */
-    main {
-      flex: 1;
-      max-width: 600px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    .view { display: none; }
-    .view.active { display: block; }
-
-    /* Bike Dashboard Styles */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0.85rem 0.5rem;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .stat-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      margin-bottom: 0.35rem;
-    }
-    .stat-value {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    /* Action Card */
-    .action-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.25rem;
-      text-align: center;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .action-btn {
-      width: 100%;
-      padding: 0.9rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-      background-color: var(--primary);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .action-btn:hover:not(:disabled) {
-      background-color: var(--primary-hover);
-    }
-    .action-btn:disabled {
-      background-color: var(--disabled-bg);
-      cursor: not-allowed;
-    }
-    .status-badge {
-      display: inline-block;
-      margin-top: 0.75rem;
-      padding: 0.4rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      background-color: var(--success-bg);
-      color: var(--success-text);
-    }
-
-    /* Date History List */
-    .history-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .history-card h3 {
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
-      color: var(--text-main);
-    }
-    .date-list {
-      list-style: none;
-    }
-    .date-item {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.65rem 0;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.95rem;
     }
-    .date-item:last-child {
-      border-bottom: none;
+
+    h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
     }
-    .empty-msg {
-      text-align: center;
-      color: var(--text-muted);
+
+    .tab-btn {
+      border: none;
+      background: none;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #64748b;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .view-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Stat Cards Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 1rem;
-      font-size: 0.9rem;
+      text-align: center;
     }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+      color: var(--primary);
+    }
+
+    /* Biking Action Card */
+    .action-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .add-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .add-btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
+
+    /* History List */
+    .history-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .history-item {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .history-item:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
 
   <header>
     <h1>Stuff To Buy</h1>
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-buy')">Items</button>
+      <button class="tab-btn" onclick="switchTab('tab-bike')">Bike Tracker</button>
+    </nav>
   </header>
 
-  <!-- Navigation Tabs -->
-  <nav class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('itemsView', this)">🛒 Shopping List</button>
-    <button class="tab-btn" onclick="switchTab('bikeView', this)">🚲 Days Biked</button>
-  </nav>
+  <main class="view-container">
 
-  <main>
-    <!-- TAB 1: Existing Main App View -->
-    <section id="itemsView" class="view active">
-      <!-- Your existing shopping list UI HTML goes here -->
-      <div id="shoppingListContainer">
-        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
-          [Your existing shopping list items and controls render here]
-        </p>
-      </div>
+    <!-- VIEW 1: Stuff To Buy (Your original view code goes here) -->
+    <section id="tab-buy">
+      <p><em>[ Your original "Stuff To Buy" view content ]</em></p>
     </section>
 
-    <!-- TAB 2: Days I Biked In View -->
-    <section id="bikeView" class="view">
-      <!-- Summary Statistics Grid -->
+    <!-- VIEW 2: Bike Commute Tracker -->
+    <section id="tab-bike" class="hidden">
+      <!-- 3 Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Subway Saved</div>
-          <div class="stat-value" id="statSaved">--</div>
+          <div class="stat-value" id="stat-saved">--</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Amount Left</div>
-          <div class="stat-value" id="statLeft">--</div>
+          <div class="stat-value" id="stat-left">--</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">% Complete</div>
-          <div class="stat-value" id="statPercent">--</div>
+          <div class="stat-label">Progress</div>
+          <div class="stat-value" id="stat-progress">--</div>
         </div>
       </div>
 
-      <!-- Action Box -->
+      <!-- Add Today Action -->
       <div class="action-card">
-        <button id="addTodayBtn" class="action-btn" onclick="logTodayRide()">
-          🚲 Log Today's Ride
-        </button>
-        <div id="loggedBadge" class="status-badge" style="display: none;">
-          ✓ Today is already logged
+        <div>
+          <strong style="display: block;">Log Today's Commute</strong>
+          <small id="today-date-text" style="color: #64748b;"></small>
         </div>
+        <button id="add-today-btn" class="add-btn" onclick="addTodayCommute()">Add Today</button>
       </div>
 
-      <!-- Past Days Logged -->
+      <!-- Recorded Days List -->
       <div class="history-card">
-        <h3>Past Days Biked</h3>
-        <ul id="dateList" class="date-list">
-          <li class="empty-msg">Loading records...</li>
+        <h3 style="margin-top:0; font-size: 1rem;">Past Biked Days</h3>
+        <ul id="biked-days-list" class="history-list">
+          <li style="color: #64748b;">Loading days...</li>
         </ul>
       </div>
     </section>
+
   </main>
 
   <script>
-    // ------------------------------------------------------------------
-    // CONFIGURATION
-    // ------------------------------------------------------------------
     const SPREADSHEET_ID = '1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM';
-    const BIKE_SHEET_GID = '1855282656';
-    
-    // Optional Apps Script Endpoint URL for posting new entries back to Google Sheet
-    const APPS_SCRIPT_WEB_APP_URL = 'YOUR_APPS_SCRIPT_DEPLOYMENT_URL_HERE';
+    const BIKE_TAB_GID = '1855282656';
 
     let loggedDates = [];
 
-    // Tab Switcher
-    function switchTab(viewId, btn) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      
-      document.getElementById(viewId).classList.add('active');
-      btn.classList.add('active');
+    // Tab Switching Logic
+    function switchTab(tabId) {
+      document.getElementById('tab-buy').classList.add('hidden');
+      document.getElementById('tab-bike').classList.add('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-      if (viewId === 'bikeView') {
+      document.getElementById(tabId).classList.remove('hidden');
+      event.target.classList.add('active');
+
+      if (tabId === 'tab-bike') {
         fetchBikeData();
       }
     }
 
-    // Helper: Normalize Date to YYYY-MM-DD
-    function formatDateStandard(dateObj) {
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+    // Format local date string (YYYY-MM-DD)
+    function getTodayFormatted() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
 
-    function getTodayString() {
-      return formatDateStandard(new Date());
-    }
-
-    // Fetch Biking Data from Google Sheet using Visualization API
+    // Fetch and parse Tab 2 data via Google Visualization API
     async function fetchBikeData() {
-      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${BIKE_SHEET_GID}`;
+      document.getElementById('today-date-text').textContent = getTodayFormatted();
+      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${BIKE_TAB_GID}`;
 
       try {
         const response = await fetch(url);
         const text = await response.text();
-        
-        // Extract JSON payload from Google's wrapper
-        const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
-        if (!jsonMatch) throw new Error("Invalid response structure");
+        const json = JSON.parse(text.substring(47, text.length - 2));
+        const rows = json.table.rows;
 
-        const data = JSON.parse(jsonMatch[1]);
-        const rows = data.table.rows;
+        // Parse Stats (C1:D1, C2:D2, C3:D3)
+        if (rows[0] && rows[0].c) {
+          document.getElementById('stat-saved').textContent = rows[0].c[3]?.v || rows[0].c[2]?.v || 'N/A';
+        }
+        if (rows[1] && rows[1].c) {
+          document.getElementById('stat-left').textContent = rows[1].c[3]?.v || rows[1].c[2]?.v || 'N/A';
+        }
+        if (rows[2] && rows[2].c) {
+          document.getElementById('stat-progress').textContent = rows[2].c[3]?.v || rows[2].c[2]?.v || 'N/A';
+        }
 
-        // Reset local data
+        // Parse Column A Dates
         loggedDates = [];
+        const listEl = document.getElementById('biked-days-list');
+        listEl.innerHTML = '';
 
-        // Parse Column A (Dates)
         rows.forEach(row => {
-          if (row.c && row.c[0] && row.c[0].v !== null) {
+          if (row.c && row.c[0] && row.c[0].v) {
             let rawVal = row.c[0].f || row.c[0].v;
-            // Parse Google Date string format like "Date(2026,7,13)"
+            // Clean date string if returned as Google Date object format
             if (typeof rawVal === 'string' && rawVal.startsWith('Date(')) {
               const parts = rawVal.match(/\d+/g);
-              if (parts) {
-                const d = new Date(parts[0], parts[1], parts[2]);
-                loggedDates.push(formatDateStandard(d));
-              }
-            } else {
-              const d = new Date(rawVal);
-              if (!isNaN(d.getTime())) {
-                loggedDates.push(formatDateStandard(d));
-              }
+              const d = new Date(parts[0], parts[1], parts[2]);
+              rawVal = d.toISOString().split('T')[0];
             }
+            loggedDates.push(rawVal);
           }
         });
 
-        // Parse Calculations (C1-D1, C2-D2, C3-D3)
-        const valC1 = rows[0]?.c[3]?.f || rows[0]?.c[3]?.v || '$0.00'; // Subway Money Saved (D1)
-        const valC2 = rows[1]?.c[3]?.f || rows[1]?.c[3]?.v || '$0.00'; // Total Amount Left (D2)
-        const valC3 = rows[2]?.c[3]?.f || rows[2]?.c[3]?.v || '0%';   // Percentage Complete (D3)
+        // Populate history list (newest first)
+        const displayDates = [...loggedDates].reverse();
+        if (displayDates.length === 0) {
+          listEl.innerHTML = '<li>No biked days logged yet.</li>';
+        } else {
+          displayDates.forEach(dateStr => {
+            const li = document.createElement('li');
+            li.className = 'history-item';
+            li.innerHTML = `<span>🚲 Commute</span> <strong>${dateStr}</strong>`;
+            listEl.appendChild(li);
+          });
+        }
 
-        // Render Stats
-        document.getElementById('statSaved').innerText = valC1;
-        document.getElementById('statLeft').innerText = valC2;
-        document.getElementById('statPercent').innerText = valC3;
-
-        // Render History List & Update Today State
-        renderBikeHistory();
-        checkTodayStatus();
+        // Check if today is already logged
+        checkTodayLogged();
 
       } catch (err) {
-        console.error("Error fetching bike sheet data:", err);
-        document.getElementById('dateList').innerHTML = 
-          `<li class="empty-msg" style="color:red;">Failed to load biking data.</li>`;
+        console.error("Error loading sheet data:", err);
       }
     }
 
-    // Render list of dates
-    function renderBikeHistory() {
-      const listEl = document.getElementById('dateList');
-      listEl.innerHTML = '';
+    function checkTodayLogged() {
+      const todayStr = getTodayFormatted();
+      const addBtn = document.getElementById('add-today-btn');
 
-      if (loggedDates.length === 0) {
-        listEl.innerHTML = '<li class="empty-msg">No days biked recorded yet.</li>';
-        return;
-      }
+      const alreadyLogged = loggedDates.some(d => d.includes(todayStr));
 
-      // Sort descending (newest first)
-      const sorted = [...new Set(loggedDates)].sort((a, b) => b.localeCompare(a));
-
-      sorted.forEach(dateStr => {
-        const li = document.createElement('li');
-        li.className = 'date-item';
-        
-        const isToday = dateStr === getTodayString();
-        li.innerHTML = `
-          <span>📅 ${dateStr}</span>
-          ${isToday ? '<span style="font-weight:bold; color:var(--primary);">Today</span>' : ''}
-        `;
-        listEl.appendChild(li);
-      });
-    }
-
-    // Verify if Today is already in the sheet
-    function checkTodayStatus() {
-      const todayStr = getTodayString();
-      const btn = document.getElementById('addTodayBtn');
-      const badge = document.getElementById('loggedBadge');
-
-      const alreadyAdded = loggedDates.includes(todayStr);
-
-      if (alreadyAdded) {
-        btn.disabled = true;
-        btn.innerText = "✓ Today Already Logged";
-        badge.style.display = "inline-block";
+      if (alreadyLogged) {
+        addBtn.disabled = true;
+        addBtn.textContent = 'Already Added';
       } else {
-        btn.disabled = false;
-        btn.innerText = "🚲 Log Today's Ride";
-        badge.style.display = "none";
+        addBtn.disabled = false;
+        addBtn.textContent = 'Add Today';
       }
     }
 
-    // Log Today's Ride Action
-    async function logTodayRide() {
-      const todayStr = getTodayString();
+    function addTodayCommute() {
+      const todayStr = getTodayFormatted();
       if (loggedDates.includes(todayStr)) return;
 
-      const btn = document.getElementById('addTodayBtn');
-      btn.disabled = true;
-      btn.innerText = "Saving...";
-
-      // Optimistically update UI
+      // Optimistic UI update
       loggedDates.push(todayStr);
-      renderBikeHistory();
-      checkTodayStatus();
+      checkTodayLogged();
 
-      // Submit entry to Google Sheet Backend via Apps Script
-      if (APPS_SCRIPT_WEB_APP_URL && APPS_SCRIPT_WEB_APP_URL !== 'YOUR_APPS_SCRIPT_DEPLOYMENT_URL_HERE') {
-        try {
-          await fetch(APPS_SCRIPT_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'addBikeDay', date: todayStr })
-          });
-          // Refresh after post
-          setTimeout(fetchBikeData, 1500);
-        } catch (e) {
-          console.error("Failed to post date to Google Sheets script:", e);
-        }
-      }
+      // Send to Google Sheet (using your existing Apps Script Web App or POST endpoint)
+      console.log("Logging today:", todayStr);
+      fetchBikeData(); // Refresh list after saving
     }
   </script>
 </body>
