@@ -59,6 +59,12 @@
       align-items: center;
       justify-content: center;
     }
+    .stat-card-last {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: 100%;
+      max-width: 220px;
+    }
     .stat-label {
       font-size: 0.7rem;
       color: #6b7280;
@@ -643,9 +649,14 @@ function renderStatsGrid() {
   const grid = $("statsGrid");
   grid.innerHTML = "";
 
-  statCardsData.forEach(stat => {
+  const total = statCardsData.length;
+  statCardsData.forEach((stat, index) => {
     const card = document.createElement("div");
     card.className = "stat-card";
+    const isPercent = /%|percent/i.test(stat.label);
+    if (index === total - 1 && (isPercent || total % 2 !== 0)) {
+      card.classList.add("stat-card-last");
+    }
 
     const labelDiv = document.createElement("div");
     labelDiv.className = "stat-label";
