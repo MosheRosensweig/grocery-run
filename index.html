@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-
 <body>
 <main class="app">
 
@@ -17,37 +16,19 @@
       <p class="eyebrow">GROCERY RUN</p>
       <h1>What do we need?</h1>
     </div>
-
-    <button class="icon-button" id="refreshBtn" aria-label="Refresh">
-      ↻
-    </button>
+    <button class="icon-button" id="refreshBtn" aria-label="Refresh">↻</button>
   </header>
-
-
-  <!-- LOGIN -->
 
   <section id="loginCard" class="card login-card">
     <h2>Connect your Google account</h2>
-
-    <p>
-      You and your wife can use your own Google accounts.
-      The app only requests access to this spreadsheet.
-    </p>
-
-    <button id="loginBtn" class="primary">
-      Sign in with Google
-    </button>
-
+    <p>You and your wife can use your own Google accounts. The app only requests access to this spreadsheet.</p>
+    <button id="loginBtn" class="primary">Sign in with Google</button>
     <p id="loginStatus" class="small"></p>
   </section>
-
-
-  <!-- APP -->
 
   <section id="appPanel" hidden>
 
     <form id="addForm" class="add-form">
-
       <input
         id="itemInput"
         autocomplete="off"
@@ -56,52 +37,31 @@
         aria-label="New grocery item"
         required
       >
-
-      <button type="submit" class="primary">
-        Add
-      </button>
-
+      <button type="submit" class="primary">Add</button>
     </form>
-
 
     <div id="status" class="status"></div>
 
+    <section id="list" class="list" aria-live="polite"></section>
 
-    <section
-      id="list"
-      class="list"
-      aria-live="polite">
-    </section>
+    <p id="empty" class="empty" hidden>Your grocery list is empty.</p>
 
-
-    <p id="empty" class="empty" hidden>
-      Your grocery list is empty.
-    </p>
-
-
-    <!-- LAST UPDATED -->
-
-    <p
-      id="lastUpdated"
-      class="small"
-      style="text-align:center; margin-top:20px;">
+    <p id="lastUpdated" class="small last-updated">
       Last updated: —
     </p>
 
-
-    <button id="signOutBtn" class="signout">
-      Sign out
-    </button>
-
+    <button id="signOutBtn" class="signout">Sign out</button>
   </section>
 
 </main>
 
-
 <script>
 
-const CONFIG = {
+/* =========================================================
+   CONFIG
+========================================================= */
 
+const CONFIG = {
   clientId:
     "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
 
@@ -114,41 +74,530 @@ const CONFIG = {
   scope:
     "https://www.googleapis.com/auth/spreadsheets",
 
-  /*
-   * How often we check Google Sheets.
-   *
-   * 2 seconds means another person's changes
-   * should normally appear within 0–2 seconds.
-   */
+  // Check Google Sheets every 2 seconds.
   syncInterval: 2000
-
 };
-
 
 const API =
   "https://sheets.googleapis.com/v4/spreadsheets";
 
 
+/* =========================================================
+   STATE
+========================================================= */
+
 let tokenClient = null;
 let accessToken = null;
-
 let items = [];
 
 let syncTimer = null;
 let syncInProgress = false;
-
 let rateLimitBackoff = 0;
 
 
+/* =========================================================
+   DOM HELPERS
+========================================================= */
+
 const $ = id =>
   document.getElementById(id);
-
 
 const loginCard =
   $("loginCard");
 
 const appPanel =
   $("appPanel");
+
+
+/* =========================================================
+   GROCERY CATEGORIES
+========================================================= */
+
+/*
+ * The order here is the order in which sections appear.
+ */
+
+const CATEGORY_ORDER = [
+  "Produce",
+  "Dairy & Eggs",
+  "Meat & Fish",
+  "Bakery",
+  "Pantry",
+  "Frozen",
+  "Drinks",
+  "Snacks",
+  "Household",
+  "Personal Care",
+  "Other"
+];
+
+
+const CATEGORY_ICONS = {
+  "Produce": "🥬",
+  "Dairy & Eggs": "🥛",
+  "Meat & Fish": "🥩",
+  "Bakery": "🥖",
+  "Pantry": "🥫",
+  "Frozen": "🧊",
+  "Drinks": "🥤",
+  "Snacks": "🍿",
+  "Household": "🧹",
+  "Personal Care": "🧴",
+  "Other": "🛒"
+};
+
+
+/*
+ * Words used to automatically classify grocery items.
+ *
+ * This is intentionally forgiving. For example:
+ *
+ * "red apples" -> Produce
+ * "2% milk" -> Dairy & Eggs
+ * "chicken breast" -> Meat & Fish
+ */
+
+const CATEGORY_KEYWORDS = {
+
+  "Produce": [
+    "apple", "apples",
+    "banana", "bananas",
+    "orange", "oranges",
+    "lemon", "lemons",
+    "lime", "limes",
+    "avocado", "avocados",
+    "tomato", "tomatoes",
+    "potato", "potatoes",
+    "onion", "onions",
+    "garlic",
+    "lettuce",
+    "spinach",
+    "kale",
+    "broccoli",
+    "cauliflower",
+    "carrot", "carrots",
+    "celery",
+    "cucumber", "cucumbers",
+    "pepper", "peppers",
+    "mushroom", "mushrooms",
+    "zucchini",
+    "eggplant",
+    "cabbage",
+    "corn",
+    "peas",
+    "beans",
+    "berries",
+    "strawberry", "strawberries",
+    "blueberry", "blueberries",
+    "raspberry", "raspberries",
+    "grape", "grapes",
+    "watermelon",
+    "melon",
+    "pineapple",
+    "mango",
+    "peach", "peaches",
+    "pear", "pears",
+    "plum", "plums",
+    "cilantro",
+    "parsley",
+    "basil",
+    "mint",
+    "herbs"
+  ],
+
+  "Dairy & Eggs": [
+    "milk",
+    "cream",
+    "half and half",
+    "half-and-half",
+    "cheese",
+    "cheddar",
+    "mozzarella",
+    "parmesan",
+    "yogurt",
+    "yoghurt",
+    "butter",
+    "eggs",
+    "egg",
+    "sour cream",
+    "cottage cheese",
+    "cream cheese",
+    "whipped cream"
+  ],
+
+  "Meat & Fish": [
+    "chicken",
+    "beef",
+    "steak",
+    "ground beef",
+    "hamburger",
+    "burger",
+    "turkey",
+    "turkey breast",
+    "pork",
+    "ham",
+    "bacon",
+    "sausage",
+    "hot dog",
+    "hot dogs",
+    "salami",
+    "pastrami",
+    "meat",
+    "fish",
+    "salmon",
+    "tuna",
+    "cod",
+    "tilapia",
+    "shrimp",
+    "lobster",
+    "crab",
+    "meatballs",
+    "lamb"
+  ],
+
+  "Bakery": [
+    "bread",
+    "bagel",
+    "bagels",
+    "roll",
+    "rolls",
+    "bun",
+    "buns",
+    "croissant",
+    "croissants",
+    "muffin",
+    "muffins",
+    "tortilla",
+    "tortillas",
+    "pita",
+    "pitas",
+    "cake",
+    "cakes",
+    "cookie",
+    "cookies",
+    "donut",
+    "donuts"
+  ],
+
+  "Pantry": [
+    "rice",
+    "pasta",
+    "noodles",
+    "flour",
+    "sugar",
+    "salt",
+    "pepper",
+    "oil",
+    "olive oil",
+    "vinegar",
+    "sauce",
+    "tomato sauce",
+    "marinara",
+    "ketchup",
+    "mustard",
+    "mayonnaise",
+    "mayo",
+    "relish",
+    "soy sauce",
+    "hot sauce",
+    "spices",
+    "cereal",
+    "oatmeal",
+    "oats",
+    "beans",
+    "lentils",
+    "chickpeas",
+    "peanut butter",
+    "jelly",
+    "jam",
+    "honey",
+    "maple syrup",
+    "flour",
+    "baking soda",
+    "baking powder",
+    "canned",
+    "can of",
+    "soup",
+    "broth",
+    "stock",
+    "crackers"
+  ],
+
+  "Frozen": [
+    "frozen",
+    "ice cream",
+    "icecream",
+    "frozen pizza",
+    "frozen vegetables",
+    "frozen fruit",
+    "frozen chicken",
+    "frozen fries",
+    "fries",
+    "tater tots",
+    "frozen waffles",
+    "frozen pancakes"
+  ],
+
+  "Drinks": [
+    "water",
+    "sparkling water",
+    "seltzer",
+    "soda",
+    "juice",
+    "orange juice",
+    "apple juice",
+    "coffee",
+    "tea",
+    "iced tea",
+    "lemonade",
+    "sports drink",
+    "energy drink",
+    "drink",
+    "drinks"
+  ],
+
+  "Snacks": [
+    "chips",
+    "pretzels",
+    "popcorn",
+    "nuts",
+    "almonds",
+    "cashews",
+    "peanuts",
+    "trail mix",
+    "granola bar",
+    "granola bars",
+    "protein bar",
+    "protein bars",
+    "candy",
+    "chocolate",
+    "gummy",
+    "gummies",
+    "snack",
+    "snacks"
+  ],
+
+  "Household": [
+    "paper towel",
+    "paper towels",
+    "toilet paper",
+    "tissues",
+    "napkins",
+    "trash bag",
+    "trash bags",
+    "garbage bag",
+    "garbage bags",
+    "foil",
+    "aluminum foil",
+    "plastic wrap",
+    "ziplock",
+    "ziploc",
+    "dish soap",
+    "dishwasher",
+    "detergent",
+    "laundry",
+    "bleach",
+    "cleaner",
+    "cleaning",
+    "sponge",
+    "sponges",
+    "broom",
+    "mop",
+    "vacuum",
+    "light bulb",
+    "batteries"
+  ],
+
+  "Personal Care": [
+    "shampoo",
+    "conditioner",
+    "soap",
+    "body wash",
+    "toothpaste",
+    "toothbrush",
+    "floss",
+    "deodorant",
+    "razor",
+    "razors",
+    "shaving",
+    "lotion",
+    "sunscreen",
+    "mouthwash",
+    "diapers",
+    "wipes",
+    "baby wipes",
+    "baby lotion",
+    "baby soap"
+  ]
+};
+
+
+/* =========================================================
+   ITEM ICONS
+========================================================= */
+
+function getItemIcon(item) {
+
+  const text =
+    item.toLowerCase();
+
+  const icons = [
+
+    [/apple/, "🍎"],
+    [/banana/, "🍌"],
+    [/orange/, "🍊"],
+    [/lemon/, "🍋"],
+    [/lime/, "🍋"],
+    [/avocado/, "🥑"],
+    [/tomato/, "🍅"],
+    [/potato/, "🥔"],
+    [/onion/, "🧅"],
+    [/garlic/, "🧄"],
+    [/carrot/, "🥕"],
+    [/broccoli/, "🥦"],
+    [/mushroom/, "🍄"],
+    [/pepper/, "🫑"],
+    [/cucumber/, "🥒"],
+    [/lettuce/, "🥬"],
+    [/spinach/, "🥬"],
+    [/grape/, "🍇"],
+    [/strawber/, "🍓"],
+    [/blueber/, "🫐"],
+    [/raspber/, "🍓"],
+    [/watermelon/, "🍉"],
+    [/pineapple/, "🍍"],
+    [/mango/, "🥭"],
+    [/peach/, "🍑"],
+    [/pear/, "🍐"],
+
+    [/milk/, "🥛"],
+    [/cheese/, "🧀"],
+    [/egg/, "🥚"],
+    [/butter/, "🧈"],
+    [/yogurt/, "🥛"],
+
+    [/chicken/, "🍗"],
+    [/steak/, "🥩"],
+    [/beef/, "🥩"],
+    [/burger/, "🍔"],
+    [/bacon/, "🥓"],
+    [/sausage/, "🌭"],
+    [/hot dog/, "🌭"],
+    [/fish/, "🐟"],
+    [/salmon/, "🐟"],
+    [/shrimp/, "🍤"],
+
+    [/bread/, "🍞"],
+    [/bagel/, "🥯"],
+    [/croissant/, "🥐"],
+    [/cake/, "🎂"],
+    [/cookie/, "🍪"],
+    [/donut/, "🍩"],
+
+    [/pizza/, "🍕"],
+    [/pasta/, "🍝"],
+    [/rice/, "🍚"],
+    [/cereal/, "🥣"],
+    [/oatmeal/, "🥣"],
+
+    [/ice cream|icecream/, "🍦"],
+
+    [/water/, "💧"],
+    [/seltzer/, "🫧"],
+    [/soda/, "🥤"],
+    [/juice/, "🧃"],
+    [/coffee/, "☕"],
+    [/tea/, "🍵"],
+    [/lemonade/, "🍋"],
+
+    [/chip/, "🥔"],
+    [/pretzel/, "🥨"],
+    [/popcorn/, "🍿"],
+    [/chocolate/, "🍫"],
+    [/candy/, "🍬"],
+    [/cookie/, "🍪"],
+    [/nuts|almonds|cashews|peanuts/, "🥜"],
+
+    [/paper towel|toilet paper|tissues|napkin/, "🧻"],
+    [/trash|garbage bag/, "🗑️"],
+    [/dish soap|detergent|cleaner|cleaning/, "🧽"],
+    [/sponge/, "🧽"],
+    [/batter/, "🔋"],
+
+    [/shampoo|conditioner/, "🧴"],
+    [/soap|body wash/, "🧼"],
+    [/toothpaste|toothbrush|floss/, "🪥"],
+    [/deodorant/, "🧴"],
+    [/diaper/, "👶"],
+    [/wipe/, "🧻"]
+
+  ];
+
+
+  for (const [pattern, icon] of icons) {
+
+    if (pattern.test(text)) {
+      return icon;
+    }
+
+  }
+
+
+  return CATEGORY_ICONS[
+    categorizeItem(item)
+  ] || "🛒";
+}
+
+
+/* =========================================================
+   CATEGORIZE ITEM
+========================================================= */
+
+function categorizeItem(item) {
+
+  const text =
+    item.toLowerCase().trim();
+
+
+  /*
+   * Check more specific categories first.
+   */
+
+  const priority = [
+    "Meat & Fish",
+    "Dairy & Eggs",
+    "Frozen",
+    "Bakery",
+    "Produce",
+    "Drinks",
+    "Snacks",
+    "Personal Care",
+    "Household",
+    "Pantry"
+  ];
+
+
+  for (const category of priority) {
+
+    const keywords =
+      CATEGORY_KEYWORDS[category];
+
+
+    if (
+      keywords.some(keyword =>
+        text.includes(keyword)
+      )
+    ) {
+
+      return category;
+
+    }
+
+  }
+
+
+  return "Other";
+}
 
 
 /* =========================================================
@@ -169,7 +618,8 @@ function setStatus(message, error = false) {
     message || "";
 
   $("status").className =
-    "status" + (error ? " error" : "");
+    "status" +
+    (error ? " error" : "");
 
 }
 
@@ -183,6 +633,7 @@ function updateLastUpdated() {
   const now =
     new Date();
 
+
   $("lastUpdated").textContent =
     "Last updated: " +
     now.toLocaleTimeString([], {
@@ -195,7 +646,7 @@ function updateLastUpdated() {
 
 
 /* =========================================================
-   GOOGLE LOGIN
+   GOOGLE AUTH
 ========================================================= */
 
 function startGoogle() {
@@ -243,16 +694,9 @@ function startGoogle() {
             false;
 
 
-          /*
-           * Load immediately.
-           */
           await load();
 
 
-          /*
-           * Then start the continuous
-           * background synchronization.
-           */
           startAutoSync();
 
         }
@@ -272,7 +716,7 @@ $("loginBtn").onclick =
 
 
 /* =========================================================
-   AUTH
+   AUTH HEADERS
 ========================================================= */
 
 function authHeaders() {
@@ -295,7 +739,7 @@ function authHeaders() {
 
 
 /* =========================================================
-   GOOGLE SHEETS REQUEST
+   GOOGLE SHEETS API
 ========================================================= */
 
 async function sheetsFetch(
@@ -327,10 +771,6 @@ async function sheetsFetch(
     );
 
 
-  /*
-   * Authentication expired.
-   */
-
   if (response.status === 401) {
 
     accessToken =
@@ -344,10 +784,6 @@ async function sheetsFetch(
 
   }
 
-
-  /*
-   * Google rate limit.
-   */
 
   if (response.status === 429) {
 
@@ -390,7 +826,7 @@ async function sheetsFetch(
 
 
 /* =========================================================
-   LOAD FROM GOOGLE SHEETS
+   LOAD LIST
 ========================================================= */
 
 async function load(options = {}) {
@@ -398,10 +834,6 @@ async function load(options = {}) {
   const silent =
     options.silent === true;
 
-
-  /*
-   * Don't allow two requests at once.
-   */
 
   if (syncInProgress) {
     return;
@@ -438,15 +870,9 @@ async function load(options = {}) {
       );
 
 
-    /*
-     * This is the actual Google Sheets read.
-     */
-
     const data =
       await sheetsFetch(
-
         `/values/${range}?majorDimension=ROWS`
-
       );
 
 
@@ -475,8 +901,8 @@ async function load(options = {}) {
 
 
     /*
-     * Determine whether the sheet
-     * actually changed.
+     * Determine whether the actual
+     * grocery list changed.
      */
 
     const changed =
@@ -493,11 +919,6 @@ async function load(options = {}) {
       newItems;
 
 
-    /*
-     * Only rebuild the HTML if the
-     * actual grocery list changed.
-     */
-
     if (changed) {
 
       render();
@@ -506,42 +927,27 @@ async function load(options = {}) {
 
 
     /*
-     * VERY IMPORTANT:
-     *
-     * This gets updated on EVERY successful
-     * Google Sheets request, even when there
-     * were no changes.
+     * This changes on EVERY successful
+     * sync, even if nothing changed.
      */
 
     updateLastUpdated();
 
 
-    /*
-     * Reset rate-limit backoff after
-     * a successful request.
-     */
-
     rateLimitBackoff =
       0;
 
-
-    /*
-     * Only change the main status for
-     * manual loads.
-     */
 
     if (!silent) {
 
       setStatus(
 
         items.length
-
           ? `${items.length} item${
               items.length === 1
                 ? ""
                 : "s"
             }`
-
           : ""
 
       );
@@ -550,13 +956,6 @@ async function load(options = {}) {
 
   }
   catch (error) {
-
-    /*
-     * Rate limiting:
-     *
-     * Don't hammer Google if it ever
-     * tells us to slow down.
-     */
 
     if (
       error.message ===
@@ -570,21 +969,11 @@ async function load(options = {}) {
         );
 
 
-      /*
-       * 4s, 8s, 16s, etc.
-       */
-
       const delay =
         Math.pow(
           2,
           rateLimitBackoff
         ) * 1000;
-
-
-      setStatus(
-        "Sync temporarily slowed down…",
-        true
-      );
 
 
       setTimeout(() => {
@@ -604,11 +993,6 @@ async function load(options = {}) {
 
     }
     else {
-
-      /*
-       * Authentication error:
-       * return to login screen.
-       */
 
       if (
         /authorization expired|sign in/i
@@ -650,15 +1034,10 @@ async function load(options = {}) {
 
 
 /* =========================================================
-   AUTOMATIC SYNCHRONIZATION
+   AUTO SYNC
 ========================================================= */
 
 function startAutoSync() {
-
-  /*
-   * Make sure we don't accidentally
-   * create multiple timers.
-   */
 
   stopAutoSync();
 
@@ -672,22 +1051,6 @@ function startAutoSync() {
     return;
   }
 
-
-  /*
-   * This is the important part.
-   *
-   * Every 2 seconds:
-   *
-   * Browser
-   *    ↓
-   * Google Sheets API
-   *    ↓
-   * Read column A
-   *    ↓
-   * Compare with current list
-   *    ↓
-   * Redraw only if changed
-   */
 
   syncTimer =
     setInterval(() => {
@@ -716,10 +1079,6 @@ function startAutoSync() {
 }
 
 
-/* =========================================================
-   STOP AUTOMATIC SYNCHRONIZATION
-========================================================= */
-
 function stopAutoSync() {
 
   if (syncTimer !== null) {
@@ -744,23 +1103,14 @@ document.addEventListener(
   "visibilitychange",
   () => {
 
-    /*
-     * Stop polling while the tab
-     * isn't visible.
-     */
-
     if (document.hidden) {
 
       stopAutoSync();
 
       return;
+
     }
 
-
-    /*
-     * Immediately check the sheet
-     * when the user comes back.
-     */
 
     if (accessToken) {
 
@@ -777,64 +1127,363 @@ document.addEventListener(
 
 
 /* =========================================================
-   RENDER LIST
+   CONFETTI
+========================================================= */
+
+function confettiExplosion(button) {
+
+  const rect =
+    button.getBoundingClientRect();
+
+
+  const centerX =
+    rect.left +
+    rect.width / 2;
+
+
+  const centerY =
+    rect.top +
+    rect.height / 2;
+
+
+  const colors = [
+    "#ff595e",
+    "#ffca3a",
+    "#8ac926",
+    "#1982c4",
+    "#6a4c93",
+    "#ff70a6",
+    "#00c2a8"
+  ];
+
+
+  const pieces = 80;
+
+
+  for (let i = 0; i < pieces; i++) {
+
+    const piece =
+      document.createElement(
+        "div"
+      );
+
+
+    piece.style.position =
+      "fixed";
+
+    piece.style.left =
+      centerX + "px";
+
+    piece.style.top =
+      centerY + "px";
+
+    piece.style.width =
+      (5 + Math.random() * 7) + "px";
+
+    piece.style.height =
+      (7 + Math.random() * 10) + "px";
+
+    piece.style.background =
+      colors[
+        Math.floor(
+          Math.random() *
+          colors.length
+        )
+      ];
+
+    piece.style.borderRadius =
+      Math.random() > 0.5
+        ? "50%"
+        : "2px";
+
+    piece.style.pointerEvents =
+      "none";
+
+    piece.style.zIndex =
+      "9999";
+
+
+    const angle =
+      Math.random() *
+      Math.PI *
+      2;
+
+
+    const velocity =
+      100 +
+      Math.random() * 220;
+
+
+    const x =
+      Math.cos(angle) *
+      velocity;
+
+
+    const y =
+      Math.sin(angle) *
+      velocity;
+
+
+    const rotation =
+      Math.random() *
+      720 -
+      360;
+
+
+    piece.animate(
+
+      [
+        {
+          transform:
+            "translate(-50%, -50%) rotate(0deg)",
+          opacity: 1
+        },
+
+        {
+          transform:
+            `translate(
+              calc(-50% + ${x}px),
+              calc(-50% + ${y + 140}px)
+            )
+            rotate(${rotation}deg)`,
+          opacity: 0
+        }
+      ],
+
+      {
+        duration:
+          700 +
+          Math.random() * 600,
+
+        easing:
+          "cubic-bezier(.15,.8,.3,1)"
+      }
+
+    );
+
+
+    document.body.appendChild(
+      piece
+    );
+
+
+    setTimeout(() => {
+
+      piece.remove();
+
+    }, 1400);
+
+  }
+
+}
+
+
+/* =========================================================
+   RENDER
 ========================================================= */
 
 function render() {
 
-  $("list").innerHTML =
+  const list =
+    $("list");
+
+
+  list.innerHTML =
     "";
 
 
+  if (!items.length) {
+
+    $("empty").hidden =
+      false;
+
+    return;
+
+  }
+
+
   $("empty").hidden =
-    items.length !== 0;
+    true;
 
 
-  items.forEach(
-    (item, index) => {
+  /*
+   * Group items by store section.
+   */
 
-      const row =
+  const groups = {};
+
+
+  CATEGORY_ORDER.forEach(
+    category => {
+      groups[category] = [];
+    }
+  );
+
+
+  items.forEach(item => {
+
+    const category =
+      categorizeItem(
+        item.value
+      );
+
+
+    groups[category].push(
+      item
+    );
+
+  });
+
+
+  /*
+   * Draw each category.
+   */
+
+  CATEGORY_ORDER.forEach(
+    category => {
+
+      const categoryItems =
+        groups[category];
+
+
+      if (!categoryItems.length) {
+        return;
+      }
+
+
+      const section =
+        document.createElement(
+          "section"
+        );
+
+      section.className =
+        "grocery-section";
+
+
+      const heading =
         document.createElement(
           "div"
         );
 
-      row.className =
-        "item";
+      heading.className =
+        "grocery-section-heading";
 
 
-      const name =
+      const icon =
         document.createElement(
           "span"
         );
 
-      name.textContent =
-        item.value;
+      icon.className =
+        "category-icon";
+
+      icon.textContent =
+        CATEGORY_ICONS[category];
 
 
-      const done =
+      const title =
         document.createElement(
-          "button"
+          "span"
         );
 
-      done.className =
-        "remove";
-
-      done.textContent =
-        "Done";
+      title.textContent =
+        category;
 
 
-      done.onclick =
-        () => removeItem(index);
-
-
-      row.append(
-        name,
-        done
+      heading.append(
+        icon,
+        title
       );
 
 
-      $("list").append(
-        row
+      section.append(
+        heading
+      );
+
+
+      categoryItems.forEach(
+        item => {
+
+          const row =
+            document.createElement(
+              "div"
+            );
+
+          row.className =
+            "item";
+
+
+          const itemIcon =
+            document.createElement(
+              "span"
+            );
+
+          itemIcon.className =
+            "item-icon";
+
+          itemIcon.textContent =
+            getItemIcon(
+              item.value
+            );
+
+
+          const name =
+            document.createElement(
+              "span"
+            );
+
+          name.className =
+            "item-name";
+
+          name.textContent =
+            item.value;
+
+
+          const done =
+            document.createElement(
+              "button"
+            );
+
+          done.className =
+            "remove";
+
+          done.textContent =
+            "Done";
+
+
+          done.onclick =
+            () => {
+
+              confettiExplosion(
+                done
+              );
+
+              removeItem(
+                items.indexOf(
+                  item
+                )
+              );
+
+            };
+
+
+          row.append(
+            itemIcon,
+            name,
+            done
+          );
+
+
+          section.append(
+            row
+          );
+
+        }
+      );
+
+
+      list.append(
+        section
       );
 
     }
@@ -855,11 +1504,6 @@ async function addItem(value) {
 
 
   try {
-
-    /*
-     * Get the current rows so that
-     * we find the next empty row.
-     */
 
     const values =
       await sheetsFetch(
@@ -939,13 +1583,7 @@ async function addItem(value) {
       "";
 
 
-    /*
-     * Immediately load the updated
-     * sheet rather than waiting 2 seconds.
-     */
-
     await load();
-
 
   }
   catch (error) {
@@ -1000,10 +1638,8 @@ async function removeItem(index) {
           "POST",
 
         headers: {
-
           "Content-Type":
             "application/json"
-
         },
 
         body:
@@ -1014,12 +1650,7 @@ async function removeItem(index) {
     );
 
 
-    /*
-     * Immediately reload.
-     */
-
     await load();
-
 
   }
   catch (error) {
@@ -1037,7 +1668,7 @@ async function removeItem(index) {
 
 
 /* =========================================================
-   ADD FORM
+   FORM
 ========================================================= */
 
 $("addForm").onsubmit =
