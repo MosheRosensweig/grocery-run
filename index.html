@@ -8,538 +8,1150 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
 <main class="app">
+
   <header>
     <div>
       <p class="eyebrow">GROCERY RUN</p>
       <h1>What do we need?</h1>
     </div>
-    <button class="icon-button" id="refreshBtn" aria-label="Refresh">↻</button>
+
+    <button class="icon-button" id="refreshBtn" aria-label="Refresh">
+      ↻
+    </button>
   </header>
+
+
+  <!-- LOGIN -->
 
   <section id="loginCard" class="card login-card">
     <h2>Connect your Google account</h2>
-    <p>You and your wife can use your own Google accounts. The app only requests access to this spreadsheet.</p>
-    <button id="loginBtn" class="primary">Sign in with Google</button>
+
+    <p>
+      You and your wife can use your own Google accounts.
+      The app only requests access to this spreadsheet.
+    </p>
+
+    <button id="loginBtn" class="primary">
+      Sign in with Google
+    </button>
+
     <p id="loginStatus" class="small"></p>
   </section>
 
+
+  <!-- APP -->
+
   <section id="appPanel" hidden>
+
     <form id="addForm" class="add-form">
-      <input id="itemInput" autocomplete="off" autocapitalize="words"
-             placeholder="Add an item…" aria-label="New grocery item" required>
-      <button type="submit" class="primary">Add</button>
+
+      <input
+        id="itemInput"
+        autocomplete="off"
+        autocapitalize="words"
+        placeholder="Add an item…"
+        aria-label="New grocery item"
+        required
+      >
+
+      <button type="submit" class="primary">
+        Add
+      </button>
+
     </form>
+
 
     <div id="status" class="status"></div>
 
-    <section id="list" class="list" aria-live="polite"></section>
 
-    <p id="empty" class="empty" hidden>Your grocery list is empty.</p>
+    <section
+      id="list"
+      class="list"
+      aria-live="polite">
+    </section>
 
-    <button id="signOutBtn" class="signout">Sign out</button>
+
+    <p id="empty" class="empty" hidden>
+      Your grocery list is empty.
+    </p>
+
+
+    <!-- LAST UPDATED -->
+
+    <p
+      id="lastUpdated"
+      class="small"
+      style="text-align:center; margin-top:20px;">
+      Last updated: —
+    </p>
+
+
+    <button id="signOutBtn" class="signout">
+      Sign out
+    </button>
+
   </section>
+
 </main>
 
-<script>
-const CONFIG = {
-  clientId: "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
-  spreadsheetId: "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
-  sheetName: "grocery run",
-  scope: "https://www.googleapis.com/auth/spreadsheets",
 
-  // Automatically check for changes every 3 seconds.
-  syncInterval: 3000
+<script>
+
+const CONFIG = {
+
+  clientId:
+    "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
+
+  spreadsheetId:
+    "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
+
+  sheetName:
+    "grocery run",
+
+  scope:
+    "https://www.googleapis.com/auth/spreadsheets",
+
+  /*
+   * How often we check Google Sheets.
+   *
+   * 2 seconds means another person's changes
+   * should normally appear within 0–2 seconds.
+   */
+  syncInterval: 2000
+
 };
 
-const API = "https://sheets.googleapis.com/v4/spreadsheets";
 
-let tokenClient;
+const API =
+  "https://sheets.googleapis.com/v4/spreadsheets";
+
+
+let tokenClient = null;
 let accessToken = null;
+
 let items = [];
+
 let syncTimer = null;
 let syncInProgress = false;
-let lastSyncTime = 0;
 
-const $ = id => document.getElementById(id);
-
-const loginCard = $("loginCard");
-const appPanel = $("appPanel");
+let rateLimitBackoff = 0;
 
 
-/* ---------------------------------------------------------
+const $ = id =>
+  document.getElementById(id);
+
+
+const loginCard =
+  $("loginCard");
+
+const appPanel =
+  $("appPanel");
+
+
+/* =========================================================
    STATUS
---------------------------------------------------------- */
+========================================================= */
 
-function setLoginStatus(msg) {
-  $("loginStatus").textContent = msg || "";
+function setLoginStatus(message) {
+
+  $("loginStatus").textContent =
+    message || "";
+
 }
 
-function setStatus(msg, error = false) {
-  $("status").textContent = msg || "";
-  $("status").className = "status" + (error ? " error" : "");
+
+function setStatus(message, error = false) {
+
+  $("status").textContent =
+    message || "";
+
+  $("status").className =
+    "status" + (error ? " error" : "");
+
 }
 
 
-/* ---------------------------------------------------------
-   GOOGLE AUTH
---------------------------------------------------------- */
+/* =========================================================
+   LAST UPDATED
+========================================================= */
+
+function updateLastUpdated() {
+
+  const now =
+    new Date();
+
+  $("lastUpdated").textContent =
+    "Last updated: " +
+    now.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+}
+
+
+/* =========================================================
+   GOOGLE LOGIN
+========================================================= */
 
 function startGoogle() {
+
   if (!window.google?.accounts?.oauth2) {
-    setLoginStatus("Google sign-in is still loading. Try again in a moment.");
+
+    setLoginStatus(
+      "Google sign-in is still loading. Try again in a moment."
+    );
+
     return;
   }
 
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CONFIG.clientId,
-    scope: CONFIG.scope,
 
-    callback: async response => {
-      if (response.error) {
-        setLoginStatus("Google authorization failed.");
-        return;
-      }
+  tokenClient =
+    google.accounts.oauth2.initTokenClient({
 
-      accessToken = response.access_token;
+      client_id:
+        CONFIG.clientId,
 
-      loginCard.hidden = true;
-      appPanel.hidden = false;
+      scope:
+        CONFIG.scope,
 
-      await load();
+      callback:
+        async response => {
 
-      // Start automatic syncing.
-      startAutoSync();
-    }
+          if (response.error) {
+
+            setLoginStatus(
+              "Google authorization failed."
+            );
+
+            return;
+          }
+
+
+          accessToken =
+            response.access_token;
+
+
+          loginCard.hidden =
+            true;
+
+          appPanel.hidden =
+            false;
+
+
+          /*
+           * Load immediately.
+           */
+          await load();
+
+
+          /*
+           * Then start the continuous
+           * background synchronization.
+           */
+          startAutoSync();
+
+        }
+
+    });
+
+
+  tokenClient.requestAccessToken({
+    prompt: ""
   });
 
-  tokenClient.requestAccessToken({ prompt: "" });
 }
 
-$("loginBtn").onclick = startGoogle;
+
+$("loginBtn").onclick =
+  startGoogle;
 
 
-/* ---------------------------------------------------------
-   API
---------------------------------------------------------- */
+/* =========================================================
+   AUTH
+========================================================= */
 
 function authHeaders() {
+
   if (!accessToken) {
-    throw new Error("Please sign in with Google.");
+
+    throw new Error(
+      "Please sign in with Google."
+    );
+
   }
 
+
   return {
-    Authorization: "Bearer " + accessToken
+    Authorization:
+      "Bearer " + accessToken
   };
+
 }
 
-async function sheetsFetch(path, options = {}) {
-  const response = await fetch(
-    API + "/" + CONFIG.spreadsheetId + path,
-    {
-      ...options,
 
-      headers: {
-        ...authHeaders(),
-        ...(options.headers || {})
+/* =========================================================
+   GOOGLE SHEETS REQUEST
+========================================================= */
+
+async function sheetsFetch(
+  path,
+  options = {}
+) {
+
+  const response =
+    await fetch(
+
+      API +
+      "/" +
+      CONFIG.spreadsheetId +
+      path,
+
+      {
+        ...options,
+
+        headers: {
+
+          ...authHeaders(),
+
+          ...(options.headers || {})
+
+        }
+
       }
-    }
-  );
+
+    );
+
+
+  /*
+   * Authentication expired.
+   */
 
   if (response.status === 401) {
-    accessToken = null;
+
+    accessToken =
+      null;
+
     stopAutoSync();
 
     throw new Error(
       "Your Google authorization expired. Please sign in again."
     );
+
   }
+
+
+  /*
+   * Google rate limit.
+   */
 
   if (response.status === 429) {
+
     throw new Error(
-      "Google rate limit reached. I'll automatically try again shortly."
+      "RATE_LIMIT"
     );
+
   }
+
 
   if (!response.ok) {
-    let message = response.statusText;
+
+    let message =
+      response.statusText;
+
 
     try {
-      const data = await response.json();
-      message = data.error?.message || message;
-    } catch {}
 
-    throw new Error(message);
+      const data =
+        await response.json();
+
+      message =
+        data.error?.message ||
+        message;
+
+    }
+    catch {}
+
+
+    throw new Error(
+      message
+    );
+
   }
 
+
   return response.json();
+
 }
 
 
-/* ---------------------------------------------------------
-   LOAD DATA
---------------------------------------------------------- */
+/* =========================================================
+   LOAD FROM GOOGLE SHEETS
+========================================================= */
 
 async function load(options = {}) {
-  const {
-    silent = false
-  } = options;
 
-  // Don't start another request if one is already running.
+  const silent =
+    options.silent === true;
+
+
+  /*
+   * Don't allow two requests at once.
+   */
+
   if (syncInProgress) {
     return;
   }
+
 
   if (!accessToken) {
     return;
   }
 
-  syncInProgress = true;
+
+  syncInProgress =
+    true;
+
 
   if (!silent) {
-    setStatus("Loading…");
+
+    setStatus(
+      "Loading…"
+    );
+
   }
 
-  $("refreshBtn").disabled = true;
+
+  $("refreshBtn").disabled =
+    true;
+
 
   try {
-    const range = encodeURIComponent(
-      `${CONFIG.sheetName}!A:A`
-    );
 
-    const data = await sheetsFetch(
-      `/values/${range}?majorDimension=ROWS`
-    );
+    const range =
+      encodeURIComponent(
+        `${CONFIG.sheetName}!A:A`
+      );
 
-    const values = data.values || [];
-
-    const newItems = values
-      .map((r, i) => ({
-        row: i + 1,
-        value: String(r[0] ?? "").trim()
-      }))
-      .filter(x => x.value);
 
     /*
-     * Only redraw the list if something actually changed.
+     * This is the actual Google Sheets read.
      */
+
+    const data =
+      await sheetsFetch(
+
+        `/values/${range}?majorDimension=ROWS`
+
+      );
+
+
+    const values =
+      data.values || [];
+
+
+    const newItems =
+      values
+
+        .map((row, index) => ({
+
+          row:
+            index + 1,
+
+          value:
+            String(
+              row[0] ?? ""
+            ).trim()
+
+        }))
+
+        .filter(item =>
+          item.value
+        );
+
+
+    /*
+     * Determine whether the sheet
+     * actually changed.
+     */
+
     const changed =
       newItems.length !== items.length ||
+
       newItems.some(
         (item, index) =>
-          item.value !== items[index]?.value
+          item.value !==
+          items[index]?.value
       );
 
-    items = newItems;
+
+    items =
+      newItems;
+
+
+    /*
+     * Only rebuild the HTML if the
+     * actual grocery list changed.
+     */
 
     if (changed) {
+
       render();
+
     }
 
-    lastSyncTime = Date.now();
+
+    /*
+     * VERY IMPORTANT:
+     *
+     * This gets updated on EVERY successful
+     * Google Sheets request, even when there
+     * were no changes.
+     */
+
+    updateLastUpdated();
+
+
+    /*
+     * Reset rate-limit backoff after
+     * a successful request.
+     */
+
+    rateLimitBackoff =
+      0;
+
+
+    /*
+     * Only change the main status for
+     * manual loads.
+     */
 
     if (!silent) {
+
       setStatus(
+
         items.length
-          ? `${items.length} item${items.length === 1 ? "" : "s"}`
+
+          ? `${items.length} item${
+              items.length === 1
+                ? ""
+                : "s"
+            }`
+
           : ""
+
       );
+
     }
 
-  } catch (e) {
+  }
+  catch (error) {
 
     /*
-     * Don't constantly flash an error while background
-     * syncing. Only show it for normal/manual loads.
+     * Rate limiting:
+     *
+     * Don't hammer Google if it ever
+     * tells us to slow down.
      */
-    if (!silent || !/rate limit/i.test(e.message)) {
-      setStatus(e.message, true);
+
+    if (
+      error.message ===
+      "RATE_LIMIT"
+    ) {
+
+      rateLimitBackoff =
+        Math.min(
+          rateLimitBackoff + 1,
+          5
+        );
+
+
+      /*
+       * 4s, 8s, 16s, etc.
+       */
+
+      const delay =
+        Math.pow(
+          2,
+          rateLimitBackoff
+        ) * 1000;
+
+
+      setStatus(
+        "Sync temporarily slowed down…",
+        true
+      );
+
+
+      setTimeout(() => {
+
+        if (
+          accessToken &&
+          !document.hidden
+        ) {
+
+          load({
+            silent: true
+          });
+
+        }
+
+      }, delay);
+
+    }
+    else {
+
+      /*
+       * Authentication error:
+       * return to login screen.
+       */
+
+      if (
+        /authorization expired|sign in/i
+          .test(error.message)
+      ) {
+
+        stopAutoSync();
+
+        appPanel.hidden =
+          true;
+
+        loginCard.hidden =
+          false;
+
+      }
+      else {
+
+        setStatus(
+          error.message,
+          true
+        );
+
+      }
+
     }
 
-    if (/authorization expired|sign in/i.test(e.message)) {
-      stopAutoSync();
-
-      appPanel.hidden = true;
-      loginCard.hidden = false;
-    }
-
-  } finally {
-    syncInProgress = false;
-    $("refreshBtn").disabled = false;
   }
+  finally {
+
+    syncInProgress =
+      false;
+
+    $("refreshBtn").disabled =
+      false;
+
+  }
+
 }
 
 
-/* ---------------------------------------------------------
-   AUTOMATIC SYNC
---------------------------------------------------------- */
+/* =========================================================
+   AUTOMATIC SYNCHRONIZATION
+========================================================= */
 
 function startAutoSync() {
-  stopAutoSync();
 
   /*
-   * Don't sync while the page is hidden.
+   * Make sure we don't accidentally
+   * create multiple timers.
    */
+
+  stopAutoSync();
+
+
+  if (!accessToken) {
+    return;
+  }
+
+
   if (document.hidden) {
     return;
   }
 
-  syncTimer = setInterval(() => {
 
-    if (!accessToken) {
-      return;
-    }
+  /*
+   * This is the important part.
+   *
+   * Every 2 seconds:
+   *
+   * Browser
+   *    ↓
+   * Google Sheets API
+   *    ↓
+   * Read column A
+   *    ↓
+   * Compare with current list
+   *    ↓
+   * Redraw only if changed
+   */
 
-    if (document.hidden) {
-      return;
-    }
+  syncTimer =
+    setInterval(() => {
 
-    /*
-     * Background sync is silent.
-     * It won't constantly change the status message.
-     */
-    load({
-      silent: true
-    });
+      if (!accessToken) {
+        return;
+      }
 
-  }, CONFIG.syncInterval);
+
+      if (document.hidden) {
+        return;
+      }
+
+
+      if (syncInProgress) {
+        return;
+      }
+
+
+      load({
+        silent: true
+      });
+
+    }, CONFIG.syncInterval);
+
 }
 
+
+/* =========================================================
+   STOP AUTOMATIC SYNCHRONIZATION
+========================================================= */
 
 function stopAutoSync() {
+
   if (syncTimer !== null) {
-    clearInterval(syncTimer);
-    syncTimer = null;
+
+    clearInterval(
+      syncTimer
+    );
+
+    syncTimer =
+      null;
+
   }
+
 }
 
 
-/*
- * When the user comes back to the browser/tab,
- * immediately check for changes.
- */
-document.addEventListener("visibilitychange", () => {
+/* =========================================================
+   TAB VISIBILITY
+========================================================= */
 
-  if (document.hidden) {
-    stopAutoSync();
-    return;
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    /*
+     * Stop polling while the tab
+     * isn't visible.
+     */
+
+    if (document.hidden) {
+
+      stopAutoSync();
+
+      return;
+    }
+
+
+    /*
+     * Immediately check the sheet
+     * when the user comes back.
+     */
+
+    if (accessToken) {
+
+      load({
+        silent: true
+      });
+
+      startAutoSync();
+
+    }
+
   }
-
-  if (accessToken) {
-    load({
-      silent: true
-    });
-
-    startAutoSync();
-  }
-});
+);
 
 
-/* ---------------------------------------------------------
-   RENDER
---------------------------------------------------------- */
+/* =========================================================
+   RENDER LIST
+========================================================= */
 
 function render() {
-  $("list").innerHTML = "";
 
-  $("empty").hidden = items.length !== 0;
+  $("list").innerHTML =
+    "";
 
-  items.forEach((item, index) => {
 
-    const row = document.createElement("div");
-    row.className = "item";
+  $("empty").hidden =
+    items.length !== 0;
 
-    const name = document.createElement("span");
-    name.textContent = item.value;
 
-    const done = document.createElement("button");
-    done.className = "remove";
-    done.textContent = "Done";
+  items.forEach(
+    (item, index) => {
 
-    done.onclick = () => removeItem(index);
+      const row =
+        document.createElement(
+          "div"
+        );
 
-    row.append(name, done);
+      row.className =
+        "item";
 
-    $("list").append(row);
-  });
+
+      const name =
+        document.createElement(
+          "span"
+        );
+
+      name.textContent =
+        item.value;
+
+
+      const done =
+        document.createElement(
+          "button"
+        );
+
+      done.className =
+        "remove";
+
+      done.textContent =
+        "Done";
+
+
+      done.onclick =
+        () => removeItem(index);
+
+
+      row.append(
+        name,
+        done
+      );
+
+
+      $("list").append(
+        row
+      );
+
+    }
+  );
+
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    ADD ITEM
---------------------------------------------------------- */
+========================================================= */
 
 async function addItem(value) {
-  setStatus("Adding…");
+
+  setStatus(
+    "Adding…"
+  );
+
 
   try {
 
-    const values = await sheetsFetch(
-      `/values/${encodeURIComponent(
-        CONFIG.sheetName + "!A:A"
-      )}?majorDimension=ROWS`
-    );
+    /*
+     * Get the current rows so that
+     * we find the next empty row.
+     */
 
-    const rows = values.values || [];
+    const values =
+      await sheetsFetch(
 
-    let target = rows.findIndex(
-      r => !String(r[0] ?? "").trim()
-    );
+        `/values/${encodeURIComponent(
+          CONFIG.sheetName + "!A:A"
+        )}?majorDimension=ROWS`
+
+      );
+
+
+    const rows =
+      values.values || [];
+
+
+    let target =
+      rows.findIndex(
+        row =>
+          !String(
+            row[0] ?? ""
+          ).trim()
+      );
+
 
     if (target < 0) {
-      target = rows.length;
+
+      target =
+        rows.length;
+
     }
+
 
     const rangeA1 =
       `${CONFIG.sheetName}!A${target + 1}`;
 
-    const range = encodeURIComponent(rangeA1);
+
+    const range =
+      encodeURIComponent(
+        rangeA1
+      );
+
 
     await sheetsFetch(
+
       `/values/${range}?valueInputOption=USER_ENTERED`,
+
       {
-        method: "PUT",
+
+        method:
+          "PUT",
 
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type":
+            "application/json"
         },
 
-        body: JSON.stringify({
-          range: rangeA1,
-          majorDimension: "ROWS",
-          values: [[value]]
-        })
+        body:
+          JSON.stringify({
+
+            range:
+              rangeA1,
+
+            majorDimension:
+              "ROWS",
+
+            values:
+              [[value]]
+
+          })
+
       }
+
     );
 
-    $("itemInput").value = "";
+
+    $("itemInput").value =
+      "";
+
 
     /*
-     * Immediately update our own screen.
-     * Don't make the user wait for the next poll.
+     * Immediately load the updated
+     * sheet rather than waiting 2 seconds.
      */
+
     await load();
 
-  } catch (e) {
-    setStatus(e.message, true);
+
   }
+  catch (error) {
+
+    setStatus(
+      error.message === "RATE_LIMIT"
+        ? "Google rate limit reached. Please try again in a moment."
+        : error.message,
+      true
+    );
+
+  }
+
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    REMOVE ITEM
---------------------------------------------------------- */
+========================================================= */
 
 async function removeItem(index) {
-  const item = items[index];
+
+  const item =
+    items[index];
+
 
   if (!item) {
     return;
   }
 
-  setStatus("Removing…");
+
+  setStatus(
+    "Removing…"
+  );
+
 
   try {
 
     const rangeA1 =
       `${CONFIG.sheetName}!A${item.row}`;
 
+
     await sheetsFetch(
-      `/values/${encodeURIComponent(rangeA1)}:clear`,
+
+      `/values/${encodeURIComponent(
+        rangeA1
+      )}:clear`,
+
       {
-        method: "POST",
+
+        method:
+          "POST",
 
         headers: {
-          "Content-Type": "application/json"
+
+          "Content-Type":
+            "application/json"
+
         },
 
-        body: "{}"
+        body:
+          "{}"
+
       }
+
     );
 
+
     /*
-     * Immediately refresh our own screen.
+     * Immediately reload.
      */
+
     await load();
 
-  } catch (e) {
-    setStatus(e.message, true);
+
   }
+  catch (error) {
+
+    setStatus(
+      error.message === "RATE_LIMIT"
+        ? "Google rate limit reached. Please try again in a moment."
+        : error.message,
+      true
+    );
+
+  }
+
 }
 
 
-/* ---------------------------------------------------------
-   FORM
---------------------------------------------------------- */
+/* =========================================================
+   ADD FORM
+========================================================= */
 
-$("addForm").onsubmit = e => {
-  e.preventDefault();
+$("addForm").onsubmit =
+  event => {
 
-  const value =
-    $("itemInput").value.trim();
-
-  if (value) {
-    addItem(value);
-  }
-};
+    event.preventDefault();
 
 
-/* ---------------------------------------------------------
-   MANUAL REFRESH
---------------------------------------------------------- */
-
-$("refreshBtn").onclick = () => {
-  load();
-};
+    const value =
+      $("itemInput")
+        .value
+        .trim();
 
 
-/* ---------------------------------------------------------
-   SIGN OUT
---------------------------------------------------------- */
+    if (value) {
 
-$("signOutBtn").onclick = () => {
-
-  stopAutoSync();
-
-  if (
-    accessToken &&
-    google?.accounts?.oauth2
-  ) {
-    google.accounts.oauth2.revoke(
-      accessToken,
-      () => {}
-    );
-  }
-
-  accessToken = null;
-
-  appPanel.hidden = true;
-  loginCard.hidden = false;
-
-  setLoginStatus("Signed out.");
-};
-
-
-/* ---------------------------------------------------------
-   INITIAL SETUP
---------------------------------------------------------- */
-
-window.addEventListener("load", () => {
-
-  setTimeout(() => {
-
-    if (CONFIG.clientId.includes("PASTE_YOUR")) {
-
-      setLoginStatus(
-        "Set your Google OAuth Web Client ID in index.html first."
+      addItem(
+        value
       );
 
-      $("loginBtn").disabled = true;
     }
 
-  }, 500);
-});
+  };
+
+
+/* =========================================================
+   MANUAL REFRESH
+========================================================= */
+
+$("refreshBtn").onclick =
+  () => {
+
+    load();
+
+  };
+
+
+/* =========================================================
+   SIGN OUT
+========================================================= */
+
+$("signOutBtn").onclick =
+  () => {
+
+    stopAutoSync();
+
+
+    if (
+      accessToken &&
+      google?.accounts?.oauth2
+    ) {
+
+      google.accounts.oauth2.revoke(
+        accessToken,
+        () => {}
+      );
+
+    }
+
+
+    accessToken =
+      null;
+
+
+    appPanel.hidden =
+      true;
+
+    loginCard.hidden =
+      false;
+
+
+    $("lastUpdated").textContent =
+      "Last updated: —";
+
+
+    setLoginStatus(
+      "Signed out."
+    );
+
+  };
+
+
+/* =========================================================
+   INITIAL SETUP
+========================================================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    setTimeout(() => {
+
+      if (
+        CONFIG.clientId.includes(
+          "PASTE_YOUR"
+        )
+      ) {
+
+        setLoginStatus(
+          "Set your Google OAuth Web Client ID in index.html first."
+        );
+
+
+        $("loginBtn").disabled =
+          true;
+
+      }
+
+    }, 500);
+
+  }
+);
+
 </script>
+
 </body>
 </html>
