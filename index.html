@@ -172,7 +172,7 @@
     <!-- BIKE VIEW -->
     <div id="bikeView" hidden>
       <div class="stats-grid" id="statsGrid">
-        <!-- Dynamically rendered combined stat card -->
+        <!-- Dynamically rendered stat cards from columns C & D -->
       </div>
 
       <button id="addTodayBtn" class="primary" style="width: 100%;">
@@ -501,8 +501,7 @@ async function load(options = {}) {
       const rows = data.values || [];
 
       let newBikeDates = [];
-      let bikedVal = "0";
-      let leftVal = "0";
+      let newStatCards = [];
 
       rows.forEach((row, index) => {
         const dateVal = String(row[0] ?? "").trim();
@@ -510,24 +509,13 @@ async function load(options = {}) {
 
         const label = String(row[2] ?? "").trim();
         const val = String(row[3] ?? "").trim();
-        
-        if (/total days biked in/i.test(label)) {
-          bikedVal = val || "0";
-        } else if (/total left/i.test(label)) {
-          leftVal = val || "0";
+        if (label) {
+          newStatCards.push({ label, value: val !== "" ? val : "0" });
         }
       });
 
       bikeDates = newBikeDates;
-      
-      const numericBiked = parseInt(bikedVal, 10) || 0;
-      const numericLeft = parseInt(leftVal, 10) || 0;
-      const totalTarget = numericBiked + numericLeft;
-
-      statCardsData = [
-        { label: "Days Biked In", value: `${numericBiked}/${totalTarget}` }
-      ];
-
+      statCardsData = newStatCards;
       renderStatsGrid();
       renderBikeList();
       if (!silent) setStatus("");
