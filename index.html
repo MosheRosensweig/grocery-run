@@ -42,7 +42,7 @@
     }
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 10px;
       margin-bottom: 24px;
     }
@@ -171,19 +171,8 @@
 
     <!-- BIKE VIEW -->
     <div id="bikeView" hidden>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label" id="statLabel1">Subway money saved</div>
-          <div class="stat-value" id="statValue1">--</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label" id="statLabel2">Total amount left</div>
-          <div class="stat-value" id="statValue2">--</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label" id="statLabel3">Percentage Complete</div>
-          <div class="stat-value" id="statValue3">--</div>
-        </div>
+      <div class="stats-grid" id="statsGrid">
+        <!-- Dynamically rendered stat cards from columns C & D -->
       </div>
 
       <button id="addTodayBtn" class="primary" style="width: 100%;">
@@ -236,6 +225,7 @@ let accessToken = null;
 
 let items = [];
 let bikeDates = [];
+let statCardsData = [];
 
 let syncTimer = null;
 let syncInProgress = false;
@@ -511,25 +501,22 @@ async function load(options = {}) {
       const rows = data.values || [];
 
       let newBikeDates = [];
+      let newStatCards = [];
+
       rows.forEach((row, index) => {
         const dateVal = String(row[0] ?? "").trim();
         if (dateVal) newBikeDates.push({ row: index + 1, value: dateVal });
 
-        if (index === 0) {
-          $("statLabel1").textContent = row[2] !== undefined && row[2] !== "" ? row[2] : "Subway money saved";
-          $("statValue1").textContent = row[3] !== undefined && row[3] !== "" ? row[3] : "0";
-        }
-        if (index === 1) {
-          $("statLabel2").textContent = row[2] !== undefined && row[2] !== "" ? row[2] : "Total amount left";
-          $("statValue2").textContent = row[3] !== undefined && row[3] !== "" ? row[3] : "0";
-        }
-        if (index === 2) {
-          $("statLabel3").textContent = row[2] !== undefined && row[2] !== "" ? row[2] : "Percentage Complete";
-          $("statValue3").textContent = row[3] !== undefined && row[3] !== "" ? row[3] : "0%";
+        const label = String(row[2] ?? "").trim();
+        const val = String(row[3] ?? "").trim();
+        if (label) {
+          newStatCards.push({ label, value: val !== "" ? val : "0" });
         }
       });
 
       bikeDates = newBikeDates;
+      statCardsData = newStatCards;
+      renderStatsGrid();
       renderBikeList();
       if (!silent) setStatus("");
     }
@@ -634,6 +621,27 @@ function confettiExplosion(button) {
 /* =========================================================
    RENDERING
 ========================================================= */
+
+function renderStatsGrid() {
+  const grid = $("statsGrid");
+  grid.innerHTML = "";
+
+  statCardsData.forEach(stat => {
+    const card = document.createElement("div");
+    card.className = "stat-card";
+
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "stat-label";
+    labelDiv.textContent = stat.label;
+
+    const valueDiv = document.createElement("div");
+    valueDiv.className = "stat-value";
+    valueDiv.textContent = stat.value;
+
+    card.append(labelDiv, valueDiv);
+    grid.append(card);
+  });
+}
 
 function renderGroceries() {
   const list = $("list");
