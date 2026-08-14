@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f6f4ef">
+  <title>Grocery Run</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div>
+      <p class="eyebrow">GROCERY RUN</p>
+      <h1>What do we need?</h1>
+    </div>
+    <button class="icon-button" id="refreshBtn" aria-label="Refresh">↻</button>
+  </header>
+
+  <section id="loginCard" class="card login-card">
+    <h2>Connect your Google account</h2>
+    <p>You and your wife can use your own Google accounts. The app only requests access to this spreadsheet.</p>
+    <button id="loginBtn" class="primary">Sign in with Google</button>
+    <p id="loginStatus" class="small"></p>
+  </section>
+
+  <section id="appPanel" hidden>
+    <form id="addForm" class="add-form">
+      <input id="itemInput" autocomplete="off" autocapitalize="words"
+             placeholder="Add an item…" aria-label="New grocery item" required>
+      <button type="submit" class="primary">Add</button>
+    </form>
+    <div id="status" class="status"></div>
+    <section id="list" class="list" aria-live="polite"></section>
+    <p id="empty" class="empty" hidden>Your grocery list is empty.</p>
+    <button id="signOutBtn" class="signout">Sign out</button>
+  </section>
+</main>
+
+<script>
+const CONFIG = {
+  clientId: "PASTE_YOUR_GOOGLE_OAUTH_WEB_CLIENT_ID_HERE.apps.googleusercontent.com",
+  spreadsheetId: "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
+  sheetName: "grocery run",
+  scope: "https://www.googleapis.com/auth/spreadsheets"
+};
+
+const API = "https://sheets.googleapis.com/v4/spreadsheets";
+let tokenClient;
+let accessToken = null;
+let items = [];
+
+const $ = id => document.getElementById(id);
+const loginCard = $("loginCard");
+const appPanel = $("appPanel");
+
+function setLoginStatus(msg) { $("loginStatus").textContent = msg || ""; }
+function setStatus(msg, error=false) {
+  $("status").textContent = msg || "";
+  $("status").className = "status" + (error ? " error" : "");
+}
+
+function startGoogle() {
+  if (!window.google?.accounts?.oauth2) {
+    setLoginStatus("Google sign-in is still loading. Try again in a moment.");
+    return;
+  }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.clientId,
+    scope: CONFIG.scope,
+    callback: async response => {
+      if (response.error) {
+        setLoginStatus("Google authorization failed.");
+        return;
+      }
+      accessToken = response.access_token;
+      loginCard.hidden = true;
+      appPanel.hidden = false;
+      await load();
+    }
+  });
+  tokenClient.requestAccessToken({prompt: ""});
+}
+
+$("loginBtn").onclick = startGoogle;
+
+function authHeaders() {
+  if (!accessToken) throw new Error("Please sign in with Google.");
+  return {Authorization: "Bearer " + accessToken};
+}
+
+async function sheetsFetch(path, options={}) {
+  const response = await fetch(API + "/" + CONFIG.spreadsheetId + path, {
+    ...options,
+    headers: {
+      ...authHeaders(),
+      ...(options.headers || {})
+    }
+  });
+  if (response.status === 401) {
+    accessToken = null;
+    throw new Error("Your Google authorization expired. Please sign in again.");
+  }
+  if (!response.ok) {
+    let message = response.statusText;
+    try {
+      const data = await response.json();
+      message = data.error?.message || message;
+    } catch {}
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+async function load() {
+  setStatus("Loading…");
+  $("refreshBtn").disabled = true;
+  try {
+    const range = encodeURIComponent(`${CONFIG.sheetName}!A:A`);
+    const data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
+    const values = data.values || [];
+    items = values.map((r, i) => ({
+      row: i + 1,
+      value: String(r[0] ?? "").trim()
+    })).filter(x => x.value);
+    render();
+    setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
+  } catch (e) {
+    setStatus(e.message, true);
+    if (/authorization expired|sign in/i.test(e.message)) {
+      appPanel.hidden = true;
+      loginCard.hidden = false;
+    }
+  } finally {
+    $("refreshBtn").disabled = false;
+  }
+}
+
+function render() {
+  $("list").innerHTML = "";
+  $("empty").hidden = items.length !== 0;
+  items.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "item";
+    const name = document.createElement("span");
+    name.textContent = item.value;
+    const done = document.createElement("button");
+    done.className = "remove";
+    done.textContent = "Done";
+    done.onclick = () => removeItem(index);
+    row.append(name, done);
+    $("list").append(row);
+  });
+}
+
+async function addItem(value) {
+  setStatus("Adding…");
+  try {
+    const values = await sheetsFetch(
+      `/values/${encodeURIComponent(CONFIG.sheetName + "!A:A")}?majorDimension=ROWS`
+    );
+    const rows = values.values || [];
+    let target = rows.findIndex(r => !String(r[0] ?? "").trim());
+    if (target < 0) target = rows.length;
+
+    const rangeA1 = `${CONFIG.sheetName}!A${target + 1}`;
+    const range = encodeURIComponent(rangeA1);
+    await sheetsFetch(`/values/${range}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({range: rangeA1, majorDimension:"ROWS", values:[[value]]})
+    });
+    $("itemInput").value = "";
+    await load();
+  } catch (e) { setStatus(e.message, true); }
+}
+
+async function removeItem(index) {
+  const item = items[index];
+  if (!item) return;
+  setStatus("Removing…");
+  try {
+    const rangeA1 = `${CONFIG.sheetName}!A${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}:clear`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: "{}"
+    });
+    await load();
+  } catch (e) { setStatus(e.message, true); }
+}
+
+$("addForm").onsubmit = e => {
+  e.preventDefault();
+  const value = $("itemInput").value.trim();
+  if (value) addItem(value);
+};
+$("refreshBtn").onclick = load;
+$("signOutBtn").onclick = () => {
+  if (accessToken && google?.accounts?.oauth2) {
+    google.accounts.oauth2.revoke(accessToken, () => {});
+  }
+  accessToken = null;
+  appPanel.hidden = true;
+  loginCard.hidden = false;
+  setLoginStatus("Signed out.");
+};
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    if (CONFIG.clientId.includes("PASTE_YOUR")) {
+      setLoginStatus("Set your Google OAuth Web Client ID in index.html first.");
+      $("loginBtn").disabled = true;
+    }
+  }, 500);
+});
+</script>
+</body>
+</html>

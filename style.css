@@ -1,0 +1,27 @@
+*{box-sizing:border-box}
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#24231f;background:#f6f4ef}
+body{margin:0;min-height:100vh;background:#f6f4ef}
+.app{width:min(680px,100%);margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 18px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.eyebrow{margin:0 0 5px;font-size:12px;font-weight:800;letter-spacing:.14em;opacity:.55}
+h1{margin:0;font-size:clamp(30px,8vw,46px);line-height:1;letter-spacing:-.04em}
+h2{margin:0 0 8px;font-size:24px}
+p{line-height:1.45}
+.card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.055)}
+.login-card{margin-top:18px}
+.small{font-size:13px;opacity:.6;min-height:20px}
+.primary{height:54px;padding:0 20px;border:0;border-radius:15px;background:#24231f;color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+.icon-button{width:48px;height:48px;border:0;border-radius:50%;background:#fff;font-size:27px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.add-form{display:flex;gap:9px;margin-bottom:12px}
+.add-form input{min-width:0;flex:1;height:54px;border:1px solid #d7d3ca;border-radius:15px;background:#fff;padding:0 16px;font-size:18px;outline:none}
+.add-form input:focus{border-color:#777269;box-shadow:0 0 0 3px rgba(119,114,105,.12)}
+.status{min-height:24px;padding:2px 4px 8px;font-size:13px;opacity:.55}
+.status.error{color:#a33;opacity:1}
+.list{display:grid;gap:9px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:66px;padding:9px 10px 9px 17px;border-radius:17px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.055)}
+.item span{font-size:19px;line-height:1.25;overflow-wrap:anywhere}
+.remove{flex:0 0 auto;min-width:68px;min-height:48px;border:0;border-radius:13px;background:#ece9e1;color:#24231f;font-size:15px;font-weight:700;cursor:pointer}
+.signout{display:block;margin:24px auto 0;border:0;background:none;font-size:14px;opacity:.55;cursor:pointer}
+.empty{margin:45px 0;text-align:center;opacity:.5}
+button:active{transform:scale(.97)}
+@media(min-width:600px){.app{padding-top:48px}}
