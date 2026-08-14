@@ -1,325 +1,1701 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stuff To Buy</title>
-  <style>
-    :root {
-      --primary: #2563eb;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #0f172a;
-      --border: #e2e8f0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 0;
-    }
-
-    /* App Header & Navigation */
-    header {
-      background-color: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 1rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
-
-    .nav-tabs {
-      display: flex;
-      gap: 0.5rem;
-      background: #f1f5f9;
-      padding: 4px;
-      border-radius: 8px;
-    }
-
-    .tab-btn {
-      border: none;
-      background: none;
-      padding: 6px 16px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      border-radius: 6px;
-      cursor: pointer;
-      color: #64748b;
-      transition: all 0.2s;
-    }
-
-    .tab-btn.active {
-      background: var(--card-bg);
-      color: var(--primary);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .view-container {
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    .hidden { display: none !important; }
-
-    /* Stat Cards Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .stat-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-top: 0.25rem;
-      color: var(--primary);
-    }
-
-    /* Biking Action Card */
-    .action-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .add-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .add-btn:disabled {
-      background: #cbd5e1;
-      cursor: not-allowed;
-    }
-
-    /* History List */
-    .history-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem;
-    }
-
-    .history-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .history-item {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .history-item:last-child { border-bottom: none; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f6f4ef">
+  <title>Grocery Run</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
+<main class="app">
 
   <header>
-    <h1>Stuff To Buy</h1>
-    <nav class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('tab-buy')">Items</button>
-      <button class="tab-btn" onclick="switchTab('tab-bike')">Bike Tracker</button>
-    </nav>
+    <div>
+      <p class="eyebrow">GROCERY RUN</p>
+      <h1>What do we need?</h1>
+    </div>
+
+    <button class="icon-button" id="refreshBtn" aria-label="Refresh">
+      ↻
+    </button>
   </header>
 
-  <main class="view-container">
 
-    <!-- VIEW 1: Stuff To Buy (Your original view code goes here) -->
-    <section id="tab-buy">
-      <p><em>[ Your original "Stuff To Buy" view content ]</em></p>
+  <!-- LOGIN -->
+
+  <section id="loginCard" class="card login-card">
+    <h2>Connect your Google account</h2>
+
+    <p>
+      You and your wife can use your own Google accounts.
+      The app only requests access to this spreadsheet.
+    </p>
+
+    <button id="loginBtn" class="primary">
+      Sign in with Google
+    </button>
+
+    <p id="loginStatus" class="small"></p>
+  </section>
+
+
+  <!-- APP -->
+
+  <section id="appPanel" hidden>
+
+    <form id="addForm" class="add-form">
+
+      <input
+        id="itemInput"
+        autocomplete="off"
+        autocapitalize="words"
+        placeholder="Add an item…"
+        aria-label="New grocery item"
+        required
+      >
+
+      <button type="submit" class="primary">
+        Add
+      </button>
+
+    </form>
+
+
+    <div id="status" class="status"></div>
+
+
+    <section
+      id="list"
+      class="list"
+      aria-live="polite">
     </section>
 
-    <!-- VIEW 2: Bike Commute Tracker -->
-    <section id="tab-bike" class="hidden">
-      <!-- 3 Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Subway Saved</div>
-          <div class="stat-value" id="stat-saved">--</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Amount Left</div>
-          <div class="stat-value" id="stat-left">--</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Progress</div>
-          <div class="stat-value" id="stat-progress">--</div>
-        </div>
-      </div>
 
-      <!-- Add Today Action -->
-      <div class="action-card">
-        <div>
-          <strong style="display: block;">Log Today's Commute</strong>
-          <small id="today-date-text" style="color: #64748b;"></small>
-        </div>
-        <button id="add-today-btn" class="add-btn" onclick="addTodayCommute()">Add Today</button>
-      </div>
+    <p id="empty" class="empty" hidden>
+      Your grocery list is empty.
+    </p>
 
-      <!-- Recorded Days List -->
-      <div class="history-card">
-        <h3 style="margin-top:0; font-size: 1rem;">Past Biked Days</h3>
-        <ul id="biked-days-list" class="history-list">
-          <li style="color: #64748b;">Loading days...</li>
-        </ul>
-      </div>
-    </section>
 
-  </main>
+    <p
+      id="lastUpdated"
+      class="small last-updated">
+      Last updated: —
+    </p>
 
-  <script>
-    const SPREADSHEET_ID = '1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM';
-    const BIKE_TAB_GID = '1855282656';
 
-    let loggedDates = [];
+    <button id="signOutBtn" class="signout">
+      Sign out
+    </button>
 
-    // Tab Switching Logic
-    function switchTab(tabId) {
-      document.getElementById('tab-buy').classList.add('hidden');
-      document.getElementById('tab-bike').classList.add('hidden');
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  </section>
 
-      document.getElementById(tabId).classList.remove('hidden');
-      event.target.classList.add('active');
+</main>
 
-      if (tabId === 'tab-bike') {
-        fetchBikeData();
-      }
+
+<script>
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const CONFIG = {
+
+  clientId:
+    "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
+
+  spreadsheetId:
+    "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
+
+  sheetName:
+    "grocery run",
+
+  scope:
+    "https://www.googleapis.com/auth/spreadsheets",
+
+  // Check Google Sheets every 2 seconds.
+  syncInterval: 2000
+
+};
+
+
+const API =
+  "https://sheets.googleapis.com/v4/spreadsheets";
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let tokenClient = null;
+let accessToken = null;
+
+let items = [];
+
+let syncTimer = null;
+let syncInProgress = false;
+let rateLimitBackoff = 0;
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const $ = id =>
+  document.getElementById(id);
+
+const loginCard =
+  $("loginCard");
+
+const appPanel =
+  $("appPanel");
+
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
+
+const CATEGORY_ORDER = [
+  "Produce",
+  "Dairy & Eggs",
+  "Meat & Fish",
+  "Bakery",
+  "Pantry",
+  "Frozen",
+  "Drinks",
+  "Snacks",
+  "Household",
+  "Personal Care",
+  "Other"
+];
+
+
+const CATEGORY_ICONS = {
+
+  "Produce": "🥬",
+  "Dairy & Eggs": "🥛",
+  "Meat & Fish": "🥩",
+  "Bakery": "🥖",
+  "Pantry": "🥫",
+  "Frozen": "🧊",
+  "Drinks": "🥤",
+  "Snacks": "🍿",
+  "Household": "🧹",
+  "Personal Care": "🧴",
+  "Other": "🛒"
+
+};
+
+
+const CATEGORY_KEYWORDS = {
+
+  "Produce": [
+    "apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons",
+    "lime", "limes", "avocado", "avocados", "tomato", "tomatoes", "potato", "potatoes",
+    "onion", "onions", "garlic", "lettuce", "spinach", "kale", "broccoli", "cauliflower",
+    "carrot", "carrots", "celery", "cucumber", "cucumbers", "pepper", "peppers", "mushroom",
+    "mushrooms", "zucchini", "eggplant", "cabbage", "corn", "peas", "berries", "strawberry",
+    "strawberries", "blueberry", "blueberries", "raspberry", "raspberries", "cranberry",
+    "cranberries", "grape", "grapes", "watermelon", "melon", "pineapple", "mango", "peach",
+    "peaches", "pear", "pears", "plum", "plums", "cilantro", "parsley", "basil", "mint", "herbs"
+  ],
+
+  "Dairy & Eggs": [
+    "milk", "cream", "half and half", "half-and-half", "cheese", "cheddar", "mozzarella",
+    "parmesan", "yogurt", "yoghurt", "butter", "eggs", "egg", "sour cream", "cottage cheese",
+    "cream cheese", "whipped cream"
+  ],
+
+  "Meat & Fish": [
+    "chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork", "ham",
+    "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish", "salmon",
+    "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"
+  ],
+
+  "Bakery": [
+    "bread", "bagel", "bagels", "roll", "rolls", "bun", "buns", "croissant", "croissants",
+    "muffin", "muffins", "tortilla", "tortillas", "pita", "pitas", "cake", "cakes", "cookie",
+    "cookies", "donut", "donuts"
+  ],
+
+  "Pantry": [
+    "rice", "pasta", "noodles", "flour", "sugar", "salt", "pepper", "oil", "olive oil",
+    "vinegar", "sauce", "tomato sauce", "marinara", "ketchup", "mustard", "mayonnaise",
+    "mayo", "relish", "soy sauce", "hot sauce", "spices", "cereal", "oatmeal", "oats",
+    "beans", "lentils", "chickpeas", "peanut butter", "jelly", "jam", "honey", "maple syrup",
+    "baking soda", "baking powder", "canned", "can of", "soup", "broth", "stock", "crackers"
+  ],
+
+  "Frozen": [
+    "frozen", "ice cream", "icecream", "frozen pizza", "frozen vegetables", "frozen fruit",
+    "frozen chicken", "frozen fries", "fries", "tater tots", "frozen waffles", "frozen pancakes"
+  ],
+
+  "Drinks": [
+    "water", "sparkling water", "seltzer", "soda", "juice", "orange juice", "apple juice",
+    "coffee", "tea", "iced tea", "lemonade", "sports drink", "energy drink", "drink", "drinks"
+  ],
+
+  "Snacks": [
+    "chips", "pretzels", "popcorn", "nuts", "almonds", "cashews", "peanuts", "trail mix",
+    "granola bar", "granola bars", "protein bar", "protein bars", "candy", "chocolate",
+    "gummy", "gummies", "snack", "snacks"
+  ],
+
+  "Household": [
+    "paper towel", "paper towels", "toilet paper", "tissues", "napkins", "trash bag",
+    "trash bags", "garbage bag", "garbage bags", "foil", "aluminum foil", "plastic wrap",
+    "ziplock", "ziploc", "dish soap", "dishwasher", "detergent", "laundry", "bleach",
+    "cleaner", "cleaning", "sponge", "sponges", "broom", "mop", "vacuum", "light bulb",
+    "batteries"
+  ],
+
+  "Personal Care": [
+    "shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss",
+    "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash", "diapers",
+    "wipes", "baby wipes", "baby lotion", "baby soap"
+  ]
+
+};
+
+
+/* =========================================================
+   FOOD LOOKUP RULES (ICONS & COLORS)
+========================================================= */
+
+const ITEM_RULES = [
+  // Yellow - Banana, Lemon, Corn, Butter, Cheese
+  { pattern: /banana|lemon|corn|squash/i, icon: "🍌", bg: "#fef9c3", color: "#854d0e" },
+  { pattern: /butter|margarine/i, icon: "🧈", bg: "#fef9c3", color: "#854d0e" },
+  { pattern: /cheese|cheddar|swiss|parmesan|mozzarella/i, icon: "🧀", bg: "#fef9c3", color: "#854d0e" },
+
+  // Red / Cranberry / Berries
+  { pattern: /cranberr/i, icon: "🍒", bg: "#ffe4e6", color: "#881337" },
+  { pattern: /cherry|cherries|pomegranate/i, icon: "🍒", bg: "#ffe4e6", color: "#9f1239" },
+  { pattern: /apple/i, icon: "🍎", bg: "#fee2e2", color: "#991b1b" },
+  { pattern: /strawberr/i, icon: "🍓", bg: "#ffe4e6", color: "#9f1239" },
+  { pattern: /raspberr/i, icon: "🍓", bg: "#ffe4e6", color: "#be123c" },
+  { pattern: /tomato|ketchup|marinara|salsa/i, icon: "🍅", bg: "#fee2e2", color: "#991b1b" },
+  { pattern: /chili|hot sauce|pepperoni/i, icon: "🌶️", bg: "#fee2e2", color: "#991b1b" },
+
+  // White / Light Cream - Milk, Cream, Garlic, Onion, Yogurt
+  { pattern: /milk|half and half|half-and-half|heavy cream|whipped cream/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
+  { pattern: /yogurt|yoghurt/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
+  { pattern: /egg|eggs/i, icon: "🥚", bg: "#fef3c7", color: "#78350f" },
+  { pattern: /onion|garlic|shallot/i, icon: "🧄", bg: "#f8fafc", color: "#334155" },
+  { pattern: /coconut/i, icon: "🥥", bg: "#f8fafc", color: "#334155" },
+
+  // Coffee / Chocolate / Brown
+  { pattern: /coffee|espresso|latte|cappuccino|mocha|java/i, icon: "☕", bg: "#efebe9", color: "#4e342e" },
+  { pattern: /chocolate|cocoa|fudge|brownie/i, icon: "🍫", bg: "#efebe9", color: "#3e2723" },
+  { pattern: /nut|nuts|almond|cashew|peanut|walnut|pecan|pistachio/i, icon: "🥜", bg: "#efebe9", color: "#4e342e" },
+  { pattern: /potato|potatoes/i, icon: "🥔", bg: "#f5f5f4", color: "#44403c" },
+
+  // Orange / Peach / Carrot
+  { pattern: /orange|tangerine|clementine|mandarin/i, icon: "🍊", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /carrot/i, icon: "🥕", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /peach|apricot|nectarine/i, icon: "🍑", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /sweet potato|yam|pumpkin/i, icon: "🎃", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /mango/i, icon: "🥭", bg: "#fef3c7", color: "#92400e" },
+  { pattern: /papaya|cantaloupe/i, icon: "🍈", bg: "#ffedd5", color: "#9a3412" },
+
+  // Greens
+  { pattern: /avocado/i, icon: "🥑", bg: "#dcfce7", color: "#166534" },
+  { pattern: /broccoli|cauliflower/i, icon: "🥦", bg: "#dcfce7", color: "#166534" },
+  { pattern: /spinach|kale|lettuce|cabbage|greens|salad|arugula/i, icon: "🥬", bg: "#dcfce7", color: "#166534" },
+  { pattern: /cucumber|zucchini/i, icon: "🥒", bg: "#dcfce7", color: "#166534" },
+  { pattern: /lime/i, icon: "🍋", bg: "#dcfce7", color: "#166534" },
+  { pattern: /pepper|peppers|bell pepper/i, icon: "🫑", bg: "#dcfce7", color: "#166534" },
+  { pattern: /pea|peas|edamame/i, icon: "🫛", bg: "#dcfce7", color: "#166534" },
+  { pattern: /basil|cilantro|parsley|mint|rosemary|thyme|herb/i, icon: "🌿", bg: "#dcfce7", color: "#166534" },
+
+  // Purple / Blueberry / Grape / Eggplant
+  { pattern: /blueberr/i, icon: "🫐", bg: "#e0e7ff", color: "#3730a3" },
+  { pattern: /grape|raisin/i, icon: "🍇", bg: "#f3e8ff", color: "#6b21a8" },
+  { pattern: /eggplant|aubergine/i, icon: "🍆", bg: "#f3e8ff", color: "#6b21a8" },
+  { pattern: /plum|prune/i, icon: "🫐", bg: "#f3e8ff", color: "#6b21a8" },
+  { pattern: /blackberr/i, icon: "🫐", bg: "#f3e8ff", color: "#581c87" },
+
+  // Bakery / Grains
+  { pattern: /bread|toast|loaf|baguette/i, icon: "🍞", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /bagel|bagels/i, icon: "🥯", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /croissant|pastry/i, icon: "🥐", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /cookie|cookies|biscuit/i, icon: "🍪", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /donut|doughnut/i, icon: "🍩", bg: "#fce4ec", color: "#880e4f" },
+  { pattern: /cake|cupcake|pie/i, icon: "🎂", bg: "#fce4ec", color: "#880e4f" },
+  { pattern: /cereal|oatmeal|oats|muesli|granola/i, icon: "🥣", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /rice|flour|sugar|salt/i, icon: "🍚", bg: "#f5f5f5", color: "#424242" },
+  { pattern: /pasta|noodle|spaghetti|macaroni|penne|ramen/i, icon: "🍝", bg: "#fffde7", color: "#f57f17" },
+  { pattern: /pizza/i, icon: "🍕", bg: "#fff3e0", color: "#e65100" },
+
+  // Meat & Seafood
+  { pattern: /steak|beef|hamburger|burger|ground beef/i, icon: "🥩", bg: "#ffebee", color: "#c62828" },
+  { pattern: /chicken|turkey|poultry|wings|breast/i, icon: "🍗", bg: "#fff3e0", color: "#d84315" },
+  { pattern: /bacon|pork|ham|sausage|hot dog|salami/i, icon: "🥓", bg: "#ffebee", color: "#b71c1c" },
+  { pattern: /fish|salmon|tuna|cod|tilapia/i, icon: "🐟", bg: "#e0f7fa", color: "#006064" },
+  { pattern: /shrimp|prawn|lobster|crab|seafood/i, icon: "🍤", bg: "#ffe0b2", color: "#e65100" },
+
+  // Drinks
+  { pattern: /water|sparkling water|seltzer/i, icon: "💧", bg: "#e0f7fa", color: "#006064" },
+  { pattern: /soda|coke|pepsi|sprite|pop/i, icon: "🥤", bg: "#ffebee", color: "#c62828" },
+  { pattern: /juice|cider|lemonade/i, icon: "🧃", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /tea|matcha|chai/i, icon: "🍵", bg: "#e8f5e9", color: "#1b5e20" },
+  { pattern: /beer|ale|lager/i, icon: "🍺", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /wine|champagne|prosecco/i, icon: "🍷", bg: "#f3e5f5", color: "#4a148c" },
+
+  // Frozen / Snacks
+  { pattern: /ice cream|icecream|gelato|sorbet/i, icon: "🍦", bg: "#fce4ec", color: "#880e4f" },
+  { pattern: /chip|chips|crisps|doritos|lays/i, icon: "🥔", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /pretzel|pretzels/i, icon: "🥨", bg: "#efebe9", color: "#4e342e" },
+  { pattern: /popcorn/i, icon: "🍿", bg: "#fffde7", color: "#f57f17" },
+  { pattern: /candy|gummy|gummies|marshmallow/i, icon: "🍬", bg: "#fce4ec", color: "#880e4f" },
+
+  // Household & Personal Care
+  { pattern: /paper towel|toilet paper|tissue|tissues|napkin/i, icon: "🧻", bg: "#f5f5f5", color: "#37474f" },
+  { pattern: /trash|garbage bag|ziploc|foil|wrap/i, icon: "🗑️", bg: "#eceff1", color: "#37474f" },
+  { pattern: /dish soap|detergent|cleaner|cleaning|bleach|soap|sponge/i, icon: "🧽", bg: "#e0f2f1", color: "#004d40" },
+  { pattern: /shampoo|conditioner|lotion|sunscreen|body wash/i, icon: "🧴", bg: "#e1f5fe", color: "#01579b" },
+  { pattern: /toothpaste|toothbrush|floss|mouthwash/i, icon: "🪥", bg: "#e0f7fa", color: "#006064" },
+  { pattern: /diaper|wipes|baby/i, icon: "👶", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /battery|batteries|light bulb/i, icon: "🔋", bg: "#fffde7", color: "#f57f17" }
+];
+
+
+/* =========================================================
+   CATEGORY LOOKUP
+========================================================= */
+
+function categorizeItem(item) {
+
+  const text =
+    item.toLowerCase().trim();
+
+
+  const priority = [
+    "Meat & Fish",
+    "Dairy & Eggs",
+    "Frozen",
+    "Bakery",
+    "Produce",
+    "Drinks",
+    "Snacks",
+    "Personal Care",
+    "Household",
+    "Pantry"
+  ];
+
+
+  for (const category of priority) {
+
+    const keywords =
+      CATEGORY_KEYWORDS[category];
+
+
+    if (
+      keywords.some(keyword =>
+        text.includes(keyword)
+      )
+    ) {
+
+      return category;
+
     }
 
-    // Format local date string (YYYY-MM-DD)
-    function getTodayFormatted() {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
+  }
+
+
+  return "Other";
+}
+
+
+/* =========================================================
+   ITEM DETAILS (COLOR & ICON)
+========================================================= */
+
+function getItemDetails(itemText) {
+
+  const text =
+    itemText.toLowerCase().trim();
+
+
+  for (const rule of ITEM_RULES) {
+
+    if (rule.pattern.test(text)) {
+
+      return rule;
+
     }
 
-    // Fetch and parse Tab 2 data via Google Visualization API
-    async function fetchBikeData() {
-      document.getElementById('today-date-text').textContent = getTodayFormatted();
-      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${BIKE_TAB_GID}`;
+  }
 
-      try {
-        const response = await fetch(url);
-        const text = await response.text();
-        const json = JSON.parse(text.substring(47, text.length - 2));
-        const rows = json.table.rows;
 
-        // Parse Stats (C1:D1, C2:D2, C3:D3)
-        if (rows[0] && rows[0].c) {
-          document.getElementById('stat-saved').textContent = rows[0].c[3]?.v || rows[0].c[2]?.v || 'N/A';
-        }
-        if (rows[1] && rows[1].c) {
-          document.getElementById('stat-left').textContent = rows[1].c[3]?.v || rows[1].c[2]?.v || 'N/A';
-        }
-        if (rows[2] && rows[2].c) {
-          document.getElementById('stat-progress').textContent = rows[2].c[3]?.v || rows[2].c[2]?.v || 'N/A';
-        }
+  const cat =
+    categorizeItem(itemText);
 
-        // Parse Column A Dates
-        loggedDates = [];
-        const listEl = document.getElementById('biked-days-list');
-        listEl.innerHTML = '';
 
-        rows.forEach(row => {
-          if (row.c && row.c[0] && row.c[0].v) {
-            let rawVal = row.c[0].f || row.c[0].v;
-            // Clean date string if returned as Google Date object format
-            if (typeof rawVal === 'string' && rawVal.startsWith('Date(')) {
-              const parts = rawVal.match(/\d+/g);
-              const d = new Date(parts[0], parts[1], parts[2]);
-              rawVal = d.toISOString().split('T')[0];
-            }
-            loggedDates.push(rawVal);
+  return {
+
+    icon:
+      CATEGORY_ICONS[cat] || "🛒",
+
+    bg:
+      "#f3f4f6",
+
+    color:
+      "#1f2937"
+
+  };
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function setLoginStatus(message) {
+
+  $("loginStatus").textContent =
+    message || "";
+
+}
+
+
+function setStatus(message, error = false) {
+
+  $("status").textContent =
+    message || "";
+
+  $("status").className =
+    "status" +
+    (error ? " error" : "");
+
+}
+
+
+/* =========================================================
+   LAST UPDATED
+========================================================= */
+
+function updateLastUpdated() {
+
+  const now =
+    new Date();
+
+
+  $("lastUpdated").textContent =
+    "Last updated: " +
+    now.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+}
+
+
+/* =========================================================
+   GOOGLE LOGIN
+========================================================= */
+
+function startGoogle() {
+
+  if (!window.google?.accounts?.oauth2) {
+
+    setLoginStatus(
+      "Google sign-in is still loading. Try again in a moment."
+    );
+
+    return;
+  }
+
+
+  tokenClient =
+    google.accounts.oauth2.initTokenClient({
+
+      client_id:
+        CONFIG.clientId,
+
+      scope:
+        CONFIG.scope,
+
+      callback:
+        async response => {
+
+          if (response.error) {
+
+            setLoginStatus(
+              "Google authorization failed."
+            );
+
+            return;
           }
-        });
 
-        // Populate history list (newest first)
-        const displayDates = [...loggedDates].reverse();
-        if (displayDates.length === 0) {
-          listEl.innerHTML = '<li>No biked days logged yet.</li>';
-        } else {
-          displayDates.forEach(dateStr => {
-            const li = document.createElement('li');
-            li.className = 'history-item';
-            li.innerHTML = `<span>🚲 Commute</span> <strong>${dateStr}</strong>`;
-            listEl.appendChild(li);
-          });
+
+          accessToken =
+            response.access_token;
+
+
+          loginCard.hidden =
+            true;
+
+          appPanel.hidden =
+            false;
+
+
+          await load();
+
+
+          startAutoSync();
+
         }
 
-        // Check if today is already logged
-        checkTodayLogged();
+    });
 
-      } catch (err) {
-        console.error("Error loading sheet data:", err);
+
+  tokenClient.requestAccessToken({
+    prompt: ""
+  });
+
+}
+
+
+$("loginBtn").onclick =
+  startGoogle;
+
+
+/* =========================================================
+   AUTH HEADERS
+========================================================= */
+
+function authHeaders() {
+
+  if (!accessToken) {
+
+    throw new Error(
+      "Please sign in with Google."
+    );
+
+  }
+
+
+  return {
+    Authorization:
+      "Bearer " + accessToken
+  };
+
+}
+
+
+/* =========================================================
+   SHEETS API
+========================================================= */
+
+async function sheetsFetch(
+  path,
+  options = {}
+) {
+
+  const response =
+    await fetch(
+
+      API +
+      "/" +
+      CONFIG.spreadsheetId +
+      path,
+
+      {
+        ...options,
+
+        headers: {
+
+          ...authHeaders(),
+
+          ...(options.headers || {})
+
+        }
+
       }
+
+    );
+
+
+  if (response.status === 401) {
+
+    accessToken =
+      null;
+
+    stopAutoSync();
+
+    throw new Error(
+      "Your Google authorization expired. Please sign in again."
+    );
+
+  }
+
+
+  if (response.status === 429) {
+
+    throw new Error(
+      "RATE_LIMIT"
+    );
+
+  }
+
+
+  if (!response.ok) {
+
+    let message =
+      response.statusText;
+
+
+    try {
+
+      const data =
+        await response.json();
+
+      message =
+        data.error?.message ||
+        message;
+
+    }
+    catch {}
+
+
+    throw new Error(
+      message
+    );
+
+  }
+
+
+  return response.json();
+
+}
+
+
+/* =========================================================
+   LOAD
+========================================================= */
+
+async function load(options = {}) {
+
+  const silent =
+    options.silent === true;
+
+
+  if (syncInProgress) {
+    return;
+  }
+
+
+  if (!accessToken) {
+    return;
+  }
+
+
+  syncInProgress =
+    true;
+
+
+  if (!silent) {
+
+    setStatus(
+      "Loading…"
+    );
+
+  }
+
+
+  $("refreshBtn").disabled =
+    true;
+
+
+  try {
+
+    const range =
+      encodeURIComponent(
+        `${CONFIG.sheetName}!A:A`
+      );
+
+
+    const data =
+      await sheetsFetch(
+        `/values/${range}?majorDimension=ROWS`
+      );
+
+
+    const values =
+      data.values || [];
+
+
+    const newItems =
+      values
+
+        .map((row, index) => ({
+
+          row:
+            index + 1,
+
+          value:
+            String(
+              row[0] ?? ""
+            ).trim()
+
+        }))
+
+        .filter(item =>
+          item.value
+        );
+
+
+    const changed =
+      newItems.length !== items.length ||
+
+      newItems.some(
+        (item, index) =>
+          item.value !==
+          items[index]?.value
+      );
+
+
+    items =
+      newItems;
+
+
+    if (changed) {
+      render();
     }
 
-    function checkTodayLogged() {
-      const todayStr = getTodayFormatted();
-      const addBtn = document.getElementById('add-today-btn');
 
-      const alreadyLogged = loggedDates.some(d => d.includes(todayStr));
+    updateLastUpdated();
 
-      if (alreadyLogged) {
-        addBtn.disabled = true;
-        addBtn.textContent = 'Already Added';
-      } else {
-        addBtn.disabled = false;
-        addBtn.textContent = 'Add Today';
+
+    rateLimitBackoff =
+      0;
+
+
+    if (!silent) {
+
+      setStatus(
+
+        items.length
+          ? `${items.length} item${
+              items.length === 1
+                ? ""
+                : "s"
+            }`
+          : ""
+
+      );
+
+    }
+
+  }
+  catch (error) {
+
+    if (
+      error.message ===
+      "RATE_LIMIT"
+    ) {
+
+      rateLimitBackoff =
+        Math.min(
+          rateLimitBackoff + 1,
+          5
+        );
+
+
+      const delay =
+        Math.pow(
+          2,
+          rateLimitBackoff
+        ) * 1000;
+
+
+      setTimeout(() => {
+
+        if (
+          accessToken &&
+          !document.hidden
+        ) {
+
+          load({
+            silent: true
+          });
+
+        }
+
+      }, delay);
+
+    }
+    else {
+
+      if (
+        /authorization expired|sign in/i
+          .test(error.message)
+      ) {
+
+        stopAutoSync();
+
+        appPanel.hidden =
+          true;
+
+        loginCard.hidden =
+          false;
+
       }
+      else {
+
+        setStatus(
+          error.message,
+          true
+        );
+
+      }
+
     }
 
-    function addTodayCommute() {
-      const todayStr = getTodayFormatted();
-      if (loggedDates.includes(todayStr)) return;
+  }
+  finally {
 
-      // Optimistic UI update
-      loggedDates.push(todayStr);
-      checkTodayLogged();
+    syncInProgress =
+      false;
 
-      // Send to Google Sheet (using your existing Apps Script Web App or POST endpoint)
-      console.log("Logging today:", todayStr);
-      fetchBikeData(); // Refresh list after saving
+    $("refreshBtn").disabled =
+      false;
+
+  }
+
+}
+
+
+/* =========================================================
+   AUTO SYNC
+========================================================= */
+
+function startAutoSync() {
+
+  stopAutoSync();
+
+
+  if (!accessToken) {
+    return;
+  }
+
+
+  if (document.hidden) {
+    return;
+  }
+
+
+  syncTimer =
+    setInterval(() => {
+
+      if (!accessToken) {
+        return;
+      }
+
+
+      if (document.hidden) {
+        return;
+      }
+
+
+      if (syncInProgress) {
+        return;
+      }
+
+
+      load({
+        silent: true
+      });
+
+    }, CONFIG.syncInterval);
+
+}
+
+
+function stopAutoSync() {
+
+  if (syncTimer !== null) {
+
+    clearInterval(
+      syncTimer
+    );
+
+    syncTimer =
+      null;
+
+  }
+
+}
+
+
+/* =========================================================
+   VISIBILITY
+========================================================= */
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (document.hidden) {
+
+      stopAutoSync();
+
+      return;
+
     }
-  </script>
+
+
+    if (accessToken) {
+
+      load({
+        silent: true
+      });
+
+      startAutoSync();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CONFETTI
+========================================================= */
+
+function confettiExplosion(button) {
+
+  const rect =
+    button.getBoundingClientRect();
+
+
+  const centerX =
+    rect.left +
+    rect.width / 2;
+
+
+  const centerY =
+    rect.top +
+    rect.height / 2;
+
+
+  const colors = [
+    "#ff595e",
+    "#ffca3a",
+    "#8ac926",
+    "#1982c4",
+    "#6a4c93",
+    "#ff70a6",
+    "#00c2a8"
+  ];
+
+
+  const pieces =
+    80;
+
+
+  for (let i = 0; i < pieces; i++) {
+
+    const piece =
+      document.createElement(
+        "div"
+      );
+
+
+    piece.style.position =
+      "fixed";
+
+    piece.style.left =
+      centerX + "px";
+
+    piece.style.top =
+      centerY + "px";
+
+    piece.style.width =
+      (5 + Math.random() * 7) + "px";
+
+    piece.style.height =
+      (7 + Math.random() * 10) + "px";
+
+    piece.style.background =
+      colors[
+        Math.floor(
+          Math.random() *
+          colors.length
+        )
+      ];
+
+    piece.style.borderRadius =
+      Math.random() > 0.5
+        ? "50%"
+        : "2px";
+
+    piece.style.pointerEvents =
+      "none";
+
+    piece.style.zIndex =
+      "9999";
+
+
+    const angle =
+      Math.random() *
+      Math.PI *
+      2;
+
+
+    const velocity =
+      100 +
+      Math.random() * 220;
+
+
+    const x =
+      Math.cos(angle) *
+      velocity;
+
+
+    const y =
+      Math.sin(angle) *
+      velocity;
+
+
+    const rotation =
+      Math.random() *
+      720 -
+      360;
+
+
+    piece.animate(
+
+      [
+        {
+          transform:
+            "translate(-50%, -50%) rotate(0deg)",
+          opacity: 1
+        },
+
+        {
+          transform:
+            `translate(
+              calc(-50% + ${x}px),
+              calc(-50% + ${y + 140}px)
+            )
+            rotate(${rotation}deg)`,
+          opacity: 0
+        }
+      ],
+
+      {
+        duration:
+          700 +
+          Math.random() * 600,
+
+        easing:
+          "cubic-bezier(.15,.8,.3,1)"
+      }
+
+    );
+
+
+    document.body.appendChild(
+      piece
+    );
+
+
+    setTimeout(() => {
+
+      piece.remove();
+
+    }, 1400);
+
+  }
+
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render() {
+
+  const list =
+    $("list");
+
+
+  list.innerHTML =
+    "";
+
+
+  if (!items.length) {
+
+    $("empty").hidden =
+      false;
+
+    return;
+
+  }
+
+
+  $("empty").hidden =
+    true;
+
+
+  const groups = {};
+
+
+  CATEGORY_ORDER.forEach(
+    category => {
+
+      groups[category] =
+        [];
+
+    }
+  );
+
+
+  items.forEach(item => {
+
+    const category =
+      categorizeItem(
+        item.value
+      );
+
+
+    groups[category].push(
+      item
+    );
+
+  });
+
+
+  CATEGORY_ORDER.forEach(
+    category => {
+
+      const categoryItems =
+        groups[category];
+
+
+      if (!categoryItems.length) {
+        return;
+      }
+
+
+      const section =
+        document.createElement(
+          "section"
+        );
+
+      section.className =
+        "grocery-section";
+
+
+      const heading =
+        document.createElement(
+          "div"
+        );
+
+      heading.className =
+        "grocery-section-heading";
+
+
+      const icon =
+        document.createElement(
+          "span"
+        );
+
+      icon.className =
+        "category-icon";
+
+      icon.textContent =
+        CATEGORY_ICONS[category];
+
+
+      const title =
+        document.createElement(
+          "span"
+        );
+
+      title.textContent =
+        category;
+
+
+      heading.append(
+        icon,
+        title
+      );
+
+
+      section.append(
+        heading
+      );
+
+
+      categoryItems.forEach(
+        item => {
+
+          const details =
+            getItemDetails(
+              item.value
+            );
+
+
+          const row =
+            document.createElement(
+              "div"
+            );
+
+          row.className =
+            "item";
+
+          /* Dynamic Styling for Row Colors */
+          row.style.backgroundColor =
+            details.bg;
+
+          row.style.borderLeft =
+            `5px solid ${details.color}`;
+
+          row.style.borderRadius =
+            "8px";
+
+          row.style.margin =
+            "6px 0";
+
+          row.style.padding =
+            "10px 14px";
+
+          row.style.display =
+            "flex";
+
+          row.style.alignItems =
+            "center";
+
+          row.style.justifyContent =
+            "space-between";
+
+
+          const itemIcon =
+            document.createElement(
+              "span"
+            );
+
+          itemIcon.className =
+            "item-icon";
+
+          itemIcon.textContent =
+            details.icon;
+
+          itemIcon.style.marginRight =
+            "10px";
+
+          itemIcon.style.fontSize =
+            "1.2rem";
+
+
+          const name =
+            document.createElement(
+              "span"
+            );
+
+          name.className =
+            "item-name";
+
+          name.textContent =
+            item.value;
+
+          name.style.color =
+            details.color;
+
+          name.style.fontWeight =
+            "600";
+
+          name.style.flexGrow =
+            "1";
+
+
+          const done =
+            document.createElement(
+              "button"
+            );
+
+          done.className =
+            "remove";
+
+          done.textContent =
+            "Done";
+
+
+          done.onclick =
+            () => {
+
+              done.disabled =
+                true;
+
+
+              confettiExplosion(
+                done
+              );
+
+
+              removeItem(
+                item
+              );
+
+            };
+
+
+          row.append(
+            itemIcon,
+            name,
+            done
+          );
+
+
+          section.append(
+            row
+          );
+
+        }
+      );
+
+
+      list.append(
+        section
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   ADD ITEM
+========================================================= */
+
+async function addItem(value) {
+
+  setStatus(
+    "Adding…"
+  );
+
+
+  try {
+
+    const values =
+      await sheetsFetch(
+
+        `/values/${encodeURIComponent(
+          CONFIG.sheetName + "!A:A"
+        )}?majorDimension=ROWS`
+
+      );
+
+
+    const rows =
+      values.values || [];
+
+
+    let target =
+      rows.findIndex(
+        row =>
+          !String(
+            row[0] ?? ""
+          ).trim()
+      );
+
+
+    if (target < 0) {
+
+      target =
+        rows.length;
+
+    }
+
+
+    const rangeA1 =
+      `${CONFIG.sheetName}!A${target + 1}`;
+
+
+    const range =
+      encodeURIComponent(
+        rangeA1
+      );
+
+
+    await sheetsFetch(
+
+      `/values/${range}?valueInputOption=USER_ENTERED`,
+
+      {
+
+        method:
+          "PUT",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify({
+
+            range:
+              rangeA1,
+
+            majorDimension:
+              "ROWS",
+
+            values:
+              [[value]]
+
+          })
+
+      }
+
+    );
+
+
+    $("itemInput").value =
+      "";
+
+
+    await load();
+
+  }
+  catch (error) {
+
+    setStatus(
+
+      error.message ===
+      "RATE_LIMIT"
+
+        ? "Google rate limit reached. Please try again in a moment."
+
+        : error.message,
+
+      true
+
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   REMOVE ITEM
+========================================================= */
+
+async function removeItem(item) {
+
+  if (!item) {
+    return;
+  }
+
+
+  setStatus(
+    "Removing…"
+  );
+
+
+  const previousItems =
+    [...items];
+
+
+  items =
+    items.filter(
+      current =>
+        current !== item
+    );
+
+
+  render();
+
+
+  try {
+
+    const rangeA1 =
+      `${CONFIG.sheetName}!A${item.row}`;
+
+
+    await sheetsFetch(
+
+      `/values/${encodeURIComponent(
+        rangeA1
+      )}:clear`,
+
+      {
+
+        method:
+          "POST",
+
+        headers: {
+
+          "Content-Type":
+            "application/json"
+
+        },
+
+        body:
+          "{}"
+
+      }
+
+    );
+
+
+    await load();
+
+  }
+  catch (error) {
+
+    items =
+      previousItems;
+
+
+    render();
+
+
+    setStatus(
+
+      error.message ===
+      "RATE_LIMIT"
+
+        ? "Google rate limit reached. The item was not deleted."
+
+        : "Couldn't delete the item: " +
+          error.message,
+
+      true
+
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+$("addForm").onsubmit =
+  event => {
+
+    event.preventDefault();
+
+
+    const value =
+      $("itemInput")
+        .value
+        .trim();
+
+
+    if (value) {
+
+      addItem(
+        value
+      );
+
+    }
+
+  };
+
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
+$("refreshBtn").onclick =
+  () => {
+
+    load();
+
+  };
+
+
+/* =========================================================
+   SIGN OUT
+========================================================= */
+
+$("signOutBtn").onclick =
+  () => {
+
+    stopAutoSync();
+
+
+    if (
+      accessToken &&
+      google?.accounts?.oauth2
+    ) {
+
+      google.accounts.oauth2.revoke(
+        accessToken,
+        () => {}
+      );
+
+    }
+
+
+    accessToken =
+      null;
+
+
+    appPanel.hidden =
+      true;
+
+    loginCard.hidden =
+      false;
+
+
+    $("lastUpdated").textContent =
+      "Last updated: —";
+
+
+    setLoginStatus(
+      "Signed out."
+    );
+
+  };
+
+
+/* =========================================================
+   INITIAL SETUP
+========================================================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    setTimeout(() => {
+
+      if (
+        CONFIG.clientId.includes(
+          "PASTE_YOUR"
+        )
+      ) {
+
+        setLoginStatus(
+          "Set your Google OAuth Web Client ID in index.html first."
+        );
+
+
+        $("loginBtn").disabled =
+          true;
+
+      }
+
+    }, 500);
+
+  }
+);
+
+</script>
 </body>
 </html>
