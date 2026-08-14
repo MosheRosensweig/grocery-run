@@ -1,1701 +1,474 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f6f4ef">
-  <title>Grocery Run</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stuff To Buy</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 16px 0;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+
+    /* Tabs Navigation */
+    .tabs {
+      display: flex;
+      gap: 12px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Stat Cards Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .progress-bar-bg {
+      background: var(--border);
+      height: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      background: var(--success);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* Action Section */
+    .action-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn:disabled {
+      background: #cbd5e1;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .config-row {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .config-row input {
+      width: 90px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    /* Date History List */
+    .history-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .history-header h3 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .badge {
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .date-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .date-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .date-item:last-child {
+      border-bottom: none;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Stuff To Buy Tab styling */
+    .item-input-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .item-input-group input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+  </style>
 </head>
-
 <body>
-<main class="app">
 
-  <header>
-    <div>
-      <p class="eyebrow">GROCERY RUN</p>
-      <h1>What do we need?</h1>
+  <div class="container">
+    <header>
+      <h1>Stuff To Buy</h1>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs">
+      <button class="tab-btn active" onclick="switchTab('buyTab', this)">Stuff To Buy</button>
+      <button class="tab-btn" onclick="switchTab('bikeTab', this)">Days I Biked In</button>
+    </nav>
+
+    <!-- TAB 1: STUFF TO BUY -->
+    <div id="buyTab" class="tab-content active">
+      <div class="action-card">
+        <div style="width: 100%;">
+          <h3>Shopping & Wishlist</h3>
+          <div class="item-input-group">
+            <input type="text" id="buyItemName" placeholder="Item name..." />
+            <input type="number" id="buyItemCost" placeholder="Estimated Cost ($)" style="max-width: 150px;" />
+            <button class="btn" onclick="addBuyItem()">Add Item</button>
+          </div>
+        </div>
+      </div>
+      <div class="history-card">
+        <ul id="buyList" class="date-list">
+          <!-- Buy items inserted dynamically -->
+        </ul>
+      </div>
     </div>
 
-    <button class="icon-button" id="refreshBtn" aria-label="Refresh">
-      ↻
-    </button>
-  </header>
-
-
-  <!-- LOGIN -->
-
-  <section id="loginCard" class="card login-card">
-    <h2>Connect your Google account</h2>
-
-    <p>
-      You and your wife can use your own Google accounts.
-      The app only requests access to this spreadsheet.
-    </p>
-
-    <button id="loginBtn" class="primary">
-      Sign in with Google
-    </button>
-
-    <p id="loginStatus" class="small"></p>
-  </section>
-
-
-  <!-- APP -->
-
-  <section id="appPanel" hidden>
-
-    <form id="addForm" class="add-form">
-
-      <input
-        id="itemInput"
-        autocomplete="off"
-        autocapitalize="words"
-        placeholder="Add an item…"
-        aria-label="New grocery item"
-        required
-      >
-
-      <button type="submit" class="primary">
-        Add
-      </button>
-
-    </form>
-
-
-    <div id="status" class="status"></div>
-
-
-    <section
-      id="list"
-      class="list"
-      aria-live="polite">
-    </section>
-
-
-    <p id="empty" class="empty" hidden>
-      Your grocery list is empty.
-    </p>
-
-
-    <p
-      id="lastUpdated"
-      class="small last-updated">
-      Last updated: —
-    </p>
-
-
-    <button id="signOutBtn" class="signout">
-      Sign out
-    </button>
-
-  </section>
-
-</main>
-
-
-<script>
-
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const CONFIG = {
-
-  clientId:
-    "938362234863-scdu7nvau60lsfm8hgj0ka1vthltl45s.apps.googleusercontent.com",
-
-  spreadsheetId:
-    "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
-
-  sheetName:
-    "grocery run",
-
-  scope:
-    "https://www.googleapis.com/auth/spreadsheets",
-
-  // Check Google Sheets every 2 seconds.
-  syncInterval: 2000
-
-};
-
-
-const API =
-  "https://sheets.googleapis.com/v4/spreadsheets";
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let tokenClient = null;
-let accessToken = null;
-
-let items = [];
-
-let syncTimer = null;
-let syncInProgress = false;
-let rateLimitBackoff = 0;
-
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const $ = id =>
-  document.getElementById(id);
-
-const loginCard =
-  $("loginCard");
-
-const appPanel =
-  $("appPanel");
-
-
-/* =========================================================
-   CATEGORIES
-========================================================= */
-
-const CATEGORY_ORDER = [
-  "Produce",
-  "Dairy & Eggs",
-  "Meat & Fish",
-  "Bakery",
-  "Pantry",
-  "Frozen",
-  "Drinks",
-  "Snacks",
-  "Household",
-  "Personal Care",
-  "Other"
-];
-
-
-const CATEGORY_ICONS = {
-
-  "Produce": "🥬",
-  "Dairy & Eggs": "🥛",
-  "Meat & Fish": "🥩",
-  "Bakery": "🥖",
-  "Pantry": "🥫",
-  "Frozen": "🧊",
-  "Drinks": "🥤",
-  "Snacks": "🍿",
-  "Household": "🧹",
-  "Personal Care": "🧴",
-  "Other": "🛒"
-
-};
-
-
-const CATEGORY_KEYWORDS = {
-
-  "Produce": [
-    "apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons",
-    "lime", "limes", "avocado", "avocados", "tomato", "tomatoes", "potato", "potatoes",
-    "onion", "onions", "garlic", "lettuce", "spinach", "kale", "broccoli", "cauliflower",
-    "carrot", "carrots", "celery", "cucumber", "cucumbers", "pepper", "peppers", "mushroom",
-    "mushrooms", "zucchini", "eggplant", "cabbage", "corn", "peas", "berries", "strawberry",
-    "strawberries", "blueberry", "blueberries", "raspberry", "raspberries", "cranberry",
-    "cranberries", "grape", "grapes", "watermelon", "melon", "pineapple", "mango", "peach",
-    "peaches", "pear", "pears", "plum", "plums", "cilantro", "parsley", "basil", "mint", "herbs"
-  ],
-
-  "Dairy & Eggs": [
-    "milk", "cream", "half and half", "half-and-half", "cheese", "cheddar", "mozzarella",
-    "parmesan", "yogurt", "yoghurt", "butter", "eggs", "egg", "sour cream", "cottage cheese",
-    "cream cheese", "whipped cream"
-  ],
-
-  "Meat & Fish": [
-    "chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork", "ham",
-    "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish", "salmon",
-    "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"
-  ],
-
-  "Bakery": [
-    "bread", "bagel", "bagels", "roll", "rolls", "bun", "buns", "croissant", "croissants",
-    "muffin", "muffins", "tortilla", "tortillas", "pita", "pitas", "cake", "cakes", "cookie",
-    "cookies", "donut", "donuts"
-  ],
-
-  "Pantry": [
-    "rice", "pasta", "noodles", "flour", "sugar", "salt", "pepper", "oil", "olive oil",
-    "vinegar", "sauce", "tomato sauce", "marinara", "ketchup", "mustard", "mayonnaise",
-    "mayo", "relish", "soy sauce", "hot sauce", "spices", "cereal", "oatmeal", "oats",
-    "beans", "lentils", "chickpeas", "peanut butter", "jelly", "jam", "honey", "maple syrup",
-    "baking soda", "baking powder", "canned", "can of", "soup", "broth", "stock", "crackers"
-  ],
-
-  "Frozen": [
-    "frozen", "ice cream", "icecream", "frozen pizza", "frozen vegetables", "frozen fruit",
-    "frozen chicken", "frozen fries", "fries", "tater tots", "frozen waffles", "frozen pancakes"
-  ],
-
-  "Drinks": [
-    "water", "sparkling water", "seltzer", "soda", "juice", "orange juice", "apple juice",
-    "coffee", "tea", "iced tea", "lemonade", "sports drink", "energy drink", "drink", "drinks"
-  ],
-
-  "Snacks": [
-    "chips", "pretzels", "popcorn", "nuts", "almonds", "cashews", "peanuts", "trail mix",
-    "granola bar", "granola bars", "protein bar", "protein bars", "candy", "chocolate",
-    "gummy", "gummies", "snack", "snacks"
-  ],
-
-  "Household": [
-    "paper towel", "paper towels", "toilet paper", "tissues", "napkins", "trash bag",
-    "trash bags", "garbage bag", "garbage bags", "foil", "aluminum foil", "plastic wrap",
-    "ziplock", "ziploc", "dish soap", "dishwasher", "detergent", "laundry", "bleach",
-    "cleaner", "cleaning", "sponge", "sponges", "broom", "mop", "vacuum", "light bulb",
-    "batteries"
-  ],
-
-  "Personal Care": [
-    "shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss",
-    "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash", "diapers",
-    "wipes", "baby wipes", "baby lotion", "baby soap"
-  ]
-
-};
-
-
-/* =========================================================
-   FOOD LOOKUP RULES (ICONS & COLORS)
-========================================================= */
-
-const ITEM_RULES = [
-  // Yellow - Banana, Lemon, Corn, Butter, Cheese
-  { pattern: /banana|lemon|corn|squash/i, icon: "🍌", bg: "#fef9c3", color: "#854d0e" },
-  { pattern: /butter|margarine/i, icon: "🧈", bg: "#fef9c3", color: "#854d0e" },
-  { pattern: /cheese|cheddar|swiss|parmesan|mozzarella/i, icon: "🧀", bg: "#fef9c3", color: "#854d0e" },
-
-  // Red / Cranberry / Berries
-  { pattern: /cranberr/i, icon: "🍒", bg: "#ffe4e6", color: "#881337" },
-  { pattern: /cherry|cherries|pomegranate/i, icon: "🍒", bg: "#ffe4e6", color: "#9f1239" },
-  { pattern: /apple/i, icon: "🍎", bg: "#fee2e2", color: "#991b1b" },
-  { pattern: /strawberr/i, icon: "🍓", bg: "#ffe4e6", color: "#9f1239" },
-  { pattern: /raspberr/i, icon: "🍓", bg: "#ffe4e6", color: "#be123c" },
-  { pattern: /tomato|ketchup|marinara|salsa/i, icon: "🍅", bg: "#fee2e2", color: "#991b1b" },
-  { pattern: /chili|hot sauce|pepperoni/i, icon: "🌶️", bg: "#fee2e2", color: "#991b1b" },
-
-  // White / Light Cream - Milk, Cream, Garlic, Onion, Yogurt
-  { pattern: /milk|half and half|half-and-half|heavy cream|whipped cream/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
-  { pattern: /yogurt|yoghurt/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
-  { pattern: /egg|eggs/i, icon: "🥚", bg: "#fef3c7", color: "#78350f" },
-  { pattern: /onion|garlic|shallot/i, icon: "🧄", bg: "#f8fafc", color: "#334155" },
-  { pattern: /coconut/i, icon: "🥥", bg: "#f8fafc", color: "#334155" },
-
-  // Coffee / Chocolate / Brown
-  { pattern: /coffee|espresso|latte|cappuccino|mocha|java/i, icon: "☕", bg: "#efebe9", color: "#4e342e" },
-  { pattern: /chocolate|cocoa|fudge|brownie/i, icon: "🍫", bg: "#efebe9", color: "#3e2723" },
-  { pattern: /nut|nuts|almond|cashew|peanut|walnut|pecan|pistachio/i, icon: "🥜", bg: "#efebe9", color: "#4e342e" },
-  { pattern: /potato|potatoes/i, icon: "🥔", bg: "#f5f5f4", color: "#44403c" },
-
-  // Orange / Peach / Carrot
-  { pattern: /orange|tangerine|clementine|mandarin/i, icon: "🍊", bg: "#ffedd5", color: "#9a3412" },
-  { pattern: /carrot/i, icon: "🥕", bg: "#ffedd5", color: "#9a3412" },
-  { pattern: /peach|apricot|nectarine/i, icon: "🍑", bg: "#ffedd5", color: "#9a3412" },
-  { pattern: /sweet potato|yam|pumpkin/i, icon: "🎃", bg: "#ffedd5", color: "#9a3412" },
-  { pattern: /mango/i, icon: "🥭", bg: "#fef3c7", color: "#92400e" },
-  { pattern: /papaya|cantaloupe/i, icon: "🍈", bg: "#ffedd5", color: "#9a3412" },
-
-  // Greens
-  { pattern: /avocado/i, icon: "🥑", bg: "#dcfce7", color: "#166534" },
-  { pattern: /broccoli|cauliflower/i, icon: "🥦", bg: "#dcfce7", color: "#166534" },
-  { pattern: /spinach|kale|lettuce|cabbage|greens|salad|arugula/i, icon: "🥬", bg: "#dcfce7", color: "#166534" },
-  { pattern: /cucumber|zucchini/i, icon: "🥒", bg: "#dcfce7", color: "#166534" },
-  { pattern: /lime/i, icon: "🍋", bg: "#dcfce7", color: "#166534" },
-  { pattern: /pepper|peppers|bell pepper/i, icon: "🫑", bg: "#dcfce7", color: "#166534" },
-  { pattern: /pea|peas|edamame/i, icon: "🫛", bg: "#dcfce7", color: "#166534" },
-  { pattern: /basil|cilantro|parsley|mint|rosemary|thyme|herb/i, icon: "🌿", bg: "#dcfce7", color: "#166534" },
-
-  // Purple / Blueberry / Grape / Eggplant
-  { pattern: /blueberr/i, icon: "🫐", bg: "#e0e7ff", color: "#3730a3" },
-  { pattern: /grape|raisin/i, icon: "🍇", bg: "#f3e8ff", color: "#6b21a8" },
-  { pattern: /eggplant|aubergine/i, icon: "🍆", bg: "#f3e8ff", color: "#6b21a8" },
-  { pattern: /plum|prune/i, icon: "🫐", bg: "#f3e8ff", color: "#6b21a8" },
-  { pattern: /blackberr/i, icon: "🫐", bg: "#f3e8ff", color: "#581c87" },
-
-  // Bakery / Grains
-  { pattern: /bread|toast|loaf|baguette/i, icon: "🍞", bg: "#fff8e1", color: "#5d4037" },
-  { pattern: /bagel|bagels/i, icon: "🥯", bg: "#fff8e1", color: "#5d4037" },
-  { pattern: /croissant|pastry/i, icon: "🥐", bg: "#fff8e1", color: "#5d4037" },
-  { pattern: /cookie|cookies|biscuit/i, icon: "🍪", bg: "#fff8e1", color: "#5d4037" },
-  { pattern: /donut|doughnut/i, icon: "🍩", bg: "#fce4ec", color: "#880e4f" },
-  { pattern: /cake|cupcake|pie/i, icon: "🎂", bg: "#fce4ec", color: "#880e4f" },
-  { pattern: /cereal|oatmeal|oats|muesli|granola/i, icon: "🥣", bg: "#fff8e1", color: "#5d4037" },
-  { pattern: /rice|flour|sugar|salt/i, icon: "🍚", bg: "#f5f5f5", color: "#424242" },
-  { pattern: /pasta|noodle|spaghetti|macaroni|penne|ramen/i, icon: "🍝", bg: "#fffde7", color: "#f57f17" },
-  { pattern: /pizza/i, icon: "🍕", bg: "#fff3e0", color: "#e65100" },
-
-  // Meat & Seafood
-  { pattern: /steak|beef|hamburger|burger|ground beef/i, icon: "🥩", bg: "#ffebee", color: "#c62828" },
-  { pattern: /chicken|turkey|poultry|wings|breast/i, icon: "🍗", bg: "#fff3e0", color: "#d84315" },
-  { pattern: /bacon|pork|ham|sausage|hot dog|salami/i, icon: "🥓", bg: "#ffebee", color: "#b71c1c" },
-  { pattern: /fish|salmon|tuna|cod|tilapia/i, icon: "🐟", bg: "#e0f7fa", color: "#006064" },
-  { pattern: /shrimp|prawn|lobster|crab|seafood/i, icon: "🍤", bg: "#ffe0b2", color: "#e65100" },
-
-  // Drinks
-  { pattern: /water|sparkling water|seltzer/i, icon: "💧", bg: "#e0f7fa", color: "#006064" },
-  { pattern: /soda|coke|pepsi|sprite|pop/i, icon: "🥤", bg: "#ffebee", color: "#c62828" },
-  { pattern: /juice|cider|lemonade/i, icon: "🧃", bg: "#fff8e1", color: "#f57f17" },
-  { pattern: /tea|matcha|chai/i, icon: "🍵", bg: "#e8f5e9", color: "#1b5e20" },
-  { pattern: /beer|ale|lager/i, icon: "🍺", bg: "#fff8e1", color: "#f57f17" },
-  { pattern: /wine|champagne|prosecco/i, icon: "🍷", bg: "#f3e5f5", color: "#4a148c" },
-
-  // Frozen / Snacks
-  { pattern: /ice cream|icecream|gelato|sorbet/i, icon: "🍦", bg: "#fce4ec", color: "#880e4f" },
-  { pattern: /chip|chips|crisps|doritos|lays/i, icon: "🥔", bg: "#fff8e1", color: "#f57f17" },
-  { pattern: /pretzel|pretzels/i, icon: "🥨", bg: "#efebe9", color: "#4e342e" },
-  { pattern: /popcorn/i, icon: "🍿", bg: "#fffde7", color: "#f57f17" },
-  { pattern: /candy|gummy|gummies|marshmallow/i, icon: "🍬", bg: "#fce4ec", color: "#880e4f" },
-
-  // Household & Personal Care
-  { pattern: /paper towel|toilet paper|tissue|tissues|napkin/i, icon: "🧻", bg: "#f5f5f5", color: "#37474f" },
-  { pattern: /trash|garbage bag|ziploc|foil|wrap/i, icon: "🗑️", bg: "#eceff1", color: "#37474f" },
-  { pattern: /dish soap|detergent|cleaner|cleaning|bleach|soap|sponge/i, icon: "🧽", bg: "#e0f2f1", color: "#004d40" },
-  { pattern: /shampoo|conditioner|lotion|sunscreen|body wash/i, icon: "🧴", bg: "#e1f5fe", color: "#01579b" },
-  { pattern: /toothpaste|toothbrush|floss|mouthwash/i, icon: "🪥", bg: "#e0f7fa", color: "#006064" },
-  { pattern: /diaper|wipes|baby/i, icon: "👶", bg: "#fff8e1", color: "#f57f17" },
-  { pattern: /battery|batteries|light bulb/i, icon: "🔋", bg: "#fffde7", color: "#f57f17" }
-];
-
-
-/* =========================================================
-   CATEGORY LOOKUP
-========================================================= */
-
-function categorizeItem(item) {
-
-  const text =
-    item.toLowerCase().trim();
-
-
-  const priority = [
-    "Meat & Fish",
-    "Dairy & Eggs",
-    "Frozen",
-    "Bakery",
-    "Produce",
-    "Drinks",
-    "Snacks",
-    "Personal Care",
-    "Household",
-    "Pantry"
-  ];
-
-
-  for (const category of priority) {
-
-    const keywords =
-      CATEGORY_KEYWORDS[category];
-
-
-    if (
-      keywords.some(keyword =>
-        text.includes(keyword)
-      )
-    ) {
-
-      return category;
-
+    <!-- TAB 2: DAYS I BIKED IN -->
+    <div id="bikeTab" class="tab-content">
+      
+      <!-- 3 Stat Cards (C1-D3) -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Subway Money Saved</div>
+          <div class="stat-value" id="statSaved">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Amount Left</div>
+          <div class="stat-value" id="statLeft">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Percentage Complete</div>
+          <div class="stat-value" id="statPercent">0.0%</div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Card: Add Today -->
+      <div class="action-card">
+        <div>
+          <div style="font-weight: 700; font-size: 1.1rem;">Log Today's Bike Commute</div>
+          <div id="todayDateLabel" style="font-size: 0.875rem; color: var(--text-muted); margin-top: 2px;"></div>
+        </div>
+        <button id="addTodayBtn" class="btn" onclick="addTodayBikeDay()">Add Today</button>
+      </div>
+
+      <!-- Settings Row -->
+      <div class="config-row">
+        <label>
+          Roundtrip Savings/Day ($):
+          <input type="number" id="dailyFareInput" value="5.80" step="0.10" onchange="updateCalculations()" />
+        </label>
+        <label>
+          Target Savings Goal ($):
+          <input type="number" id="goalInput" value="1000" step="50" onchange="updateCalculations()" />
+        </label>
+      </div>
+      <br />
+
+      <!-- Past Days History -->
+      <div class="history-card">
+        <div class="history-header">
+          <h3>Past Days Biked</h3>
+          <span class="badge" id="totalDaysBadge">0 Days</span>
+        </div>
+        <ul id="bikeDaysList" class="date-list">
+          <!-- Dates rendered here -->
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // State Data
+    let bikeDates = JSON.parse(localStorage.getItem('bikeDates')) || [];
+    let buyItems = JSON.parse(localStorage.getItem('buyItems')) || [];
+
+    function getTodayString() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
 
-  }
-
-
-  return "Other";
-}
-
-
-/* =========================================================
-   ITEM DETAILS (COLOR & ICON)
-========================================================= */
-
-function getItemDetails(itemText) {
-
-  const text =
-    itemText.toLowerCase().trim();
-
-
-  for (const rule of ITEM_RULES) {
-
-    if (rule.pattern.test(text)) {
-
-      return rule;
-
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      element.classList.add('active');
     }
 
-  }
-
-
-  const cat =
-    categorizeItem(itemText);
-
-
-  return {
-
-    icon:
-      CATEGORY_ICONS[cat] || "🛒",
-
-    bg:
-      "#f3f4f6",
-
-    color:
-      "#1f2937"
-
-  };
-
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function setLoginStatus(message) {
-
-  $("loginStatus").textContent =
-    message || "";
-
-}
-
-
-function setStatus(message, error = false) {
-
-  $("status").textContent =
-    message || "";
-
-  $("status").className =
-    "status" +
-    (error ? " error" : "");
-
-}
-
-
-/* =========================================================
-   LAST UPDATED
-========================================================= */
-
-function updateLastUpdated() {
-
-  const now =
-    new Date();
-
-
-  $("lastUpdated").textContent =
-    "Last updated: " +
-    now.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit"
-    });
-
-}
-
-
-/* =========================================================
-   GOOGLE LOGIN
-========================================================= */
-
-function startGoogle() {
-
-  if (!window.google?.accounts?.oauth2) {
-
-    setLoginStatus(
-      "Google sign-in is still loading. Try again in a moment."
-    );
-
-    return;
-  }
-
-
-  tokenClient =
-    google.accounts.oauth2.initTokenClient({
-
-      client_id:
-        CONFIG.clientId,
-
-      scope:
-        CONFIG.scope,
-
-      callback:
-        async response => {
-
-          if (response.error) {
-
-            setLoginStatus(
-              "Google authorization failed."
-            );
-
-            return;
-          }
-
-
-          accessToken =
-            response.access_token;
-
-
-          loginCard.hidden =
-            true;
-
-          appPanel.hidden =
-            false;
-
-
-          await load();
-
-
-          startAutoSync();
-
-        }
-
-    });
-
-
-  tokenClient.requestAccessToken({
-    prompt: ""
-  });
-
-}
-
-
-$("loginBtn").onclick =
-  startGoogle;
-
-
-/* =========================================================
-   AUTH HEADERS
-========================================================= */
-
-function authHeaders() {
-
-  if (!accessToken) {
-
-    throw new Error(
-      "Please sign in with Google."
-    );
-
-  }
-
-
-  return {
-    Authorization:
-      "Bearer " + accessToken
-  };
-
-}
-
-
-/* =========================================================
-   SHEETS API
-========================================================= */
-
-async function sheetsFetch(
-  path,
-  options = {}
-) {
-
-  const response =
-    await fetch(
-
-      API +
-      "/" +
-      CONFIG.spreadsheetId +
-      path,
-
-      {
-        ...options,
-
-        headers: {
-
-          ...authHeaders(),
-
-          ...(options.headers || {})
-
-        }
-
+    // Bike Tracker Functions
+    function renderBikeTab() {
+      const todayStr = getTodayString();
+      const addBtn = document.getElementById('addTodayBtn');
+      document.getElementById('todayDateLabel').innerText = `Today: ${todayStr}`;
+
+      // Check if today is already added
+      const alreadyAdded = bikeDates.includes(todayStr);
+      if (alreadyAdded) {
+        addBtn.disabled = true;
+        addBtn.innerText = "Already Added Today";
+      } else {
+        addBtn.disabled = false;
+        addBtn.innerText = "Add Today";
       }
 
-    );
-
-
-  if (response.status === 401) {
-
-    accessToken =
-      null;
-
-    stopAutoSync();
-
-    throw new Error(
-      "Your Google authorization expired. Please sign in again."
-    );
-
-  }
-
-
-  if (response.status === 429) {
-
-    throw new Error(
-      "RATE_LIMIT"
-    );
-
-  }
-
-
-  if (!response.ok) {
-
-    let message =
-      response.statusText;
-
-
-    try {
-
-      const data =
-        await response.json();
-
-      message =
-        data.error?.message ||
-        message;
-
-    }
-    catch {}
-
-
-    throw new Error(
-      message
-    );
-
-  }
-
-
-  return response.json();
-
-}
-
-
-/* =========================================================
-   LOAD
-========================================================= */
-
-async function load(options = {}) {
-
-  const silent =
-    options.silent === true;
-
-
-  if (syncInProgress) {
-    return;
-  }
-
-
-  if (!accessToken) {
-    return;
-  }
-
-
-  syncInProgress =
-    true;
-
-
-  if (!silent) {
-
-    setStatus(
-      "Loading…"
-    );
-
-  }
-
-
-  $("refreshBtn").disabled =
-    true;
-
-
-  try {
-
-    const range =
-      encodeURIComponent(
-        `${CONFIG.sheetName}!A:A`
-      );
-
-
-    const data =
-      await sheetsFetch(
-        `/values/${range}?majorDimension=ROWS`
-      );
-
-
-    const values =
-      data.values || [];
-
-
-    const newItems =
-      values
-
-        .map((row, index) => ({
-
-          row:
-            index + 1,
-
-          value:
-            String(
-              row[0] ?? ""
-            ).trim()
-
-        }))
-
-        .filter(item =>
-          item.value
-        );
-
-
-    const changed =
-      newItems.length !== items.length ||
-
-      newItems.some(
-        (item, index) =>
-          item.value !==
-          items[index]?.value
-      );
-
-
-    items =
-      newItems;
-
-
-    if (changed) {
-      render();
-    }
-
-
-    updateLastUpdated();
-
-
-    rateLimitBackoff =
-      0;
-
-
-    if (!silent) {
-
-      setStatus(
-
-        items.length
-          ? `${items.length} item${
-              items.length === 1
-                ? ""
-                : "s"
-            }`
-          : ""
-
-      );
-
-    }
-
-  }
-  catch (error) {
-
-    if (
-      error.message ===
-      "RATE_LIMIT"
-    ) {
-
-      rateLimitBackoff =
-        Math.min(
-          rateLimitBackoff + 1,
-          5
-        );
-
-
-      const delay =
-        Math.pow(
-          2,
-          rateLimitBackoff
-        ) * 1000;
-
-
-      setTimeout(() => {
-
-        if (
-          accessToken &&
-          !document.hidden
-        ) {
-
-          load({
-            silent: true
-          });
-
-        }
-
-      }, delay);
-
-    }
-    else {
-
-      if (
-        /authorization expired|sign in/i
-          .test(error.message)
-      ) {
-
-        stopAutoSync();
-
-        appPanel.hidden =
-          true;
-
-        loginCard.hidden =
-          false;
-
-      }
-      else {
-
-        setStatus(
-          error.message,
-          true
-        );
-
-      }
-
-    }
-
-  }
-  finally {
-
-    syncInProgress =
-      false;
-
-    $("refreshBtn").disabled =
-      false;
-
-  }
-
-}
-
-
-/* =========================================================
-   AUTO SYNC
-========================================================= */
-
-function startAutoSync() {
-
-  stopAutoSync();
-
-
-  if (!accessToken) {
-    return;
-  }
-
-
-  if (document.hidden) {
-    return;
-  }
-
-
-  syncTimer =
-    setInterval(() => {
-
-      if (!accessToken) {
-        return;
-      }
-
-
-      if (document.hidden) {
-        return;
-      }
-
-
-      if (syncInProgress) {
-        return;
-      }
-
-
-      load({
-        silent: true
+      // Render History
+      const listEl = document.getElementById('bikeDaysList');
+      listEl.innerHTML = '';
+      
+      bikeDates.forEach((dateStr, index) => {
+        const li = document.createElement('li');
+        li.className = 'date-item';
+        
+        // Format display date
+        const [y, m, d] = dateStr.split('-');
+        const dateObj = new Date(y, m - 1, d);
+        const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+
+        li.innerHTML = `
+          <span><strong>${formatted}</strong> <small style="color: var(--text-muted);">(${dateStr})</small></span>
+          <button class="delete-btn" onclick="removeBikeDay(${index})">Remove</button>
+        `;
+        listEl.appendChild(li);
       });
 
-    }, CONFIG.syncInterval);
-
-}
-
-
-function stopAutoSync() {
-
-  if (syncTimer !== null) {
-
-    clearInterval(
-      syncTimer
-    );
-
-    syncTimer =
-      null;
-
-  }
-
-}
-
-
-/* =========================================================
-   VISIBILITY
-========================================================= */
-
-document.addEventListener(
-  "visibilitychange",
-  () => {
-
-    if (document.hidden) {
-
-      stopAutoSync();
-
-      return;
-
+      document.getElementById('totalDaysBadge').innerText = `${bikeDates.length} Days`;
+      updateCalculations();
     }
 
+    function addTodayBikeDay() {
+      const todayStr = getTodayString();
+      if (!bikeDates.includes(todayStr)) {
+        bikeDates.unshift(todayStr); // Add to top
+        localStorage.setItem('bikeDates', JSON.stringify(bikeDates));
+        renderBikeTab();
+      }
+    }
 
-    if (accessToken) {
+    function removeBikeDay(index) {
+      bikeDates.splice(index, 1);
+      localStorage.setItem('bikeDates', JSON.stringify(bikeDates));
+      renderBikeTab();
+    }
 
-      load({
-        silent: true
+    function updateCalculations() {
+      const dailyFare = parseFloat(document.getElementById('dailyFareInput').value) || 5.80;
+      const goal = parseFloat(document.getElementById('goalInput').value) || 1000;
+
+      const totalSaved = bikeDates.length * dailyFare;
+      const amountLeft = Math.max(0, goal - totalSaved);
+      const percentComplete = Math.min(100, (totalSaved / goal) * 100);
+
+      document.getElementById('statSaved').innerText = `$${totalSaved.toFixed(2)}`;
+      document.getElementById('statLeft').innerText = `$${amountLeft.toFixed(2)}`;
+      document.getElementById('statPercent').innerText = `${percentComplete.toFixed(1)}%`;
+      document.getElementById('progressFill').style.width = `${percentComplete}%`;
+    }
+
+    // Stuff To Buy Tab Functions
+    function addBuyItem() {
+      const nameInput = document.getElementById('buyItemName');
+      const costInput = document.getElementById('buyItemCost');
+      
+      if (!nameInput.value.trim()) return;
+
+      buyItems.push({
+        id: Date.now(),
+        name: nameInput.value.trim(),
+        cost: parseFloat(costInput.value) || 0
       });
 
-      startAutoSync();
-
+      localStorage.setItem('buyItems', JSON.stringify(buyItems));
+      nameInput.value = '';
+      costInput.value = '';
+      renderBuyTab();
     }
 
-  }
-);
-
-
-/* =========================================================
-   CONFETTI
-========================================================= */
-
-function confettiExplosion(button) {
-
-  const rect =
-    button.getBoundingClientRect();
-
-
-  const centerX =
-    rect.left +
-    rect.width / 2;
-
-
-  const centerY =
-    rect.top +
-    rect.height / 2;
-
-
-  const colors = [
-    "#ff595e",
-    "#ffca3a",
-    "#8ac926",
-    "#1982c4",
-    "#6a4c93",
-    "#ff70a6",
-    "#00c2a8"
-  ];
-
-
-  const pieces =
-    80;
-
-
-  for (let i = 0; i < pieces; i++) {
-
-    const piece =
-      document.createElement(
-        "div"
-      );
-
-
-    piece.style.position =
-      "fixed";
-
-    piece.style.left =
-      centerX + "px";
-
-    piece.style.top =
-      centerY + "px";
-
-    piece.style.width =
-      (5 + Math.random() * 7) + "px";
-
-    piece.style.height =
-      (7 + Math.random() * 10) + "px";
-
-    piece.style.background =
-      colors[
-        Math.floor(
-          Math.random() *
-          colors.length
-        )
-      ];
-
-    piece.style.borderRadius =
-      Math.random() > 0.5
-        ? "50%"
-        : "2px";
-
-    piece.style.pointerEvents =
-      "none";
-
-    piece.style.zIndex =
-      "9999";
-
-
-    const angle =
-      Math.random() *
-      Math.PI *
-      2;
-
-
-    const velocity =
-      100 +
-      Math.random() * 220;
-
-
-    const x =
-      Math.cos(angle) *
-      velocity;
-
-
-    const y =
-      Math.sin(angle) *
-      velocity;
-
-
-    const rotation =
-      Math.random() *
-      720 -
-      360;
-
-
-    piece.animate(
-
-      [
-        {
-          transform:
-            "translate(-50%, -50%) rotate(0deg)",
-          opacity: 1
-        },
-
-        {
-          transform:
-            `translate(
-              calc(-50% + ${x}px),
-              calc(-50% + ${y + 140}px)
-            )
-            rotate(${rotation}deg)`,
-          opacity: 0
-        }
-      ],
-
-      {
-        duration:
-          700 +
-          Math.random() * 600,
-
-        easing:
-          "cubic-bezier(.15,.8,.3,1)"
-      }
-
-    );
-
-
-    document.body.appendChild(
-      piece
-    );
-
-
-    setTimeout(() => {
-
-      piece.remove();
-
-    }, 1400);
-
-  }
-
-}
-
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function render() {
-
-  const list =
-    $("list");
-
-
-  list.innerHTML =
-    "";
-
-
-  if (!items.length) {
-
-    $("empty").hidden =
-      false;
-
-    return;
-
-  }
-
-
-  $("empty").hidden =
-    true;
-
-
-  const groups = {};
-
-
-  CATEGORY_ORDER.forEach(
-    category => {
-
-      groups[category] =
-        [];
-
-    }
-  );
-
-
-  items.forEach(item => {
-
-    const category =
-      categorizeItem(
-        item.value
-      );
-
-
-    groups[category].push(
-      item
-    );
-
-  });
-
-
-  CATEGORY_ORDER.forEach(
-    category => {
-
-      const categoryItems =
-        groups[category];
-
-
-      if (!categoryItems.length) {
-        return;
-      }
-
-
-      const section =
-        document.createElement(
-          "section"
-        );
-
-      section.className =
-        "grocery-section";
-
-
-      const heading =
-        document.createElement(
-          "div"
-        );
-
-      heading.className =
-        "grocery-section-heading";
-
-
-      const icon =
-        document.createElement(
-          "span"
-        );
-
-      icon.className =
-        "category-icon";
-
-      icon.textContent =
-        CATEGORY_ICONS[category];
-
-
-      const title =
-        document.createElement(
-          "span"
-        );
-
-      title.textContent =
-        category;
-
-
-      heading.append(
-        icon,
-        title
-      );
-
-
-      section.append(
-        heading
-      );
-
-
-      categoryItems.forEach(
-        item => {
-
-          const details =
-            getItemDetails(
-              item.value
-            );
-
-
-          const row =
-            document.createElement(
-              "div"
-            );
-
-          row.className =
-            "item";
-
-          /* Dynamic Styling for Row Colors */
-          row.style.backgroundColor =
-            details.bg;
-
-          row.style.borderLeft =
-            `5px solid ${details.color}`;
-
-          row.style.borderRadius =
-            "8px";
-
-          row.style.margin =
-            "6px 0";
-
-          row.style.padding =
-            "10px 14px";
-
-          row.style.display =
-            "flex";
-
-          row.style.alignItems =
-            "center";
-
-          row.style.justifyContent =
-            "space-between";
-
-
-          const itemIcon =
-            document.createElement(
-              "span"
-            );
-
-          itemIcon.className =
-            "item-icon";
-
-          itemIcon.textContent =
-            details.icon;
-
-          itemIcon.style.marginRight =
-            "10px";
-
-          itemIcon.style.fontSize =
-            "1.2rem";
-
-
-          const name =
-            document.createElement(
-              "span"
-            );
-
-          name.className =
-            "item-name";
-
-          name.textContent =
-            item.value;
-
-          name.style.color =
-            details.color;
-
-          name.style.fontWeight =
-            "600";
-
-          name.style.flexGrow =
-            "1";
-
-
-          const done =
-            document.createElement(
-              "button"
-            );
-
-          done.className =
-            "remove";
-
-          done.textContent =
-            "Done";
-
-
-          done.onclick =
-            () => {
-
-              done.disabled =
-                true;
-
-
-              confettiExplosion(
-                done
-              );
-
-
-              removeItem(
-                item
-              );
-
-            };
-
-
-          row.append(
-            itemIcon,
-            name,
-            done
-          );
-
-
-          section.append(
-            row
-          );
-
-        }
-      );
-
-
-      list.append(
-        section
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   ADD ITEM
-========================================================= */
-
-async function addItem(value) {
-
-  setStatus(
-    "Adding…"
-  );
-
-
-  try {
-
-    const values =
-      await sheetsFetch(
-
-        `/values/${encodeURIComponent(
-          CONFIG.sheetName + "!A:A"
-        )}?majorDimension=ROWS`
-
-      );
-
-
-    const rows =
-      values.values || [];
-
-
-    let target =
-      rows.findIndex(
-        row =>
-          !String(
-            row[0] ?? ""
-          ).trim()
-      );
-
-
-    if (target < 0) {
-
-      target =
-        rows.length;
-
+    function removeBuyItem(id) {
+      buyItems = buyItems.filter(item => item.id !== id);
+      localStorage.setItem('buyItems', JSON.stringify(buyItems));
+      renderBuyTab();
     }
 
-
-    const rangeA1 =
-      `${CONFIG.sheetName}!A${target + 1}`;
-
-
-    const range =
-      encodeURIComponent(
-        rangeA1
-      );
-
-
-    await sheetsFetch(
-
-      `/values/${range}?valueInputOption=USER_ENTERED`,
-
-      {
-
-        method:
-          "PUT",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body:
-          JSON.stringify({
-
-            range:
-              rangeA1,
-
-            majorDimension:
-              "ROWS",
-
-            values:
-              [[value]]
-
-          })
-
-      }
-
-    );
-
-
-    $("itemInput").value =
-      "";
-
-
-    await load();
-
-  }
-  catch (error) {
-
-    setStatus(
-
-      error.message ===
-      "RATE_LIMIT"
-
-        ? "Google rate limit reached. Please try again in a moment."
-
-        : error.message,
-
-      true
-
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   REMOVE ITEM
-========================================================= */
-
-async function removeItem(item) {
-
-  if (!item) {
-    return;
-  }
-
-
-  setStatus(
-    "Removing…"
-  );
-
-
-  const previousItems =
-    [...items];
-
-
-  items =
-    items.filter(
-      current =>
-        current !== item
-    );
-
-
-  render();
-
-
-  try {
-
-    const rangeA1 =
-      `${CONFIG.sheetName}!A${item.row}`;
-
-
-    await sheetsFetch(
-
-      `/values/${encodeURIComponent(
-        rangeA1
-      )}:clear`,
-
-      {
-
-        method:
-          "POST",
-
-        headers: {
-
-          "Content-Type":
-            "application/json"
-
-        },
-
-        body:
-          "{}"
-
-      }
-
-    );
-
-
-    await load();
-
-  }
-  catch (error) {
-
-    items =
-      previousItems;
-
-
-    render();
-
-
-    setStatus(
-
-      error.message ===
-      "RATE_LIMIT"
-
-        ? "Google rate limit reached. The item was not deleted."
-
-        : "Couldn't delete the item: " +
-          error.message,
-
-      true
-
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   FORM
-========================================================= */
-
-$("addForm").onsubmit =
-  event => {
-
-    event.preventDefault();
-
-
-    const value =
-      $("itemInput")
-        .value
-        .trim();
-
-
-    if (value) {
-
-      addItem(
-        value
-      );
-
+    function renderBuyTab() {
+      const listEl = document.getElementById('buyList');
+      listEl.innerHTML = '';
+      buyItems.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'date-item';
+        li.innerHTML = `
+          <span><strong>${item.name}</strong> ${item.cost ? `<small style="color: var(--text-muted);">$${item.cost.toFixed(2)}</small>` : ''}</span>
+          <button class="delete-btn" onclick="removeBuyItem(${item.id})">Delete</button>
+        `;
+        listEl.appendChild(li);
+      });
     }
 
-  };
-
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-$("refreshBtn").onclick =
-  () => {
-
-    load();
-
-  };
-
-
-/* =========================================================
-   SIGN OUT
-========================================================= */
-
-$("signOutBtn").onclick =
-  () => {
-
-    stopAutoSync();
-
-
-    if (
-      accessToken &&
-      google?.accounts?.oauth2
-    ) {
-
-      google.accounts.oauth2.revoke(
-        accessToken,
-        () => {}
-      );
-
-    }
-
-
-    accessToken =
-      null;
-
-
-    appPanel.hidden =
-      true;
-
-    loginCard.hidden =
-      false;
-
-
-    $("lastUpdated").textContent =
-      "Last updated: —";
-
-
-    setLoginStatus(
-      "Signed out."
-    );
-
-  };
-
-
-/* =========================================================
-   INITIAL SETUP
-========================================================= */
-
-window.addEventListener(
-  "load",
-  () => {
-
-    setTimeout(() => {
-
-      if (
-        CONFIG.clientId.includes(
-          "PASTE_YOUR"
-        )
-      ) {
-
-        setLoginStatus(
-          "Set your Google OAuth Web Client ID in index.html first."
-        );
-
-
-        $("loginBtn").disabled =
-          true;
-
-      }
-
-    }, 500);
-
-  }
-);
-
-</script>
+    // Initial Load
+    renderBikeTab();
+    renderBuyTab();
+  </script>
 </body>
 </html>
