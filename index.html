@@ -226,6 +226,7 @@ let accessToken = null;
 let items = [];
 let bikeDates = [];
 let statCardsData = [];
+let editingItemRow = null;
 
 let syncTimer = null;
 let syncInProgress = false;
@@ -492,7 +493,7 @@ async function load(options = {}) {
       const changed = newItems.length !== items.length || newItems.some((item, index) => item.value !== items[index]?.value);
       items = newItems;
 
-      if (changed) renderGroceries();
+      if (changed && editingItemRow === null) renderGroceries();
       if (!silent) setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
 
     } else if (currentTab === 'bike') {
@@ -690,32 +691,169 @@ function renderGroceries() {
       row.style.alignItems = "center";
       row.style.justifyContent = "space-between";
 
-      const itemIcon = document.createElement("span");
-      itemIcon.textContent = details.icon;
-      itemIcon.style.marginRight = "10px";
-      itemIcon.style.fontSize = "1.2rem";
+      if (editingItemRow === item.row) {
+        row.classList.add("editing");
 
-      const name = document.createElement("span");
-      name.textContent = item.value;
-      name.style.color = details.color;
-      name.style.fontWeight = "600";
-      name.style.flexGrow = "1";
+        const editForm = document.createElement("form");
+        editForm.className = "edit-form";
 
-      const done = document.createElement("button");
-      done.className = "remove";
-      done.textContent = "Done";
-      done.onclick = () => {
-        done.disabled = true;
-        confettiExplosion(done);
-        removeGroceryItem(item);
-      };
+        const editInput = document.createElement("input");
+        editInput.type = "text";
+        editInput.className = "edit-input";
+        editInput.value = item.value;
+        editInput.setAttribute("aria-label", "Edit item name");
 
-      row.append(itemIcon, name, done);
-      section.append(row);
+        const actions = document.createElement("div");
+        actions.className = "edit-actions";
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "submit";
+        saveBtn.className = "save-btn";
+        saveBtn.textContent = "Save";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "cancel-btn";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.onclick = (e) => {
+          e.stopPropagation();
+          editingItemRow = null;
+          renderGroceries();
+        };
+
+        actions.append(saveBtn, cancelBtn);
+        editForm.append(editInput, actions);
+
+        editForm.onsubmit = (e) => {
+          e.preventDefault();
+          const newValue = editInput.value.trim();
+          if (newValue && newValue !== item.value) {
+            updateGroceryItem(item, newValue);
+          } else {
+            editingItemRow = null;
+            renderGroceries();
+          }
+        };
+
+        editInput.onkeydown = (e) => {
+          if (e.key === "Escape") {
+            editingItemRow = null;
+            renderGroceries();
+          }
+        };
+
+        row.append(editForm);
+        section.append(row);
+
+        setTimeout(() => editInput.focus(), 50);
+
+      } else {
+        const itemIcon = document.createElement("span");
+        itemIcon.textContent = details.icon;
+        itemIcon.style.marginRight = "10px";
+        itemIcon.style.fontSize = "1.2rem";
+
+        const name = document.createElement("span");
+        name.textContent = item.value;
+        name.style.color = details.color;
+        name.style.fontWeight = "600";
+        name.style.flexGrow = "1";
+
+        const done = document.createElement("button");
+        done.className = "remove";
+        done.textContent = "Done";
+        done.onclick = (e) => {
+          e.stopPropagation();
+          done.disabled = true;
+          confettiExplosion(done);
+          removeGroceryItem(item);
+        };
+
+        row.append(itemIcon, name, done);
+
+        let pressTimer = null;
+        let startX = 0;
+        let startY = 0;
+
+        const cancelPress = () => {
+          if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+          row.classList.remove("holding");
+        };
+
+        const startPress = (e) => {
+          if (e.button && e.button !== 0) return;
+          if (e.target.closest(".remove")) return;
+
+          cancelPress();
+          startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+          startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+          row.classList.add("holding");
+
+          pressTimer = setTimeout(() => {
+            row.classList.remove("holding");
+            if (navigator.vibrate) {
+              try { navigator.vibrate(40); } catch (err) {}
+            }
+            editingItemRow = item.row;
+            renderGroceries();
+          }, 500);
+        };
+
+        const movePress = (e) => {
+          if (!pressTimer) return;
+          const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+          const currentY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+          const diffX = Math.abs(currentX - startX);
+          const diffY = Math.abs(currentY - startY);
+          if (diffX > 8 || diffY > 8) {
+            cancelPress();
+          }
+        };
+
+        row.addEventListener("pointerdown", startPress);
+        row.addEventListener("pointerup", cancelPress);
+        row.addEventListener("pointercancel", cancelPress);
+        row.addEventListener("pointerleave", cancelPress);
+        row.addEventListener("pointermove", movePress);
+        row.addEventListener("contextmenu", (e) => {
+          if (pressTimer || row.classList.contains("holding")) {
+            e.preventDefault();
+          }
+        });
+
+        section.append(row);
+      }
     });
 
     list.append(section);
   });
+}
+
+async function updateGroceryItem(item, newValue) {
+  if (!item || !newValue) return;
+  editingItemRow = null;
+  setStatus("Saving…");
+  const oldText = item.value;
+  item.value = newValue;
+  renderGroceries();
+
+  try {
+    const rangeA1 = `${CONFIG.sheetName}!A${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[newValue]] })
+    });
+    await load();
+  } catch (error) {
+    item.value = oldText;
+    renderGroceries();
+    setStatus("Couldn't update item: " + error.message, true);
+  }
 }
 
 function renderBikeList() {
