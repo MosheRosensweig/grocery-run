@@ -209,15 +209,15 @@ const CATEGORY_KEYWORDS = {
   ],
 
   "Meat & Fish": [
-    "chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork",
-    "ham", "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish",
-    "salmon", "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"
+    "chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork", "ham",
+    "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish", "salmon",
+    "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"
   ],
 
   "Bakery": [
     "bread", "bagel", "bagels", "roll", "rolls", "bun", "buns", "croissant", "croissants",
     "muffin", "muffins", "tortilla", "tortillas", "pita", "pitas", "cake", "cakes", "cookie",
-    "cookies", "donut", "donuts", "challah", "brioche"
+    "cookies", "donut", "donuts"
   ],
 
   "Pantry": [
@@ -235,8 +235,7 @@ const CATEGORY_KEYWORDS = {
 
   "Drinks": [
     "water", "sparkling water", "seltzer", "soda", "juice", "orange juice", "apple juice",
-    "coffee", "espresso", "tea", "iced tea", "lemonade", "sports drink", "energy drink",
-    "wine", "beer", "drink", "drinks"
+    "coffee", "tea", "iced tea", "lemonade", "sports drink", "energy drink", "drink", "drinks"
   ],
 
   "Snacks": [
@@ -255,96 +254,112 @@ const CATEGORY_KEYWORDS = {
 
   "Personal Care": [
     "shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss",
-    "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash",
-    "diapers", "wipes", "baby wipes", "baby lotion", "baby soap"
+    "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash", "diapers",
+    "wipes", "baby wipes", "baby lotion", "baby soap"
   ]
 
 };
 
 
 /* =========================================================
-   ITEM THEMES & COLORS
+   FOOD LOOKUP RULES (ICONS & COLORS)
 ========================================================= */
 
-/* Format: [ Pattern, Icon, Background Color, Border Accent Color ] */
-const ITEM_THEMES = [
+const ITEM_RULES = [
+  // Yellow - Banana, Lemon, Corn, Butter, Cheese
+  { pattern: /banana|lemon|corn|squash/i, icon: "🍌", bg: "#fef9c3", color: "#854d0e" },
+  { pattern: /butter|margarine/i, icon: "🧈", bg: "#fef9c3", color: "#854d0e" },
+  { pattern: /cheese|cheddar|swiss|parmesan|mozzarella/i, icon: "🧀", bg: "#fef9c3", color: "#854d0e" },
 
-  // Yellows & Gold
-  [/banana/, "🍌", "#fef9c3", "#fde047"],
-  [/lemon|lemonade/, "🍋", "#fef9c3", "#facc15"],
-  [/corn/, "🌽", "#fef08a", "#eab308"],
-  [/pineapple/, "🍍", "#fef08a", "#ca8a04"],
-  [/butter|margarine/, "🧈", "#fffbeb", "#fde047"],
-  [/cheese|cheddar|mozzarella|parmesan/, "🧀", "#fef3c7", "#f59e0b"],
-  [/honey|maple syrup/, "🍯", "#fef3c7", "#d97706"],
-  [/mustard/, "🟡", "#fef08a", "#eab308"],
+  // Red / Cranberry / Berries
+  { pattern: /cranberr/i, icon: "🍒", bg: "#ffe4e6", color: "#881337" },
+  { pattern: /cherry|cherries|pomegranate/i, icon: "🍒", bg: "#ffe4e6", color: "#9f1239" },
+  { pattern: /apple/i, icon: "🍎", bg: "#fee2e2", color: "#991b1b" },
+  { pattern: /strawberr/i, icon: "🍓", bg: "#ffe4e6", color: "#9f1239" },
+  { pattern: /raspberr/i, icon: "🍓", bg: "#ffe4e6", color: "#be123c" },
+  { pattern: /tomato|ketchup|marinara|salsa/i, icon: "🍅", bg: "#fee2e2", color: "#991b1b" },
+  { pattern: /chili|hot sauce|pepperoni/i, icon: "🌶️", bg: "#fee2e2", color: "#991b1b" },
 
-  // Reds & Pink Tones
-  [/cranberry|cranberries/, "🍒", "#ffe4e6", "#f43f5e"],
-  [/apple/, "🍎", "#fee2e2", "#f87171"],
-  [/strawberry|strawber/, "🍓", "#ffe4e6", "#fb7185"],
-  [/raspberry|raspber/, "🍓", "#ffe4e6", "#f43f5e"],
-  [/watermelon/, "🍉", "#ffe4e6", "#fb7185"],
-  [/cherry|cherries/, "🍒", "#ffe4e6", "#e11d48"],
-  [/tomato|marinara|ketchup/, "🍅", "#fee2e2", "#ef4444"],
-  [/steak|beef|ground beef|meatball/, "🥩", "#fce7f3", "#f43f5e"],
-  [/bacon|ham|pork|salami/, "🥓", "#ffe4e6", "#fb7185"],
-  [/wine|rosé/, "🍷", "#fce4ec", "#e11d48"],
+  // White / Light Cream - Milk, Cream, Garlic, Onion, Yogurt
+  { pattern: /milk|half and half|half-and-half|heavy cream|whipped cream/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
+  { pattern: /yogurt|yoghurt/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
+  { pattern: /egg|eggs/i, icon: "🥚", bg: "#fef3c7", color: "#78350f" },
+  { pattern: /onion|garlic|shallot/i, icon: "🧄", bg: "#f8fafc", color: "#334155" },
+  { pattern: /coconut/i, icon: "🥥", bg: "#f8fafc", color: "#334155" },
+
+  // Coffee / Chocolate / Brown
+  { pattern: /coffee|espresso|latte|cappuccino|mocha|java/i, icon: "☕", bg: "#efebe9", color: "#4e342e" },
+  { pattern: /chocolate|cocoa|fudge|brownie/i, icon: "🍫", bg: "#efebe9", color: "#3e2723" },
+  { pattern: /nut|nuts|almond|cashew|peanut|walnut|pecan|pistachio/i, icon: "🥜", bg: "#efebe9", color: "#4e342e" },
+  { pattern: /potato|potatoes/i, icon: "🥔", bg: "#f5f5f4", color: "#44403c" },
+
+  // Orange / Peach / Carrot
+  { pattern: /orange|tangerine|clementine|mandarin/i, icon: "🍊", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /carrot/i, icon: "🥕", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /peach|apricot|nectarine/i, icon: "🍑", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /sweet potato|yam|pumpkin/i, icon: "🎃", bg: "#ffedd5", color: "#9a3412" },
+  { pattern: /mango/i, icon: "🥭", bg: "#fef3c7", color: "#92400e" },
+  { pattern: /papaya|cantaloupe/i, icon: "🍈", bg: "#ffedd5", color: "#9a3412" },
 
   // Greens
-  [/broccoli/, "🥦", "#dcfce7", "#4ade80"],
-  [/spinach|lettuce|kale|cabbage|greens|herbs|cilantro|parsley|basil|mint/, "🥬", "#dcfce7", "#22c55e"],
-  [/cucumber|zucchini|celery/, "🥒", "#e8f5e9", "#4caf50"],
-  [/avocado/, "🥑", "#ecfdf5", "#34d399"],
-  [/lime/, "🍋", "#ecfdf5", "#a3e635"],
-  [/peas/, "🫛", "#dcfce7", "#4ade80"],
-  [/pepper|bell pepper/, "🫑", "#dcfce7", "#16a34a"],
-  [/olive oil|oil/, "🫒", "#f0fdf4", "#86efac"],
-  [/matcha|green tea/, "🍵", "#e8f5e9", "#81c784"],
+  { pattern: /avocado/i, icon: "🥑", bg: "#dcfce7", color: "#166534" },
+  { pattern: /broccoli|cauliflower/i, icon: "🥦", bg: "#dcfce7", color: "#166534" },
+  { pattern: /spinach|kale|lettuce|cabbage|greens|salad|arugula/i, icon: "🥬", bg: "#dcfce7", color: "#166534" },
+  { pattern: /cucumber|zucchini/i, icon: "🥒", bg: "#dcfce7", color: "#166534" },
+  { pattern: /lime/i, icon: "🍋", bg: "#dcfce7", color: "#166534" },
+  { pattern: /pepper|peppers|bell pepper/i, icon: "🫑", bg: "#dcfce7", color: "#166534" },
+  { pattern: /pea|peas|edamame/i, icon: "🫛", bg: "#dcfce7", color: "#166534" },
+  { pattern: /basil|cilantro|parsley|mint|rosemary|thyme|herb/i, icon: "🌿", bg: "#dcfce7", color: "#166534" },
 
-  // Oranges
-  [/orange|tangerine|clementine/, "🍊", "#ffedd5", "#fb923c"],
-  [/carrot/, "🥕", "#ffedd5", "#f97316"],
-  [/peach|apricot/, "🍑", "#ffedd5", "#fdba74"],
-  [/pumpkin|sweet potato/, "🎃", "#ffedd5", "#f97316"],
-  [/chicken|turkey|poultry/, "🍗", "#fff7ed", "#fdba74"],
-  [/salmon|shrimp|crab|lobster/, "🍤", "#ffedd5", "#f97316"],
+  // Purple / Blueberry / Grape / Eggplant
+  { pattern: /blueberr/i, icon: "🫐", bg: "#e0e7ff", color: "#3730a3" },
+  { pattern: /grape|raisin/i, icon: "🍇", bg: "#f3e8ff", color: "#6b21a8" },
+  { pattern: /eggplant|aubergine/i, icon: "🍆", bg: "#f3e8ff", color: "#6b21a8" },
+  { pattern: /plum|prune/i, icon: "🫐", bg: "#f3e8ff", color: "#6b21a8" },
+  { pattern: /blackberr/i, icon: "🫐", bg: "#f3e8ff", color: "#581c87" },
 
-  // Purples & Blues
-  [/blueberry|blueber/, "🫐", "#e0e7ff", "#818cf8"],
-  [/blackberry|blackber/, "🫐", "#e0e7ff", "#6366f1"],
-  [/grape|plum|eggplant/, "🍇", "#f3e8ff", "#c084fc"],
+  // Bakery / Grains
+  { pattern: /bread|toast|loaf|baguette/i, icon: "🍞", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /bagel|bagels/i, icon: "🥯", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /croissant|pastry/i, icon: "🥐", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /cookie|cookies|biscuit/i, icon: "🍪", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /donut|doughnut/i, icon: "🍩", bg: "#fce4ec", color: "#880e4f" },
+  { pattern: /cake|cupcake|pie/i, icon: "🎂", bg: "#fce4ec", color: "#880e4f" },
+  { pattern: /cereal|oatmeal|oats|muesli|granola/i, icon: "🥣", bg: "#fff8e1", color: "#5d4037" },
+  { pattern: /rice|flour|sugar|salt/i, icon: "🍚", bg: "#f5f5f5", color: "#424242" },
+  { pattern: /pasta|noodle|spaghetti|macaroni|penne|ramen/i, icon: "🍝", bg: "#fffde7", color: "#f57f17" },
+  { pattern: /pizza/i, icon: "🍕", bg: "#fff3e0", color: "#e65100" },
 
-  // Brown & Coffee Tones
-  [/coffee|espresso|latte|cappuccino/, "☕", "#efebe9", "#a1887f"],
-  [/chocolate|cocoa|brownie/, "🍫", "#efebe9", "#8d6e63"],
-  [/nut|nuts|almond|cashew|peanut|peanut butter/, "🥜", "#f5f5f4", "#d6d3d1"],
-  [/bread|toast|bagel|bun|roll|croissant|brioche|challah/, "🍞", "#fff8e7", "#f59e0b"],
-  [/cereal|oatmeal|oats/, "🥣", "#fef3c7", "#d97706"],
-  [/mushroom/, "🍄", "#f5f5f4", "#a8a29e"],
-  [/potato/, "🥔", "#f5f5f4", "#d6d3d1"],
-  [/onion|garlic/, "🧄", "#fafaf9", "#e7e5e4"],
+  // Meat & Seafood
+  { pattern: /steak|beef|hamburger|burger|ground beef/i, icon: "🥩", bg: "#ffebee", color: "#c62828" },
+  { pattern: /chicken|turkey|poultry|wings|breast/i, icon: "🍗", bg: "#fff3e0", color: "#d84315" },
+  { pattern: /bacon|pork|ham|sausage|hot dog|salami/i, icon: "🥓", bg: "#ffebee", color: "#b71c1c" },
+  { pattern: /fish|salmon|tuna|cod|tilapia/i, icon: "🐟", bg: "#e0f7fa", color: "#006064" },
+  { pattern: /shrimp|prawn|lobster|crab|seafood/i, icon: "🍤", bg: "#ffe0b2", color: "#e65100" },
 
-  // Pure White / Dairy Clean Tones
-  [/milk|cream|half and half|half-and-half/, "🥛", "#ffffff", "#cbd5e1"],
-  [/yogurt|yoghurt/, "🥛", "#f8fafc", "#e2e8f0"],
-  [/egg|eggs/, "🥚", "#fffde7", "#fde047"],
-  [/rice|pasta|noodle|flour|sugar|salt/, "🍚", "#fafafa", "#e5e5e5"],
-  [/paper towel|toilet paper|tissues|napkin/, "🧻", "#ffffff", "#cbd5e1"],
+  // Drinks
+  { pattern: /water|sparkling water|seltzer/i, icon: "💧", bg: "#e0f7fa", color: "#006064" },
+  { pattern: /soda|coke|pepsi|sprite|pop/i, icon: "🥤", bg: "#ffebee", color: "#c62828" },
+  { pattern: /juice|cider|lemonade/i, icon: "🧃", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /tea|matcha|chai/i, icon: "🍵", bg: "#e8f5e9", color: "#1b5e20" },
+  { pattern: /beer|ale|lager/i, icon: "🍺", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /wine|champagne|prosecco/i, icon: "🍷", bg: "#f3e5f5", color: "#4a148c" },
 
-  // Soft Blues / Water & Frozen
-  [/water|seltzer|sparkling water/, "💧", "#f0f9ff", "#38bdf8"],
-  [/soda|juice|drink/, "🥤", "#e0f2fe", "#0284c7"],
-  [/ice cream|icecream|frozen/, "🍦", "#f0f9ff", "#7dd3fc"],
-  [/fish|tuna|cod|tilapia/, "🐟", "#e0f2fe", "#38bdf8"],
+  // Frozen / Snacks
+  { pattern: /ice cream|icecream|gelato|sorbet/i, icon: "🍦", bg: "#fce4ec", color: "#880e4f" },
+  { pattern: /chip|chips|crisps|doritos|lays/i, icon: "🥔", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /pretzel|pretzels/i, icon: "🥨", bg: "#efebe9", color: "#4e342e" },
+  { pattern: /popcorn/i, icon: "🍿", bg: "#fffde7", color: "#f57f17" },
+  { pattern: /candy|gummy|gummies|marshmallow/i, icon: "🍬", bg: "#fce4ec", color: "#880e4f" },
 
-  // Household & Cleaning
-  [/soap|shampoo|conditioner|detergent|cleaner|cleaning|dish soap/, "🧼", "#f0fdf4", "#4ade80"],
-  [/sponge/, "🧽", "#fef9c3", "#facc15"],
-  [/trash|garbage bag/, "🗑️", "#f1f5f9", "#94a3b8"],
-  [/battery|batteries/, "🔋", "#f0fdf4", "#22c55e"],
-  [/diaper|wipes|baby/, "👶", "#f0fdf4", "#86efac"]
-
+  // Household & Personal Care
+  { pattern: /paper towel|toilet paper|tissue|tissues|napkin/i, icon: "🧻", bg: "#f5f5f5", color: "#37474f" },
+  { pattern: /trash|garbage bag|ziploc|foil|wrap/i, icon: "🗑️", bg: "#eceff1", color: "#37474f" },
+  { pattern: /dish soap|detergent|cleaner|cleaning|bleach|soap|sponge/i, icon: "🧽", bg: "#e0f2f1", color: "#004d40" },
+  { pattern: /shampoo|conditioner|lotion|sunscreen|body wash/i, icon: "🧴", bg: "#e1f5fe", color: "#01579b" },
+  { pattern: /toothpaste|toothbrush|floss|mouthwash/i, icon: "🪥", bg: "#e0f7fa", color: "#006064" },
+  { pattern: /diaper|wipes|baby/i, icon: "👶", bg: "#fff8e1", color: "#f57f17" },
+  { pattern: /battery|batteries|light bulb/i, icon: "🔋", bg: "#fffde7", color: "#f57f17" }
 ];
 
 
@@ -396,34 +411,41 @@ function categorizeItem(item) {
 
 
 /* =========================================================
-   ITEM THEME LOOKUP
+   ITEM DETAILS (COLOR & ICON)
 ========================================================= */
 
-function getItemTheme(item) {
+function getItemDetails(itemText) {
 
   const text =
-    item.toLowerCase().trim();
+    itemText.toLowerCase().trim();
 
 
-  for (const [pattern, icon, bg, border] of ITEM_THEMES) {
+  for (const rule of ITEM_RULES) {
 
-    if (pattern.test(text)) {
+    if (rule.pattern.test(text)) {
 
-      return {
-        icon,
-        bg,
-        border
-      };
+      return rule;
 
     }
 
   }
 
 
+  const cat =
+    categorizeItem(itemText);
+
+
   return {
-    icon: CATEGORY_ICONS[categorizeItem(item)] || "🛒",
-    bg: "#ffffff",
-    border: "#e2e8f0"
+
+    icon:
+      CATEGORY_ICONS[cat] || "🛒",
+
+    bg:
+      "#f3f4f6",
+
+    color:
+      "#1f2937"
+
   };
 
 }
@@ -1217,8 +1239,10 @@ function render() {
       categoryItems.forEach(
         item => {
 
-          const theme =
-            getItemTheme(item.value);
+          const details =
+            getItemDetails(
+              item.value
+            );
 
 
           const row =
@@ -1229,13 +1253,30 @@ function render() {
           row.className =
             "item";
 
-
-          /* Dynamically apply food-specific background & border colors */
+          /* Dynamic Styling for Row Colors */
           row.style.backgroundColor =
-            theme.bg;
+            details.bg;
 
-          row.style.borderColor =
-            theme.border;
+          row.style.borderLeft =
+            `5px solid ${details.color}`;
+
+          row.style.borderRadius =
+            "8px";
+
+          row.style.margin =
+            "6px 0";
+
+          row.style.padding =
+            "10px 14px";
+
+          row.style.display =
+            "flex";
+
+          row.style.alignItems =
+            "center";
+
+          row.style.justifyContent =
+            "space-between";
 
 
           const itemIcon =
@@ -1247,7 +1288,13 @@ function render() {
             "item-icon";
 
           itemIcon.textContent =
-            theme.icon;
+            details.icon;
+
+          itemIcon.style.marginRight =
+            "10px";
+
+          itemIcon.style.fontSize =
+            "1.2rem";
 
 
           const name =
@@ -1260,6 +1307,15 @@ function render() {
 
           name.textContent =
             item.value;
+
+          name.style.color =
+            details.color;
+
+          name.style.fontWeight =
+            "600";
+
+          name.style.flexGrow =
+            "1";
 
 
           const done =
