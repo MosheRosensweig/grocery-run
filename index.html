@@ -45,6 +45,7 @@
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 10px;
       margin-bottom: 24px;
+      justify-content: center;
     }
     .stat-card {
       background: #ffffff;
@@ -55,6 +56,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       display: flex;
       flex-direction: column;
+      align-items: center;
       justify-content: center;
     }
     .stat-label {
@@ -64,11 +66,15 @@
       font-weight: 700;
       margin-bottom: 6px;
       line-height: 1.2;
+      text-align: center;
+      width: 100%;
     }
     .stat-value {
       font-size: 1.1rem;
       font-weight: 800;
       color: #111827;
+      text-align: center;
+      width: 100%;
     }
     .bike-list {
       display: flex;
@@ -84,6 +90,8 @@
       color: #374151;
       display: flex;
       align-items: center;
+      justify-content: center;
+      text-align: center;
       border: 1px solid #e5e7eb;
     }
     .bike-date-row::before {
@@ -513,6 +521,14 @@ async function load(options = {}) {
         if (label) {
           newStatCards.push({ label, value: val !== "" ? val : "0" });
         }
+      });
+
+      newStatCards.sort((a, b) => {
+        const aIsPercent = /%|percent/i.test(a.label);
+        const bIsPercent = /%|percent/i.test(b.label);
+        if (aIsPercent && !bIsPercent) return 1;
+        if (!aIsPercent && bIsPercent) return -1;
+        return 0;
       });
 
       bikeDates = newBikeDates;
