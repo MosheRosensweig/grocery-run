@@ -593,6 +593,7 @@ function startGoogle() {
         }
 
         accessToken = response.access_token;
+        localStorage.setItem("autoLogin", "true");
         loginCard.hidden = true;
         appPanel.hidden = false;
 
@@ -642,6 +643,7 @@ async function sheetsFetch(path, options = {}) {
 
   if (response.status === 401) {
     accessToken = null;
+    localStorage.removeItem("autoLogin");
     stopAutoSync();
     throw new Error("Your Google authorization expired. Please sign in again.");
   }
@@ -764,6 +766,7 @@ async function load(options = {}) {
     else {
       if (/authorization expired|sign in/i.test(error.message)) {
         stopAutoSync();
+        localStorage.removeItem("autoLogin");
         appPanel.hidden = true;
         loginCard.hidden = false;
       }
@@ -1157,6 +1160,7 @@ $("signOutBtn").onclick = () => {
   }
 
   accessToken = null;
+  localStorage.removeItem("autoLogin");
   appPanel.hidden = true;
   loginCard.hidden = false;
   $("lastUpdated").textContent = "Last updated: —";
@@ -1166,7 +1170,7 @@ $("signOutBtn").onclick = () => {
 
 
 /* =========================================================
-   INITIAL SETUP
+   INITIAL SETUP & AUTO-LOGIN
 ========================================================= */
 
 window.addEventListener("load", () => {
@@ -1174,6 +1178,33 @@ window.addEventListener("load", () => {
     if (CONFIG.clientId.includes("PASTE_YOUR")) {
       setLoginStatus("Set your Google OAuth Web Client ID in index.html first.");
       $("loginBtn").disabled = true;
+      return;
+    }
+
+    // Check if user was previously logged in
+    if (localStorage.getItem("autoLogin") === "true") {
+      if (window.google?.accounts?.oauth2) {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: CONFIG.clientId,
+          scope: CONFIG.scope,
+          callback: async response => {
+            if (!response.error) {
+              accessToken = response.access_token;
+              loginCard.hidden = true;
+              appPanel.hidden = false;
+              await load();
+              startAutoSync();
+            } else {
+              localStorage.removeItem("autoLogin");
+            }
+          }
+        });
+
+        // Request token silently in the background
+        tokenClient.requestAccessToken({
+          prompt: ""
+        });
+      }
     }
   }, 500);
 });
