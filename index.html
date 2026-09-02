@@ -16,7 +16,7 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
@@ -46,8 +46,14 @@
     /* ADD FORM CONTAINER */
     .add-form-container{display:flex;flex-direction:column;gap:12px;margin-bottom:18px;background:#ffffff;padding:14px;border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,.055);border:1px solid rgba(0,0,0,.04)}
     .add-input-row{display:flex;gap:8px;align-items:center}
-    .add-input-row input{min-width:0;flex:1;height:50px;border:1.5px solid #d7d3ca;border-radius:14px;background:#fff;padding:0 14px;font-size:16px;color:#111827;outline:none;-webkit-appearance:none}
-    .add-input-row input:focus{border-color:#24231f;box-shadow:0 0 0 3px rgba(36,35,31,.08)}
+    .input-autocomplete-wrapper{position:relative;flex:1;min-width:0;display:flex;align-items:center}
+    .input-autocomplete-wrapper input{width:100%;min-width:0;height:50px;border:1.5px solid #d7d3ca;border-radius:14px;background:#fff;padding:0 14px;font-size:16px;color:#111827;outline:none;-webkit-appearance:none;position:relative;z-index:1;background:transparent}
+    .input-autocomplete-wrapper input:focus{border-color:#24231f;box-shadow:0 0 0 3px rgba(36,35,31,.08)}
+    .ghost-text-overlay{position:absolute;left:0;top:0;width:100%;height:100%;padding:0 14px;display:flex;align-items:center;font-size:16px;font-family:inherit;line-height:50px;pointer-events:none;white-space:pre;overflow:hidden;border:1.5px solid transparent;box-sizing:border-box;background:#fff;border-radius:14px;z-index:0}
+    .ghost-text-typed{color:transparent}
+    .ghost-text-suffix{color:#9ca3af;font-weight:400}
+    .ghost-text-badge{position:absolute;right:8px;top:50%;transform:translateY(-50%);height:28px;padding:0 10px;border-radius:8px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:700;border:1px solid #d1d5db;cursor:pointer;display:flex;align-items:center;gap:4px;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+    .ghost-text-badge:active{background:#e5e7eb}
 
     .add-preview-bar{display:flex;align-items:center;gap:8px;width:100%}
     .preview-field{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#6b7280;flex:1;min-width:0}
@@ -163,14 +169,18 @@
     <div id="groceryView">
       <form id="addForm" class="add-form-container">
         <div class="add-input-row">
-          <input
-            id="itemInput"
-            autocomplete="off"
-            autocapitalize="words"
-            placeholder="Add an item…"
-            aria-label="New grocery item"
-            required
-          >
+          <div class="input-autocomplete-wrapper">
+            <div id="ghostTextOverlay" class="ghost-text-overlay" aria-hidden="true"></div>
+            <input
+              id="itemInput"
+              autocomplete="off"
+              autocapitalize="words"
+              placeholder="Add an item…"
+              aria-label="New grocery item"
+              required
+            >
+            <button type="button" id="ghostTextBadge" class="ghost-text-badge" hidden title="Tap to accept suggestion">⇥</button>
+          </div>
           <button type="submit" class="primary">
             Add
           </button>
@@ -306,10 +316,23 @@ const CATEGORY_ICONS = {
 };
 
 const ICON_LIBRARY = [
+  // Dairy, Breakfast & Yogurt
+  { icon: "🥣", name: "yogurt yoghurt greek yogurt bowl cereal oatmeal breakfast dairy" },
+  { icon: "🍮", name: "custard pudding yogurt flan dessert dairy" },
+  { icon: "🥛", name: "milk cream half and half heavy cream dairy drink" },
+  { icon: "🧀", name: "cheese cheddar swiss parmesan mozzarella dairy" },
+  { icon: "🧈", name: "butter margarine dairy" },
+  { icon: "🥚", name: "egg eggs dairy breakfast" },
+  { icon: "🥞", name: "pancakes pancake breakfast syrup" },
+  { icon: "🧇", name: "waffle waffles breakfast" },
+  { icon: "🍦", name: "ice cream soft serve dairy frozen" },
+  { icon: "🍨", name: "ice cream gelato dessert dairy" },
+
+  // Fruits & Produce
   { icon: "🍎", name: "apple red fruit produce" },
   { icon: "🍏", name: "green apple fruit produce" },
   { icon: "🍐", name: "pear fruit produce" },
-  { icon: "🍊", name: "orange citrus fruit produce" },
+  { icon: "🍊", name: "orange citrus mandarin clementine tangerine fruit produce" },
   { icon: "🍋", name: "lemon citrus fruit produce" },
   { icon: "🍌", name: "banana fruit produce" },
   { icon: "🍉", name: "watermelon melon fruit produce" },
@@ -317,91 +340,167 @@ const ICON_LIBRARY = [
   { icon: "🍓", name: "strawberry berries fruit produce" },
   { icon: "🫐", name: "blueberries berries fruit produce" },
   { icon: "🍒", name: "cherries cherry fruit produce" },
-  { icon: "🍑", name: "peach fruit produce" },
+  { icon: "🍑", name: "peach nectarine apricot fruit produce" },
   { icon: "🥭", name: "mango fruit produce" },
   { icon: "🍍", name: "pineapple fruit produce" },
   { icon: "🥥", name: "coconut fruit produce" },
   { icon: "🥝", name: "kiwi fruit produce" },
+  { icon: "🍈", name: "melon cantaloupe honeydew fruit produce" },
+
+  // Vegetables & Produce
+  { icon: "🥒", name: "cucumber pickles zucchini vegetable produce" },
   { icon: "🍅", name: "tomato vegetable produce" },
   { icon: "🥑", name: "avocado vegetable produce" },
   { icon: "🥦", name: "broccoli vegetable produce" },
-  { icon: "🥬", name: "lettuce spinach kale greens salad produce" },
-  { icon: "🥒", name: "cucumber zucchini vegetable produce" },
-  { icon: "🌶️", name: "chili hot pepper spicy produce" },
-  { icon: "🫑", name: "bell pepper pepper produce" },
+  { icon: "🥬", name: "lettuce spinach kale greens salad cabbage arugula produce" },
+  { icon: "🌶️", name: "chili hot pepper spicy jalapeño produce" },
+  { icon: "🫑", name: "bell pepper pepper green red produce" },
   { icon: "🌽", name: "corn vegetable produce" },
   { icon: "🥕", name: "carrot vegetable produce" },
   { icon: "🧄", name: "garlic herb produce" },
-  { icon: "🧅", name: "onion vegetable produce" },
-  { icon: "🥔", name: "potato produce" },
+  { icon: "🧅", name: "onion red onion yellow onion vegetable produce" },
+  { icon: "🥔", name: "potato potatoes produce" },
   { icon: "🍠", name: "sweet potato yam produce" },
-  { icon: "🫛", name: "peas pea pod produce" },
-  { icon: "🍄", name: "mushroom produce" },
-  { icon: "🌿", name: "herbs basil cilantro parsley produce" },
-  { icon: "🥛", name: "milk cream dairy drink" },
-  { icon: "🧀", name: "cheese cheddar swiss dairy" },
-  { icon: "🧈", name: "butter margarine dairy" },
-  { icon: "🥚", name: "egg eggs dairy" },
-  { icon: "🍦", name: "ice cream soft serve dairy frozen" },
-  { icon: "🍨", name: "ice cream dessert dairy" },
-  { icon: "🥩", name: "steak beef meat" },
-  { icon: "🍗", name: "chicken poultry drumstick meat" },
-  { icon: "🥓", name: "bacon pork meat" },
-  { icon: "🍔", name: "burger hamburger meat" },
-  { icon: "🌭", name: "hot dog sausage meat" },
-  { icon: "🍖", name: "meat rib pork" },
-  { icon: "🍤", name: "shrimp prawn seafood fish" },
-  { icon: "🦪", name: "oyster seafood fish" },
+  { icon: "🫛", name: "peas pea pod edamame produce" },
+  { icon: "🍄", name: "mushroom mushrooms produce" },
+  { icon: "🍆", name: "eggplant aubergine produce" },
+  { icon: "🌿", name: "herbs basil cilantro parsley mint rosemary thyme produce" },
+  { icon: "🥗", name: "salad mixed greens bowl produce" },
+  { icon: "🫒", name: "olives olive oil pantry produce" },
+  { icon: "🥜", name: "peanuts peanut butter nuts snack" },
+  { icon: "🌰", name: "chestnut nuts almond walnut snack" },
+
+  // Meat, Poultry & Seafood
+  { icon: "🥩", name: "steak beef meat ground beef roast" },
+  { icon: "🍗", name: "chicken poultry drumstick wings breast meat" },
+  { icon: "🍖", name: "meat rib pork chop meat" },
+  { icon: "🥓", name: "bacon pork meat breakfast" },
+  { icon: "🍔", name: "burger hamburger meat patty" },
+  { icon: "🌭", name: "hot dog sausage frankfurter meat" },
+  { icon: "🥪", name: "sandwich deli turkey ham bread" },
+  { icon: "🌮", name: "taco mexican meat" },
+  { icon: "🌯", name: "burrito wrap meat" },
+  { icon: "🥙", name: "pita gyro wrap meat" },
+  { icon: "🧆", name: "falafel veggie vegetarian" },
+  { icon: "🥟", name: "dumpling gyoza dim sum" },
+  { icon: "🍤", name: "shrimp prawn tempura seafood fish" },
+  { icon: "🦪", name: "oyster clam seafood fish" },
   { icon: "🦞", name: "lobster seafood fish" },
   { icon: "🦀", name: "crab seafood fish" },
-  { icon: "🐟", name: "fish salmon tuna seafood" },
-  { icon: "🥖", name: "baguette bread bakery" },
-  { icon: "🍞", name: "loaf bread toast bakery" },
-  { icon: "🥯", name: "bagel bakery" },
-  { icon: "🥐", name: "croissant pastry bakery" },
+  { icon: "🐟", name: "fish salmon tuna cod tilapia seafood" },
+  { icon: "🍣", name: "sushi salmon tuna roll seafood" },
+  { icon: "🍱", name: "bento meal prepared food" },
+
+  // Bakery & Bread
+  { icon: "🥖", name: "baguette french bread bakery" },
+  { icon: "🍞", name: "loaf bread toast sliced bakery" },
+  { icon: "🥯", name: "bagel bagels bakery breakfast" },
+  { icon: "🥐", name: "croissant pastry bakery breakfast" },
   { icon: "🥨", name: "pretzel bakery snack" },
-  { icon: "🧇", name: "waffle breakfast bakery" },
-  { icon: "🥞", name: "pancakes breakfast bakery" },
-  { icon: "🍪", name: "cookie biscuit bakery snack" },
-  { icon: "🍩", name: "donut doughnut bakery" },
-  { icon: "🎂", name: "cake birthday bakery" },
-  { icon: "🍰", name: "slice cake dessert bakery" },
-  { icon: "🧁", name: "cupcake bakery" },
-  { icon: "🥧", name: "pie bakery" },
-  { icon: "🥫", name: "canned food soup pantry" },
-  { icon: "🍝", name: "spaghetti pasta noodle pantry" },
-  { icon: "🍜", name: "ramen noodles pantry" },
-  { icon: "🍚", name: "rice grain pantry" },
-  { icon: "🥣", name: "cereal oatmeal bowl pantry" },
+  { icon: "🫓", name: "pita flatbread naan tortilla bakery" },
+  { icon: "🍪", name: "cookie cookies chocolate chip biscuit bakery snack" },
+  { icon: "🍩", name: "donut doughnut bakery snack" },
+  { icon: "🎂", name: "cake birthday bakery dessert" },
+  { icon: "🍰", name: "slice cake cheesecake dessert bakery" },
+  { icon: "🧁", name: "cupcake bakery muffin" },
+  { icon: "🥧", name: "pie apple pie bakery dessert" },
+
+  // Pantry, Grains & Sauces
+  { icon: "🥫", name: "canned food can tomato soup beans pantry" },
+  { icon: "🍝", name: "spaghetti pasta noodles tomato sauce pantry" },
+  { icon: "🍜", name: "ramen soup noodles broth pantry" },
+  { icon: "🍚", name: "rice white rice brown rice grain pantry" },
+  { icon: "🍛", name: "curry rice meal pantry" },
+  { icon: "🍲", name: "soup pot stew broth pantry" },
   { icon: "🍿", name: "popcorn snack pantry" },
-  { icon: "🍫", name: "chocolate candy pantry snack" },
-  { icon: "🍬", name: "candy sweet pantry snack" },
-  { icon: "🍯", name: "honey syrup pantry" },
-  { icon: "🧂", name: "salt pepper spice pantry" },
-  { icon: "🫙", name: "jar jam jelly sauce pantry" },
-  { icon: "🥤", name: "soda cup drink beverage" },
-  { icon: "🧃", name: "juice box drink beverage" },
-  { icon: "☕", name: "coffee espresso tea hot drink" },
-  { icon: "🍵", name: "tea matcha green tea drink" },
-  { icon: "🧋", name: "boba bubble tea drink" },
-  { icon: "💧", name: "water bottle drink" },
+  { icon: "🍫", name: "chocolate candy bar sweet pantry snack" },
+  { icon: "🍬", name: "candy sweets gummy pantry snack" },
+  { icon: "🍭", name: "lollipop candy sweet snack" },
+  { icon: "🍯", name: "honey syrup sweet pantry" },
+  { icon: "🧂", name: "salt pepper spices seasoning pantry" },
+  { icon: "🫙", name: "jar jam jelly preserves sauce salsa pantry" },
+
+  // Drinks & Beverages
+  { icon: "🥤", name: "soda coke pop cup drink beverage" },
+  { icon: "🧃", name: "juice box apple orange juice drink beverage" },
+  { icon: "☕", name: "coffee espresso latte cappuccino tea hot drink" },
+  { icon: "🍵", name: "tea green tea matcha herbal drink" },
+  { icon: "🧋", name: "boba bubble tea milk tea drink" },
+  { icon: "💧", name: "water spring sparkling seltzer bottle drink" },
+  { icon: "🍼", name: "baby bottle milk formula drink" },
   { icon: "🍺", name: "beer ale lager alcohol drink" },
-  { icon: "🍷", name: "wine alcohol drink" },
-  { icon: "🍾", name: "champagne alcohol drink" },
-  { icon: "🧻", name: "toilet paper paper towel tissue household" },
-  { icon: "🧹", name: "broom cleaning household" },
-  { icon: "🧽", name: "sponge dish soap cleaning household" },
-  { icon: "🧴", name: "lotion shampoo soap bottle personal care" },
-  { icon: "🗑️", name: "trash garbage bag household" },
-  { icon: "🔋", name: "battery power household" },
-  { icon: "💡", name: "light bulb household" },
-  { icon: "🪥", name: "toothbrush toothpaste personal care" },
-  { icon: "🧼", name: "bar soap cleaning personal care" },
-  { icon: "🪴", name: "plant flower household" },
-  { icon: "🛒", name: "shopping cart grocery general" },
-  { icon: "📦", name: "box package item general" },
-  { icon: "🛍️", name: "shopping bag general" },
-  { icon: "🏷️", name: "tag price label general" }
+  { icon: "🍻", name: "beers cheers alcohol drink" },
+  { icon: "🥂", name: "champagne toast prosecco alcohol drink" },
+  { icon: "🍷", name: "wine red wine white wine alcohol drink" },
+  { icon: "🥃", name: "whiskey liquor spirits alcohol drink" },
+  { icon: "🍸", name: "cocktail martini alcohol drink" },
+  { icon: "🍹", name: "tropical drink cocktail alcohol" },
+  { icon: "🍾", name: "bottle champagne wine alcohol drink" },
+  { icon: "🧊", name: "ice cubes frozen cold" },
+
+  // Household & Cleaning
+  { icon: "🧻", name: "toilet paper paper towels napkins tissue household" },
+  { icon: "🧹", name: "broom cleaning sweep household" },
+  { icon: "🧽", name: "sponge dish soap clean dishwashing household" },
+  { icon: "🧼", name: "soap bar hand soap cleaning household" },
+  { icon: "🧴", name: "lotion shampoo conditioner body wash soap bottle household personal care" },
+  { icon: "🧺", name: "laundry detergent basket wash clothes household" },
+  { icon: "🪣", name: "bucket mop cleaning household" },
+  { icon: "🗑️", name: "trash garbage bags can household" },
+  { icon: "🔋", name: "battery batteries power aa aaa household" },
+  { icon: "💡", name: "light bulb lamp household" },
+  { icon: "🕯️", name: "candle flame household" },
+  { icon: "🔌", name: "plug cord electric household" },
+  { icon: "🪴", name: "plant flowers houseplant garden household" },
+  { icon: "💐", name: "flowers bouquet roses household" },
+  { icon: "🍽️", name: "plates dishes forks spoons kitchen household" },
+
+  // Personal Care & Health
+  { icon: "🪥", name: "toothbrush toothpaste teeth hygiene personal care" },
+  { icon: "🪒", name: "razor shaving cream personal care" },
+  { icon: "🛁", name: "bath shower body wash personal care" },
+  { icon: "🩹", name: "bandaid bandage first aid health personal care" },
+  { icon: "💊", name: "pills medicine vitamins capsules health" },
+  { icon: "🩺", name: "doctor medicine health care" },
+  { icon: "👶", name: "baby diapers wipes formula baby care" },
+  { icon: "🐶", name: "dog dog food treats pet" },
+  { icon: "🐱", name: "cat cat food litter pet" },
+  { icon: "🦴", name: "bone dog treat pet" },
+
+  // General & Shopping
+  { icon: "🛒", name: "shopping cart grocery store run item" },
+  { icon: "🛍️", name: "shopping bags store items" },
+  { icon: "📦", name: "box package delivery item" },
+  { icon: "🏷️", name: "tag price label sale" },
+  { icon: "⚡", name: "energy power quick" },
+  { icon: "⭐️", name: "star favorite special" }
+];
+
+const GROCERY_DICTIONARY = [
+  "Apples", "Apple Juice", "Apple Cider", "Avocados", "Arugula", "Almonds", "Almond Milk", "Aluminum Foil", "Asparagus", "Artichokes",
+  "Bananas", "Bagels", "Bacon", "Bread", "Broccoli", "Butter", "Blueberries", "Blackberries", "Beef", "Bell Peppers", "Baking Soda", "Baking Powder", "Beans", "Black Beans", "Brown Sugar", "Bleach", "Body Wash", "Batteries", "Baguette", "BBQ Sauce", "Basil", "Baby Wipes", "Beer", "Brioche",
+  "Carrots", "Chicken", "Chicken Breast", "Chicken Wings", "Chicken Thighs", "Cheese", "Cheddar Cheese", "Cottage Cheese", "Cream Cheese", "Coffee", "Coffee Beans", "Cranberries", "Cucumbers", "Celery", "Corn", "Cauliflower", "Cabbage", "Cilantro", "Cereal", "Crackers", "Chips", "Chocolate", "Cookies", "Croissants", "Cat Food", "Conditioner", "Cleaning Spray", "Cantaloupe", "Cherries", "Couscous", "Coconut Milk",
+  "Dairy Free Milk", "Deli Turkey", "Deli Ham", "Dish Soap", "Dishwasher Pods", "Deodorant", "Diapers", "Diet Coke", "Donuts", "Salad Dressing", "Dog Food", "Dijon Mustard",
+  "Eggs", "Egg Whites", "Eggplant", "Energy Drinks", "English Muffins", "Espresso", "Extra Virgin Olive Oil", "Edamame",
+  "Fish", "Frozen Pizza", "Frozen Vegetables", "Frozen Fruit", "Frozen Waffles", "Frozen Chicken", "Flour", "Floss", "Foil", "French Fries", "Feta Cheese", "Fresh Mozzarella",
+  "Garlic", "Grapes", "Green Beans", "Greek Yogurt", "Ground Beef", "Ground Turkey", "Granola", "Granola Bars", "Gummy Bears", "Grapefruit", "Ginger", "Garbage Bags", "Goat Cheese", "Gouda",
+  "Half and Half", "Ham", "Hamburger Buns", "Hot Dogs", "Hot Dog Buns", "Hot Sauce", "Honey", "Hummus", "Heavy Cream", "Hand Soap", "Herbs", "Honeydew", "Hash Browns",
+  "Ice Cream", "Ice", "Iced Tea", "Italian Bread", "Italian Seasoning",
+  "Jalapeños", "Jelly", "Jam", "Juice", "Jasmine Rice",
+  "Kale", "Ketchup", "Kidney Beans", "Kiwi", "Kombucha", "Kosher Salt",
+  "Lemons", "Limes", "Lettuce", "Lamb Chops", "Lobster", "Lox", "Lotion", "Laundry Detergent", "Light Bulbs", "Lentils", "Lemonade", "Lasagna Noodles",
+  "Milk", "Mozzarella", "Mushrooms", "Mustard", "Mayonnaise", "Mayo", "Maple Syrup", "Muffins", "Mangoes", "Melon", "Mint", "Mouthwash", "Macaroni and Cheese", "Meatballs", "Marinara Sauce", "Mini Peppers",
+  "Napkins", "Noodles", "Nuts", "Nutella", "Nonstick Cooking Spray", "Nectarines",
+  "Oatmeal", "Oats", "Oat Milk", "Olive Oil", "Olives", "Onions", "Oranges", "Orange Juice", "Oreos", "Oregano",
+  "Paper Towels", "Pasta", "Pasta Sauce", "Parmesan Cheese", "Peanut Butter", "Peanuts", "Peaches", "Pears", "Peas", "Peppers", "Pickles", "Pineapple", "Pita Bread", "Pizza", "Plums", "Pork", "Pork Chops", "Popcorn", "Potatoes", "Pretzels", "Protein Bars", "Pudding", "Provolone", "Parchment Paper",
+  "Quinoa", "Q-tips",
+  "Radishes", "Raspberries", "Raisins", "Ranch Dressing", "Red Onions", "Red Bell Peppers", "Rice", "Rolls", "Romaine Lettuce", "Rotisserie Chicken", "Razors", "Ricotta Cheese", "Ravioli",
+  "Salad", "Salmon", "Salt", "Salsa", "Sausages", "Salami", "Seltzer", "Shampoo", "Shrimp", "Snacks", "Soap", "Sour Cream", "Soy Milk", "Soy Sauce", "Spaghetti", "Spices", "Spinach", "Sponges", "Squash", "Steak", "Strawberries", "Sugar", "Sunscreen", "Sweet Potatoes", "Swiss Cheese", "Sour Dough Bread",
+  "Tacos", "Taco Shells", "Taco Seasoning", "Tea", "Tissues", "Tilapia", "Tofu", "Toilet Paper", "Tomatoes", "Tomato Sauce", "Tomato Paste", "Toothpaste", "Toothbrush", "Tortillas", "Trash Bags", "Tuna", "Turkey", "Tater Tots", "Thyme",
+  "Vanilla Extract", "Vegetable Oil", "Vinegar", "Vitamins",
+  "Waffles", "Walnuts", "Water", "Watermelon", "Whipped Cream", "Wine", "Wipes", "Wraps", "White Rice", "Worcestershire Sauce",
+  "Yogurt", "Yogurt Tubes", "Yellow Onions", "Yellow Squash",
+  "Zucchini"
 ];
 
 const CATEGORY_KEYWORDS = {
@@ -418,6 +517,7 @@ const CATEGORY_KEYWORDS = {
 };
 
 const ITEM_RULES = [
+  { pattern: /yogurt|yoghurt/i, icon: "🥣", bg: "#f0f9ff", color: "#0369a1" },
   { pattern: /banana|lemon|corn|squash/i, icon: "🍌", bg: "#fef9c3", color: "#854d0e" },
   { pattern: /butter|margarine/i, icon: "🧈", bg: "#fef9c3", color: "#854d0e" },
   { pattern: /cheese|cheddar|swiss|parmesan|mozzarella/i, icon: "🧀", bg: "#fef9c3", color: "#854d0e" },
@@ -429,7 +529,6 @@ const ITEM_RULES = [
   { pattern: /tomato|ketchup|marinara|salsa/i, icon: "🍅", bg: "#fee2e2", color: "#991b1b" },
   { pattern: /chili|hot sauce|pepperoni/i, icon: "🌶️", bg: "#fee2e2", color: "#991b1b" },
   { pattern: /milk|half and half|half-and-half|heavy cream|whipped cream/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
-  { pattern: /yogurt|yoghurt/i, icon: "🥛", bg: "#f8fafc", color: "#334155" },
   { pattern: /egg|eggs/i, icon: "🥚", bg: "#fef3c7", color: "#78350f" },
   { pattern: /onion|garlic|shallot/i, icon: "🧄", bg: "#f8fafc", color: "#334155" },
   { pattern: /coconut/i, icon: "🥥", bg: "#f8fafc", color: "#334155" },
@@ -1149,14 +1248,64 @@ function updateAddFormPreview() {
   }
 }
 
+let currentSuggestion = null;
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function getSuggestion(typed) {
+  if (!typed || !typed.trim()) return null;
+  const clean = typed.trim().toLowerCase();
+  return GROCERY_DICTIONARY.find(item => item.toLowerCase().startsWith(clean) && item.toLowerCase() !== clean) || null;
+}
+
+function updateGhostText() {
+  const input = $("itemInput");
+  const typed = input.value;
+  const overlay = $("ghostTextOverlay");
+  const badge = $("ghostTextBadge");
+  
+  if (!typed || !typed.trim()) {
+    overlay.innerHTML = "";
+    badge.hidden = true;
+    currentSuggestion = null;
+    return;
+  }
+
+  const match = getSuggestion(typed);
+  if (match) {
+    currentSuggestion = match;
+    const suffix = match.slice(typed.length);
+    overlay.innerHTML = `<span class="ghost-text-typed">${escapeHtml(typed)}</span><span class="ghost-text-suffix">${escapeHtml(suffix)}</span>`;
+    badge.hidden = false;
+    badge.textContent = `⇥ ${match}`;
+  } else {
+    overlay.innerHTML = "";
+    badge.hidden = true;
+    currentSuggestion = null;
+  }
+}
+
+function acceptSuggestion() {
+  if (currentSuggestion) {
+    $("itemInput").value = currentSuggestion;
+    updateGhostText();
+    updateAddFormPreview();
+  }
+}
+
 function resetAddFormState() {
   userHasManuallyChangedCategory = false;
   userHasManuallyChangedIcon = false;
   userCustomColor = null;
   currentAddIcon = "🛒";
+  currentSuggestion = null;
   $("addIconBtn").textContent = "🛒";
   $("addColorInput").value = "#ffffff";
   $("addColorSwatch").style.backgroundColor = "#ffffff";
+  $("ghostTextOverlay").innerHTML = "";
+  $("ghostTextBadge").hidden = true;
   updateAddFormPreview();
 }
 
@@ -1217,8 +1366,26 @@ function renderIconGrid(query) {
 }
 
 $("itemInput").addEventListener("input", () => {
+  updateGhostText();
   updateAddFormPreview();
 });
+
+$("itemInput").addEventListener("keydown", (e) => {
+  if ((e.key === "Tab" || e.key === "ArrowRight") && currentSuggestion) {
+    const input = $("itemInput");
+    // Accept autocomplete on Tab or if cursor is at the end of the text on ArrowRight
+    if (e.key === "Tab" || input.selectionStart === input.value.length) {
+      e.preventDefault();
+      acceptSuggestion();
+    }
+  }
+});
+
+$("ghostTextBadge").onclick = (e) => {
+  e.preventDefault();
+  acceptSuggestion();
+  $("itemInput").focus();
+};
 
 $("addCategorySelect").addEventListener("change", () => {
   userHasManuallyChangedCategory = true;
