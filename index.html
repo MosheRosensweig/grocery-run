@@ -157,18 +157,31 @@
 
     <!-- GROCERY VIEW -->
     <div id="groceryView">
-      <form id="addForm" class="add-form">
-        <input
-          id="itemInput"
-          autocomplete="off"
-          autocapitalize="words"
-          placeholder="Add an item…"
-          aria-label="New grocery item"
-          required
-        >
-        <button type="submit" class="primary">
-          Add
-        </button>
+      <form id="addForm" class="add-form-container">
+        <div class="add-input-row">
+          <input
+            id="itemInput"
+            autocomplete="off"
+            autocapitalize="words"
+            placeholder="Add an item…"
+            aria-label="New grocery item"
+            required
+          >
+          <button type="submit" class="primary">
+            Add
+          </button>
+        </div>
+        <div id="addPreviewBar" class="add-preview-bar">
+          <label class="preview-field">
+            <span class="preview-label">Category:</span>
+            <select id="addCategorySelect" class="category-select" aria-label="Select category"></select>
+          </label>
+          <button type="button" id="addIconBtn" class="icon-picker-btn" title="Choose Icon">🛒</button>
+          <label class="color-picker-wrapper" title="Choose Custom Color">
+            <input type="color" id="addColorInput" value="#ffffff">
+            <span id="addColorSwatch" class="color-swatch">🎨</span>
+          </label>
+        </div>
       </form>
 
       <section
@@ -210,6 +223,18 @@
 
   </section>
 
+  <!-- SEARCHABLE ICON PICKER MODAL -->
+  <div id="iconModal" class="icon-modal-overlay" hidden>
+    <div class="icon-modal">
+      <div class="icon-modal-header">
+        <h3 style="margin:0;">Choose Icon</h3>
+        <button type="button" id="closeIconModal" class="icon-modal-close" aria-label="Close icon picker">✕</button>
+      </div>
+      <input type="text" id="iconSearchInput" class="icon-search-input" placeholder="Search icons (e.g. apple, milk, bread)..." autocomplete="off">
+      <div id="iconGrid" class="icon-grid"></div>
+    </div>
+  </div>
+
 </main>
 
 
@@ -242,6 +267,12 @@ let bikeDates = [];
 let statCardsData = [];
 let editingItemRow = null;
 
+let userHasManuallyChangedCategory = false;
+let userHasManuallyChangedIcon = false;
+let userCustomColor = null;
+let currentAddIcon = "🛒";
+let activeIconPickerCallback = null;
+
 let syncTimer = null;
 let syncInProgress = false;
 let rateLimitBackoff = 0;
@@ -269,6 +300,105 @@ const CATEGORY_ICONS = {
   "Pantry": "🥫", "Frozen": "🧊", "Drinks": "🥤", "Snacks": "🍿",
   "Household": "🧹", "Personal Care": "🧴", "Other": "🛒"
 };
+
+const ICON_LIBRARY = [
+  { icon: "🍎", name: "apple red fruit produce" },
+  { icon: "🍏", name: "green apple fruit produce" },
+  { icon: "🍐", name: "pear fruit produce" },
+  { icon: "🍊", name: "orange citrus fruit produce" },
+  { icon: "🍋", name: "lemon citrus fruit produce" },
+  { icon: "🍌", name: "banana fruit produce" },
+  { icon: "🍉", name: "watermelon melon fruit produce" },
+  { icon: "🍇", name: "grapes grape fruit produce" },
+  { icon: "🍓", name: "strawberry berries fruit produce" },
+  { icon: "🫐", name: "blueberries berries fruit produce" },
+  { icon: "🍒", name: "cherries cherry fruit produce" },
+  { icon: "🍑", name: "peach fruit produce" },
+  { icon: "🥭", name: "mango fruit produce" },
+  { icon: "🍍", name: "pineapple fruit produce" },
+  { icon: "🥥", name: "coconut fruit produce" },
+  { icon: "🥝", name: "kiwi fruit produce" },
+  { icon: "🍅", name: "tomato vegetable produce" },
+  { icon: "🥑", name: "avocado vegetable produce" },
+  { icon: "🥦", name: "broccoli vegetable produce" },
+  { icon: "🥬", name: "lettuce spinach kale greens salad produce" },
+  { icon: "🥒", name: "cucumber zucchini vegetable produce" },
+  { icon: "🌶️", name: "chili hot pepper spicy produce" },
+  { icon: "🫑", name: "bell pepper pepper produce" },
+  { icon: "🌽", name: "corn vegetable produce" },
+  { icon: "🥕", name: "carrot vegetable produce" },
+  { icon: "🧄", name: "garlic herb produce" },
+  { icon: "🧅", name: "onion vegetable produce" },
+  { icon: "🥔", name: "potato produce" },
+  { icon: "🍠", name: "sweet potato yam produce" },
+  { icon: "🫛", name: "peas pea pod produce" },
+  { icon: "🍄", name: "mushroom produce" },
+  { icon: "🌿", name: "herbs basil cilantro parsley produce" },
+  { icon: "🥛", name: "milk cream dairy drink" },
+  { icon: "🧀", name: "cheese cheddar swiss dairy" },
+  { icon: "🧈", name: "butter margarine dairy" },
+  { icon: "🥚", name: "egg eggs dairy" },
+  { icon: "🍦", name: "ice cream soft serve dairy frozen" },
+  { icon: "🍨", name: "ice cream dessert dairy" },
+  { icon: "🥩", name: "steak beef meat" },
+  { icon: "🍗", name: "chicken poultry drumstick meat" },
+  { icon: "🥓", name: "bacon pork meat" },
+  { icon: "🍔", name: "burger hamburger meat" },
+  { icon: "🌭", name: "hot dog sausage meat" },
+  { icon: "🍖", name: "meat rib pork" },
+  { icon: "🍤", name: "shrimp prawn seafood fish" },
+  { icon: "🦪", name: "oyster seafood fish" },
+  { icon: "🦞", name: "lobster seafood fish" },
+  { icon: "🦀", name: "crab seafood fish" },
+  { icon: "🐟", name: "fish salmon tuna seafood" },
+  { icon: "🥖", name: "baguette bread bakery" },
+  { icon: "🍞", name: "loaf bread toast bakery" },
+  { icon: "🥯", name: "bagel bakery" },
+  { icon: "🥐", name: "croissant pastry bakery" },
+  { icon: "🥨", name: "pretzel bakery snack" },
+  { icon: "🧇", name: "waffle breakfast bakery" },
+  { icon: "🥞", name: "pancakes breakfast bakery" },
+  { icon: "🍪", name: "cookie biscuit bakery snack" },
+  { icon: "🍩", name: "donut doughnut bakery" },
+  { icon: "🎂", name: "cake birthday bakery" },
+  { icon: "🍰", name: "slice cake dessert bakery" },
+  { icon: "🧁", name: "cupcake bakery" },
+  { icon: "🥧", name: "pie bakery" },
+  { icon: "🥫", name: "canned food soup pantry" },
+  { icon: "🍝", name: "spaghetti pasta noodle pantry" },
+  { icon: "🍜", name: "ramen noodles pantry" },
+  { icon: "🍚", name: "rice grain pantry" },
+  { icon: "🥣", name: "cereal oatmeal bowl pantry" },
+  { icon: "🍿", name: "popcorn snack pantry" },
+  { icon: "🍫", name: "chocolate candy pantry snack" },
+  { icon: "🍬", name: "candy sweet pantry snack" },
+  { icon: "🍯", name: "honey syrup pantry" },
+  { icon: "🧂", name: "salt pepper spice pantry" },
+  { icon: "🫙", name: "jar jam jelly sauce pantry" },
+  { icon: "🥤", name: "soda cup drink beverage" },
+  { icon: "🧃", name: "juice box drink beverage" },
+  { icon: "☕", name: "coffee espresso tea hot drink" },
+  { icon: "🍵", name: "tea matcha green tea drink" },
+  { icon: "🧋", name: "boba bubble tea drink" },
+  { icon: "💧", name: "water bottle drink" },
+  { icon: "🍺", name: "beer ale lager alcohol drink" },
+  { icon: "🍷", name: "wine alcohol drink" },
+  { icon: "🍾", name: "champagne alcohol drink" },
+  { icon: "🧻", name: "toilet paper paper towel tissue household" },
+  { icon: "🧹", name: "broom cleaning household" },
+  { icon: "🧽", name: "sponge dish soap cleaning household" },
+  { icon: "🧴", name: "lotion shampoo soap bottle personal care" },
+  { icon: "🗑️", name: "trash garbage bag household" },
+  { icon: "🔋", name: "battery power household" },
+  { icon: "💡", name: "light bulb household" },
+  { icon: "🪥", name: "toothbrush toothpaste personal care" },
+  { icon: "🧼", name: "bar soap cleaning personal care" },
+  { icon: "🪴", name: "plant flower household" },
+  { icon: "🛒", name: "shopping cart grocery general" },
+  { icon: "📦", name: "box package item general" },
+  { icon: "🛍️", name: "shopping bag general" },
+  { icon: "🏷️", name: "tag price label general" }
+];
 
 const CATEGORY_KEYWORDS = {
   "Produce": ["apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons", "lime", "limes", "avocado", "avocados", "tomato", "tomatoes", "potato", "potatoes", "onion", "onions", "garlic", "lettuce", "spinach", "kale", "broccoli", "cauliflower", "carrot", "carrots", "celery", "cucumber", "cucumbers", "pepper", "peppers", "mushroom", "mushrooms", "zucchini", "eggplant", "cabbage", "corn", "peas", "berries", "strawberry", "strawberries", "blueberry", "blueberries", "raspberry", "raspberries", "cranberry", "cranberries", "grape", "grapes", "watermelon", "melon", "pineapple", "mango", "peach", "peaches", "pear", "pears", "plum", "plums", "cilantro", "parsley", "basil", "mint", "herbs"],
@@ -496,15 +626,29 @@ async function load(options = {}) {
 
   try {
     if (currentTab === 'groceries') {
-      const range = encodeURIComponent(`${CONFIG.sheetName}!A:A`);
+      const range = encodeURIComponent(`${CONFIG.sheetName}!A:D`);
       const data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
       const values = data.values || [];
 
       const newItems = values
-        .map((row, index) => ({ row: index + 1, value: String(row[0] ?? "").trim() }))
-        .filter(item => item.value);
+        .map((row, index) => {
+          const val = String(row[0] ?? "").trim();
+          if (!val) return null;
+          return {
+            row: index + 1,
+            value: val,
+            category: String(row[1] ?? "").trim() || null,
+            icon: String(row[2] ?? "").trim() || null,
+            color: String(row[3] ?? "").trim() || null
+          };
+        })
+        .filter(Boolean);
 
-      const changed = newItems.length !== items.length || newItems.some((item, index) => item.value !== items[index]?.value);
+      const changed = newItems.length !== items.length || newItems.some((item, index) => {
+        const existing = items[index];
+        if (!existing) return true;
+        return item.value !== existing.value || item.category !== existing.category || item.icon !== existing.icon || item.color !== existing.color;
+      });
       items = newItems;
 
       if (changed && editingItemRow === null) renderGroceries();
@@ -671,6 +815,20 @@ function renderStatsGrid() {
   });
 }
 
+function getItemCategory(item) {
+  return item.category || categorizeItem(item.value);
+}
+
+function getItemIcon(item) {
+  if (item.icon) return item.icon;
+  return getItemDetails(item.value).icon;
+}
+
+function getItemBgColor(item) {
+  if (item.color) return item.color;
+  return getItemDetails(item.value).bg;
+}
+
 function renderGroceries() {
   const list = $("list");
   list.innerHTML = "";
@@ -683,7 +841,7 @@ function renderGroceries() {
 
   const groups = {};
   CATEGORY_ORDER.forEach(cat => groups[cat] = []);
-  items.forEach(item => groups[categorizeItem(item.value)].push(item));
+  items.forEach(item => groups[getItemCategory(item)].push(item));
 
   CATEGORY_ORDER.forEach(category => {
     const categoryItems = groups[category];
@@ -709,7 +867,7 @@ function renderGroceries() {
       const details = getItemDetails(item.value);
       const row = document.createElement("div");
       row.className = "item";
-      row.style.backgroundColor = details.bg;
+      row.style.backgroundColor = getItemBgColor(item);
       row.style.borderLeft = `5px solid ${details.color}`;
       row.style.borderRadius = "8px";
       row.style.margin = "6px 0";
@@ -722,7 +880,10 @@ function renderGroceries() {
         row.classList.add("editing");
 
         const editForm = document.createElement("form");
-        editForm.className = "edit-form";
+        editForm.className = "edit-form-expanded";
+
+        const mainRow = document.createElement("div");
+        mainRow.className = "edit-row-main";
 
         const editInput = document.createElement("input");
         editInput.type = "text";
@@ -749,13 +910,71 @@ function renderGroceries() {
         };
 
         actions.append(saveBtn, cancelBtn);
-        editForm.append(editInput, actions);
+        mainRow.append(editInput, actions);
+
+        const controlsRow = document.createElement("div");
+        controlsRow.className = "edit-row-controls";
+
+        const catLabel = document.createElement("label");
+        catLabel.className = "preview-field";
+        const catSpan = document.createElement("span");
+        catSpan.className = "preview-label";
+        catSpan.textContent = "Category:";
+
+        const catSelect = document.createElement("select");
+        catSelect.className = "category-select";
+        CATEGORY_ORDER.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          if (c === getItemCategory(item)) opt.selected = true;
+          catSelect.append(opt);
+        });
+        catLabel.append(catSpan, catSelect);
+
+        let selectedEditIcon = getItemIcon(item);
+        const iconBtn = document.createElement("button");
+        iconBtn.type = "button";
+        iconBtn.className = "icon-picker-btn";
+        iconBtn.textContent = selectedEditIcon;
+        iconBtn.title = "Choose Icon";
+        iconBtn.onclick = (e) => {
+          e.stopPropagation();
+          openIconPicker((newIcon) => {
+            selectedEditIcon = newIcon;
+            iconBtn.textContent = newIcon;
+          });
+        };
+
+        let selectedEditColor = getItemBgColor(item);
+        const colorLabel = document.createElement("label");
+        colorLabel.className = "color-picker-wrapper";
+        colorLabel.title = "Choose Color";
+
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = selectedEditColor.startsWith("#") && selectedEditColor.length === 7 ? selectedEditColor : "#ffffff";
+
+        const colorSwatch = document.createElement("span");
+        colorSwatch.className = "color-swatch";
+        colorSwatch.style.backgroundColor = selectedEditColor;
+        colorSwatch.textContent = "🎨";
+
+        colorInput.oninput = (e) => {
+          selectedEditColor = e.target.value;
+          colorSwatch.style.backgroundColor = selectedEditColor;
+        };
+
+        colorLabel.append(colorInput, colorSwatch);
+
+        controlsRow.append(catLabel, iconBtn, colorLabel);
+        editForm.append(mainRow, controlsRow);
 
         editForm.onsubmit = (e) => {
           e.preventDefault();
           const newValue = editInput.value.trim();
-          if (newValue && newValue !== item.value) {
-            updateGroceryItem(item, newValue);
+          if (newValue) {
+            updateGroceryItem(item, newValue, catSelect.value, selectedEditIcon, selectedEditColor);
           } else {
             editingItemRow = null;
             renderGroceries();
@@ -776,7 +995,7 @@ function renderGroceries() {
 
       } else {
         const itemIcon = document.createElement("span");
-        itemIcon.textContent = details.icon;
+        itemIcon.textContent = getItemIcon(item);
         itemIcon.style.marginRight = "10px";
         itemIcon.style.fontSize = "1.2rem";
 
@@ -860,24 +1079,27 @@ function renderGroceries() {
   });
 }
 
-async function updateGroceryItem(item, newValue) {
+async function updateGroceryItem(item, newValue, newCategory, newIcon, newColor) {
   if (!item || !newValue) return;
   editingItemRow = null;
   setStatus("Saving…");
-  const oldText = item.value;
+  const oldState = { ...item };
   item.value = newValue;
+  item.category = newCategory || null;
+  item.icon = newIcon || null;
+  item.color = newColor || null;
   renderGroceries();
 
   try {
-    const rangeA1 = `${CONFIG.sheetName}!A${item.row}`;
+    const rangeA1 = `${CONFIG.sheetName}!A${item.row}:D${item.row}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[newValue]] })
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[newValue, newCategory || "", newIcon || "", newColor || ""]] })
     });
     await load();
   } catch (error) {
-    item.value = oldText;
+    Object.assign(item, oldState);
     renderGroceries();
     setStatus("Couldn't update item: " + error.message, true);
   }
@@ -899,11 +1121,123 @@ function renderBikeList() {
   });
 }
 
+function initCategorySelects() {
+  const sel = $("addCategorySelect");
+  if (!sel) return;
+  sel.innerHTML = "";
+  CATEGORY_ORDER.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    sel.append(opt);
+  });
+}
+
+function updateAddFormPreview() {
+  const text = $("itemInput").value.trim();
+  if (!userHasManuallyChangedCategory) {
+    const autoCat = text ? categorizeItem(text) : "Produce";
+    $("addCategorySelect").value = autoCat;
+  }
+  if (!userHasManuallyChangedIcon) {
+    currentAddIcon = text ? getItemDetails(text).icon : "🛒";
+    $("addIconBtn").textContent = currentAddIcon;
+  }
+}
+
+function resetAddFormState() {
+  userHasManuallyChangedCategory = false;
+  userHasManuallyChangedIcon = false;
+  userCustomColor = null;
+  currentAddIcon = "🛒";
+  $("addIconBtn").textContent = "🛒";
+  $("addColorInput").value = "#ffffff";
+  $("addColorSwatch").style.backgroundColor = "#ffffff";
+  updateAddFormPreview();
+}
+
+function openIconPicker(onSelect) {
+  activeIconPickerCallback = onSelect;
+  $("iconSearchInput").value = "";
+  renderIconGrid("");
+  $("iconModal").hidden = false;
+  setTimeout(() => $("iconSearchInput").focus(), 50);
+}
+
+function closeIconPicker() {
+  $("iconModal").hidden = true;
+  activeIconPickerCallback = null;
+}
+
+$("closeIconModal").onclick = closeIconPicker;
+$("iconModal").onclick = (e) => {
+  if (e.target === $("iconModal")) closeIconPicker();
+};
+
+$("iconSearchInput").addEventListener("input", (e) => {
+  renderIconGrid(e.target.value.toLowerCase().trim());
+});
+
+function renderIconGrid(query) {
+  const grid = $("iconGrid");
+  grid.innerHTML = "";
+
+  const filtered = query
+    ? ICON_LIBRARY.filter(item => item.name.includes(query) || item.icon.includes(query))
+    : ICON_LIBRARY;
+
+  filtered.forEach(item => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "icon-item";
+    btn.textContent = item.icon;
+    btn.title = item.name;
+    btn.onclick = () => {
+      if (activeIconPickerCallback) {
+        activeIconPickerCallback(item.icon);
+      }
+      closeIconPicker();
+    };
+    grid.append(btn);
+  });
+
+  if (!filtered.length) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.style.gridColumn = "1 / -1";
+    emptyMsg.style.textAlign = "center";
+    emptyMsg.style.padding = "20px";
+    emptyMsg.style.opacity = "0.6";
+    emptyMsg.textContent = "No icons found matching '" + query + "'";
+    grid.append(emptyMsg);
+  }
+}
+
+$("itemInput").addEventListener("input", () => {
+  updateAddFormPreview();
+});
+
+$("addCategorySelect").addEventListener("change", () => {
+  userHasManuallyChangedCategory = true;
+});
+
+$("addColorInput").addEventListener("input", (e) => {
+  userCustomColor = e.target.value;
+  $("addColorSwatch").style.backgroundColor = userCustomColor;
+});
+
+$("addIconBtn").onclick = () => {
+  openIconPicker((selectedIcon) => {
+    currentAddIcon = selectedIcon;
+    userHasManuallyChangedIcon = true;
+    $("addIconBtn").textContent = selectedIcon;
+  });
+};
+
 /* =========================================================
    ACTIONS
 ========================================================= */
 
-async function addGroceryItem(value) {
+async function addGroceryItem(value, category, icon, color) {
   setStatus("Adding…");
   try {
     const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A:A")}?majorDimension=ROWS`);
@@ -911,14 +1245,15 @@ async function addGroceryItem(value) {
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
-    const rangeA1 = `${CONFIG.sheetName}!A${target + 1}`;
+    const rangeA1 = `${CONFIG.sheetName}!A${target + 1}:D${target + 1}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value]] })
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value, category || "", icon || "", color || ""]] })
     });
 
     $("itemInput").value = "";
+    resetAddFormState();
     await load();
   } catch (error) {
     setStatus(error.message === "RATE_LIMIT" ? "Google rate limit reached. Please try again." : error.message, true);
@@ -976,7 +1311,10 @@ async function removeGroceryItem(item) {
 $("addForm").onsubmit = event => {
   event.preventDefault();
   const value = $("itemInput").value.trim();
-  if (value) addGroceryItem(value);
+  const category = $("addCategorySelect").value;
+  const icon = currentAddIcon;
+  const color = userCustomColor;
+  if (value) addGroceryItem(value, category, icon, color);
 };
 
 $("refreshBtn").onclick = () => load();
@@ -1001,6 +1339,7 @@ $("signOutBtn").onclick = () => {
 ========================================================= */
 
 window.addEventListener("load", () => {
+  initCategorySelects();
   setTimeout(() => {
     const cachedToken = localStorage.getItem("google_access_token");
     const tokenExpiry = localStorage.getItem("google_token_expiry");
