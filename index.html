@@ -934,12 +934,15 @@ function stopAutoSync() {
   }
 }
 
-document.addEventListener("visibilitychange", () => {
+document.addEventListener("visibilitychange", async () => {
   if (document.hidden) {
     stopAutoSync();
-  } else if (accessToken) {
-    load({ silent: true });
-    startAutoSync();
+  } else {
+    const ok = await ensureValidToken(false);
+    if (ok) {
+      load({ silent: true });
+      startAutoSync();
+    }
   }
 });
 
