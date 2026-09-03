@@ -16,7 +16,7 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
@@ -35,6 +35,8 @@
     .small{font-size:13px;opacity:.6;min-height:20px}
     .primary{height:50px;padding:0 20px;border:0;border-radius:14px;background:#24231f;color:#fff;font-size:16px;font-weight:700;cursor:pointer;flex-shrink:0;transition:transform .1s,opacity .1s}
     .icon-button{width:46px;height:46px;border:0;border-radius:50%;background:#fff;font-size:24px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:center}
+    .reconnect-banner{background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background 0.2s}
+    .reconnect-banner:hover{background:#fde68a}
 
     .tabs{display:flex;gap:10px;margin-bottom:20px}
     .tab{flex:1;padding:12px;border:none;border-radius:10px;font-size:1rem;font-weight:600;background:#e5e7eb;color:#4b5563;cursor:pointer;transition:all 0.2s}
@@ -127,9 +129,12 @@
       <h1 id="headerTitle">What do we need?</h1>
     </div>
 
-    <button class="icon-button" id="refreshBtn" aria-label="Refresh">
-      ↻
-    </button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button type="button" id="reconnectBtn" class="reconnect-banner" hidden title="Tap to reconnect Google Sheets">⚠️ Reconnect</button>
+      <button class="icon-button" id="refreshBtn" aria-label="Refresh">
+        ↻
+      </button>
+    </div>
   </header>
 
 
@@ -648,33 +653,96 @@ function handleTokenReceived(token, expiresInSeconds = 3600) {
   const expiryTime = Date.now() + (expiresInSeconds * 1000) - 60000; // 1 min buffer
   localStorage.setItem("google_access_token", token);
   localStorage.setItem("google_token_expiry", expiryTime);
+  localStorage.setItem("has_connected_google", "true");
   localStorage.setItem("autoLogin", "true");
 
   loginCard.hidden = true;
   appPanel.hidden = false;
-  load();
+  const recBtn = $("reconnectBtn");
+  if (recBtn) recBtn.hidden = true;
+  load({ silent: true });
   startAutoSync();
 }
 
-function startGoogle() {
-  if (!window.google?.accounts?.oauth2) {
-    setLoginStatus("Google sign-in is still loading. Try again in a moment.");
-    return;
-  }
-
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CONFIG.clientId,
-    scope: CONFIG.scope,
-    callback: response => {
-      if (response.error) {
-        setLoginStatus("Google authorization failed.");
-        return;
-      }
-      handleTokenReceived(response.access_token, response.expires_in || 3600);
+function refreshTokenSilently() {
+  return new Promise((resolve) => {
+    if (!window.google?.accounts?.oauth2) return resolve(false);
+    try {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CONFIG.clientId,
+        scope: CONFIG.scope,
+        callback: response => {
+          if (!response.error && response.access_token) {
+            handleTokenReceived(response.access_token, response.expires_in || 3600);
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }
+      });
+      tokenClient.requestAccessToken({ prompt: "" });
+    } catch {
+      resolve(false);
     }
   });
+}
 
-  tokenClient.requestAccessToken({ prompt: "" });
+function requestUserAuth() {
+  return new Promise((resolve) => {
+    if (!window.google?.accounts?.oauth2) {
+      setLoginStatus("Google sign-in is still loading. Try again in a moment.");
+      return resolve(false);
+    }
+    try {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CONFIG.clientId,
+        scope: CONFIG.scope,
+        callback: response => {
+          if (!response.error && response.access_token) {
+            handleTokenReceived(response.access_token, response.expires_in || 3600);
+            resolve(true);
+          } else {
+            setLoginStatus("Google authorization failed.");
+            resolve(false);
+          }
+        }
+      });
+      tokenClient.requestAccessToken({ prompt: "" });
+    } catch (e) {
+      setLoginStatus("Error initiating sign-in: " + e.message);
+      resolve(false);
+    }
+  });
+}
+
+async function ensureValidToken(interactive = false) {
+  const cachedToken = localStorage.getItem("google_access_token");
+  const tokenExpiry = parseInt(localStorage.getItem("google_token_expiry") || "0", 10);
+
+  if (cachedToken && Date.now() < tokenExpiry) {
+    accessToken = cachedToken;
+    const recBtn = $("reconnectBtn");
+    if (recBtn) recBtn.hidden = true;
+    return true;
+  }
+
+  if (!interactive) {
+    const ok = await refreshTokenSilently();
+    if (ok) return true;
+    if (localStorage.getItem("has_connected_google") === "true") {
+      const recBtn = $("reconnectBtn");
+      if (recBtn) recBtn.hidden = false;
+    }
+    return false;
+  } else {
+    const ok = await requestUserAuth();
+    if (ok) return true;
+    return false;
+  }
+}
+
+function startGoogle() {
+  requestUserAuth();
 }
 
 $("loginBtn").onclick = startGoogle;
@@ -688,7 +756,17 @@ function authHeaders() {
    SHEETS API
 ========================================================= */
 
-async function sheetsFetch(path, options = {}) {
+async function sheetsFetch(path, options = {}, isRetry = false) {
+  const tokenExpiry = parseInt(localStorage.getItem("google_token_expiry") || "0", 10);
+  if (!accessToken || Date.now() >= tokenExpiry) {
+    const refreshed = await ensureValidToken(false);
+    if (!refreshed && !accessToken) {
+      const recBtn = $("reconnectBtn");
+      if (recBtn) recBtn.hidden = false;
+      throw new Error("AUTH_PAUSED");
+    }
+  }
+
   const response = await fetch(API + "/" + CONFIG.spreadsheetId + path, {
     ...options,
     headers: { ...authHeaders(), ...(options.headers || {}) }
@@ -697,10 +775,15 @@ async function sheetsFetch(path, options = {}) {
   if (response.status === 401) {
     accessToken = null;
     localStorage.removeItem("google_access_token");
-    localStorage.removeItem("google_token_expiry");
-    localStorage.removeItem("autoLogin");
-    stopAutoSync();
-    throw new Error("Your Google authorization expired. Please sign in again.");
+    if (!isRetry) {
+      const refreshed = await ensureValidToken(false);
+      if (refreshed) {
+        return sheetsFetch(path, options, true);
+      }
+    }
+    const recBtn = $("reconnectBtn");
+    if (recBtn) recBtn.hidden = false;
+    throw new Error("AUTH_PAUSED");
   }
 
   if (response.status === 429) throw new Error("RATE_LIMIT");
@@ -722,7 +805,16 @@ async function sheetsFetch(path, options = {}) {
 
 async function load(options = {}) {
   const silent = options.silent === true;
-  if (syncInProgress || !accessToken) return;
+  if (syncInProgress) return;
+
+  if (!accessToken) {
+    const ok = await ensureValidToken(false);
+    if (!ok) {
+      if (!silent) setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"} (cached)` : "");
+      return;
+    }
+  }
+
   syncInProgress = true;
   if (!silent) setStatus("Loading…");
   $("refreshBtn").disabled = true;
@@ -755,6 +847,7 @@ async function load(options = {}) {
       items = newItems;
 
       if (changed && editingItemRow === null) renderGroceries();
+      localStorage.setItem("cached_groceries", JSON.stringify(items));
       if (!silent) setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
 
     } else if (currentTab === 'bike') {
@@ -788,29 +881,31 @@ async function load(options = {}) {
       statCardsData = newStatCards;
       renderStatsGrid();
       renderBikeList();
+      localStorage.setItem("cached_bike_dates", JSON.stringify(bikeDates));
+      localStorage.setItem("cached_bike_stats", JSON.stringify(statCardsData));
       if (!silent) setStatus("");
     }
 
     updateLastUpdated();
+    localStorage.setItem("cached_last_updated", $("lastUpdated").textContent);
+    const recBtn = $("reconnectBtn");
+    if (recBtn) recBtn.hidden = true;
     rateLimitBackoff = 0;
   }
   catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      const recBtn = $("reconnectBtn");
+      if (recBtn) recBtn.hidden = false;
+      if (!silent) setStatus("Offline (cached data). Tap Reconnect to sync.", false);
+      return;
+    }
     if (error.message === "RATE_LIMIT") {
       rateLimitBackoff = Math.min(rateLimitBackoff + 1, 5);
       setTimeout(() => {
         if (accessToken && !document.hidden) load({ silent: true });
       }, Math.pow(2, rateLimitBackoff) * 1000);
     } else {
-      if (/authorization expired|sign in/i.test(error.message)) {
-        stopAutoSync();
-        localStorage.removeItem("google_access_token");
-        localStorage.removeItem("google_token_expiry");
-        localStorage.removeItem("autoLogin");
-        appPanel.hidden = true;
-        loginCard.hidden = false;
-      } else {
-        setStatus(error.message, true);
-      }
+      setStatus(error.message, true);
     }
   }
   finally {
@@ -1191,9 +1286,15 @@ async function updateGroceryItem(item, newValue, newCategory, newIcon, newColor)
   item.category = newCategory || null;
   item.icon = newIcon || null;
   item.color = newColor || null;
+  localStorage.setItem("cached_groceries", JSON.stringify(items));
   renderGroceries();
 
   try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Updated locally. Tap Reconnect to sync with Google.", false);
+      return;
+    }
     const rangeA1 = `${CONFIG.sheetName}!A${item.row}:D${item.row}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
@@ -1202,9 +1303,14 @@ async function updateGroceryItem(item, newValue, newCategory, newIcon, newColor)
     });
     await load();
   } catch (error) {
-    Object.assign(item, oldState);
-    renderGroceries();
-    setStatus("Couldn't update item: " + error.message, true);
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Updated locally. Tap Reconnect to sync with Google.", false);
+    } else {
+      Object.assign(item, oldState);
+      localStorage.setItem("cached_groceries", JSON.stringify(items));
+      renderGroceries();
+      setStatus("Couldn't update item: " + error.message, true);
+    }
   }
 }
 
@@ -1411,6 +1517,11 @@ $("addIconBtn").onclick = () => {
 async function addGroceryItem(value, category, icon, color) {
   setStatus("Adding…");
   try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+      return;
+    }
     const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A:A")}?majorDimension=ROWS`);
     const rows = values.values || [];
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
@@ -1427,7 +1538,11 @@ async function addGroceryItem(value, category, icon, color) {
     resetAddFormState();
     await load();
   } catch (error) {
-    setStatus(error.message === "RATE_LIMIT" ? "Google rate limit reached. Please try again." : error.message, true);
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+    } else {
+      setStatus(error.message === "RATE_LIMIT" ? "Google rate limit reached. Please try again." : error.message, true);
+    }
   }
 }
 
@@ -1435,6 +1550,11 @@ $("addTodayBtn").onclick = async () => {
   setStatus("Adding today's ride...");
   $("addTodayBtn").disabled = true;
   try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+      return;
+    }
     const today = new Date();
     const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
     const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.bikeSheetName + "!A:A")}?majorDimension=ROWS`);
@@ -1452,7 +1572,11 @@ $("addTodayBtn").onclick = async () => {
     confettiExplosion($("addTodayBtn"));
     await load();
   } catch (error) {
-    setStatus("Error saving ride: " + error.message, true);
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+    } else {
+      setStatus("Error saving ride: " + error.message, true);
+    }
   } finally {
     $("addTodayBtn").disabled = false;
   }
@@ -1463,9 +1587,15 @@ async function removeGroceryItem(item) {
   setStatus("Removing…");
   const previousItems = [...items];
   items = items.filter(current => current !== item);
+  localStorage.setItem("cached_groceries", JSON.stringify(items));
   renderGroceries();
 
   try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Removed locally. Tap Reconnect to sync.", false);
+      return;
+    }
     await sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + item.row)}:clear`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1473,9 +1603,14 @@ async function removeGroceryItem(item) {
     });
     await load();
   } catch (error) {
-    items = previousItems;
-    renderGroceries();
-    setStatus("Couldn't delete the item: " + error.message, true);
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Removed locally. Tap Reconnect to sync with Google.", false);
+    } else {
+      items = previousItems;
+      localStorage.setItem("cached_groceries", JSON.stringify(items));
+      renderGroceries();
+      setStatus("Couldn't delete the item: " + error.message, true);
+    }
   }
 }
 
@@ -1499,6 +1634,11 @@ $("signOutBtn").onclick = () => {
   localStorage.removeItem("google_access_token");
   localStorage.removeItem("google_token_expiry");
   localStorage.removeItem("autoLogin");
+  localStorage.removeItem("has_connected_google");
+  localStorage.removeItem("cached_groceries");
+  localStorage.removeItem("cached_bike_dates");
+  localStorage.removeItem("cached_bike_stats");
+  localStorage.removeItem("cached_last_updated");
   appPanel.hidden = true;
   loginCard.hidden = false;
   $("lastUpdated").textContent = "Last updated: —";
@@ -1506,41 +1646,76 @@ $("signOutBtn").onclick = () => {
 };
 
 /* =========================================================
-   INITIAL LOAD & SESSION CHECK
+   INITIAL LOAD & CACHE RESTORATION
 ========================================================= */
+
+function restoreLocalCache() {
+  const hasConnected = localStorage.getItem("has_connected_google") === "true" || localStorage.getItem("autoLogin") === "true";
+  const cachedGroceries = localStorage.getItem("cached_groceries");
+  const cachedBikeDates = localStorage.getItem("cached_bike_dates");
+  const cachedBikeStats = localStorage.getItem("cached_bike_stats");
+  const cachedLastUpdated = localStorage.getItem("cached_last_updated");
+
+  if (hasConnected || cachedGroceries) {
+    loginCard.hidden = true;
+    appPanel.hidden = false;
+
+    if (cachedGroceries) {
+      try {
+        items = JSON.parse(cachedGroceries);
+        renderGroceries();
+        setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
+      } catch {}
+    }
+    if (cachedBikeDates) {
+      try {
+        bikeDates = JSON.parse(cachedBikeDates);
+        renderBikeList();
+      } catch {}
+    }
+    if (cachedBikeStats) {
+      try {
+        statCardsData = JSON.parse(cachedBikeStats);
+        renderStatsGrid();
+      } catch {}
+    }
+    if (cachedLastUpdated) {
+      $("lastUpdated").textContent = cachedLastUpdated;
+    }
+  }
+}
+
+// Restore cached UI immediately on script execution!
+restoreLocalCache();
 
 window.addEventListener("load", () => {
   initCategorySelects();
-  setTimeout(() => {
-    const cachedToken = localStorage.getItem("google_access_token");
-    const tokenExpiry = localStorage.getItem("google_token_expiry");
 
-    // If we have a cached token that hasn't expired yet, reuse it immediately!
-    if (cachedToken && tokenExpiry && Date.now() < parseInt(tokenExpiry, 10)) {
-      accessToken = cachedToken;
-      loginCard.hidden = true;
-      appPanel.hidden = false;
-      load();
-      startAutoSync();
-      return;
-    }
+  const recBtn = $("reconnectBtn");
+  if (recBtn) {
+    recBtn.onclick = async () => {
+      setStatus("Reconnecting to Google…");
+      const ok = await requestUserAuth();
+      if (ok) {
+        await load();
+        startAutoSync();
+      }
+    };
+  }
 
-    // Otherwise, try background silent login if user was logged in before
-    if (localStorage.getItem("autoLogin") === "true" && window.google?.accounts?.oauth2) {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CONFIG.clientId,
-        scope: CONFIG.scope,
-        callback: response => {
-          if (!response.error) {
-            handleTokenReceived(response.access_token, response.expires_in || 3600);
-          } else {
-            localStorage.removeItem("autoLogin");
-          }
-        }
-      });
-      tokenClient.requestAccessToken({ prompt: "" });
-    }
-  }, 500);
+  const hasConnected = localStorage.getItem("has_connected_google") === "true" || localStorage.getItem("autoLogin") === "true";
+  if (hasConnected) {
+    setTimeout(async () => {
+      const ok = await ensureValidToken(false);
+      if (ok) {
+        load({ silent: true });
+        startAutoSync();
+      } else {
+        const btn = $("reconnectBtn");
+        if (btn) btn.hidden = false;
+      }
+    }, 300);
+  }
 });
 
 </script>
