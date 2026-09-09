@@ -358,13 +358,13 @@ const appPanel = $("appPanel");
 
 const CATEGORY_ORDER = [
   "Produce", "Dairy & Eggs", "Meat & Fish", "Bakery", "Pantry",
-  "Frozen", "Drinks", "Snacks", "Household", "Personal Care", "Other"
+  "Frozen", "Drinks", "Snacks", "Household", "Pet Supplies", "Personal Care", "Other"
 ];
 
 const CATEGORY_ICONS = {
   "Produce": "🥬", "Dairy & Eggs": "🥛", "Meat & Fish": "🥩", "Bakery": "🥖",
   "Pantry": "🥫", "Frozen": "🧊", "Drinks": "🥤", "Snacks": "🍿",
-  "Household": "🧹", "Personal Care": "🧴", "Other": "🛒"
+  "Household": "🧹", "Pet Supplies": "🐾", "Personal Care": "🧴", "Other": "🛒"
 };
 
 const ICON_LIBRARY = [
@@ -531,9 +531,9 @@ const ICON_LIBRARY = [
 const GROCERY_DICTIONARY = [
   "Apples", "Apple Juice", "Apple Cider", "Avocados", "Arugula", "Almonds", "Almond Milk", "Aluminum Foil", "Asparagus", "Artichokes",
   "Bananas", "Bagels", "Bacon", "Bread", "Broccoli", "Butter", "Blueberries", "Blackberries", "Beef", "Bell Peppers", "Baking Soda", "Baking Powder", "Beans", "Black Beans", "Brown Sugar", "Bleach", "Body Wash", "Batteries", "Baguette", "BBQ Sauce", "Basil", "Baby Wipes", "Beer", "Brioche",
-  "Carrots", "Chicken", "Chicken Breast", "Chicken Wings", "Chicken Thighs", "Cheese", "Cheddar Cheese", "Cottage Cheese", "Cream Cheese", "Coffee", "Coffee Beans", "Cranberries", "Cucumbers", "Celery", "Corn", "Cauliflower", "Cabbage", "Cilantro", "Cereal", "Crackers", "Chips", "Chocolate", "Cookies", "Croissants", "Cat Food", "Conditioner", "Cleaning Spray", "Cantaloupe", "Cherries", "Couscous", "Coconut Milk",
+  "Carrots", "Chicken", "Chicken Breast", "Chicken Wings", "Chicken Thighs", "Cheese", "Cheddar Cheese", "Cottage Cheese", "Cream Cheese", "Coffee", "Coffee Beans", "Cranberries", "Cucumbers", "Celery", "Corn", "Cauliflower", "Cabbage", "Cilantro", "Cereal", "Crackers", "Chips", "Chocolate", "Cookies", "Croissants", "Cat Food", "Conditioner", "Cleaning Spray", "Cantaloupe", "Cherries", "Couscous", "Coconut Milk", "Canned Tuna", "Canned Chicken", "Canned Salmon", "Canned Sardines", "Canned Black Beans", "Canned Chickpeas", "Canned Corn", "Canned Peas", "Canned Green Beans", "Canned Carrots", "Canned Tomatoes", "Canned Pumpkin", "Canned Peaches", "Canned Pears", "Canned Pineapple", "Canned Mandarin Oranges", "Canned Fruit Cocktail", "Canned Coconut Milk", "Canned Hearts of Palm", "Canned Chili", "Canned Soup", "Chili Con Carne", "Condensed Milk",
   "Dairy Free Milk", "Deli Turkey", "Deli Ham", "Dish Soap", "Dishwasher Pods", "Deodorant", "Diapers", "Diet Coke", "Donuts", "Salad Dressing", "Dog Food", "Dijon Mustard",
-  "Eggs", "Egg Whites", "Eggplant", "Energy Drinks", "English Muffins", "Espresso", "Extra Virgin Olive Oil", "Edamame",
+  "Eggs", "Egg Whites", "Eggplant", "Energy Drinks", "English Muffins", "Espresso", "Extra Virgin Olive Oil", "Edamame", "Evaporated Milk",
   "Fish", "Frozen Pizza", "Frozen Vegetables", "Frozen Fruit", "Frozen Waffles", "Frozen Chicken", "Flour", "Floss", "Foil", "French Fries", "Feta Cheese", "Fresh Mozzarella",
   "Garlic", "Grapes", "Green Beans", "Greek Yogurt", "Ground Beef", "Ground Turkey", "Granola", "Granola Bars", "Gummy Bears", "Grapefruit", "Ginger", "Garbage Bags", "Goat Cheese", "Gouda",
   "Half and Half", "Ham", "Hamburger Buns", "Hot Dogs", "Hot Dog Buns", "Hot Sauce", "Honey", "Hummus", "Heavy Cream", "Hand Soap", "Herbs", "Honeydew", "Hash Browns",
@@ -555,17 +555,207 @@ const GROCERY_DICTIONARY = [
   "Zucchini"
 ];
 
+/* Exact-phrase overrides, checked before keywords (first match wins).
+   Handles cases where a substring would misfire, e.g. "orange juice" (not
+   produce), "ice cream" (not dairy), "pita chips" (not bakery). */
+const CATEGORY_PHRASES = [
+  { match: "canned", category: "Pantry" },
+  { match: "can of", category: "Pantry" },
+  { match: "tinned", category: "Pantry" },
+  { match: "in a can", category: "Pantry" },
+  { match: "chili con carne", category: "Pantry" },
+  { match: "ice", category: "Frozen", exact: true },
+  { match: "cider vinegar", category: "Pantry" },
+  { match: "wine vinegar", category: "Pantry" },
+  { match: "chicken broth", category: "Pantry" },
+  { match: "chicken stock", category: "Pantry" },
+  { match: "beef broth", category: "Pantry" },
+  { match: "beef stock", category: "Pantry" },
+  { match: "vegetable broth", category: "Pantry" },
+  { match: "vegetable stock", category: "Pantry" },
+  { match: "veggie broth", category: "Pantry" },
+  { match: "bone broth", category: "Pantry" },
+  { match: "chicken noodle", category: "Pantry" },
+  { match: "chicken soup", category: "Pantry" },
+  { match: "tomato soup", category: "Pantry" },
+  { match: "mushroom soup", category: "Pantry" },
+  { match: "vegetable soup", category: "Pantry" },
+  { match: "lentil soup", category: "Pantry" },
+  { match: "split pea", category: "Pantry" },
+  { match: "clam chowder", category: "Pantry" },
+  { match: "wonton soup", category: "Pantry" },
+  { match: "miso soup", category: "Pantry" },
+  { match: "cream of", category: "Pantry" },
+  { match: "bisque", category: "Pantry" },
+  { match: "beef stew", category: "Pantry" },
+  { match: "salad dressing", category: "Pantry" },
+  { match: "tomato sauce", category: "Pantry" },
+  { match: "tomato paste", category: "Pantry" },
+  { match: "pizza sauce", category: "Pantry" },
+  { match: "apple sauce", category: "Pantry" },
+  { match: "applesauce", category: "Pantry" },
+  { match: "cranberry sauce", category: "Pantry" },
+  { match: "fish sauce", category: "Pantry" },
+  { match: "steak sauce", category: "Pantry" },
+  { match: "duck sauce", category: "Pantry" },
+  { match: "plum sauce", category: "Pantry" },
+  { match: "pie filling", category: "Pantry" },
+  { match: "pumpkin pie filling", category: "Pantry" },
+  { match: "pumpkin puree", category: "Pantry" },
+  { match: "pumpkin purée", category: "Pantry" },
+  { match: "peanut butter", category: "Pantry" },
+  { match: "almond butter", category: "Pantry" },
+  { match: "cashew butter", category: "Pantry" },
+  { match: "sunflower butter", category: "Pantry" },
+  { match: "nut butter", category: "Pantry" },
+  { match: "hamburger bun", category: "Bakery" },
+  { match: "hamburger buns", category: "Bakery" },
+  { match: "hot dog bun", category: "Bakery" },
+  { match: "hot dog buns", category: "Bakery" },
+  { match: "hot dog roll", category: "Bakery" },
+  { match: "corn tortilla", category: "Bakery" },
+  { match: "corn tortillas", category: "Bakery" },
+  { match: "bread crumb", category: "Pantry" },
+  { match: "bread crumbs", category: "Pantry" },
+  { match: "cookie dough", category: "Pantry" },
+  { match: "cake mix", category: "Pantry" },
+  { match: "pancake mix", category: "Pantry" },
+  { match: "pancake batter", category: "Pantry" },
+  { match: "cooking spray", category: "Pantry" },
+  { match: "nonstick cooking spray", category: "Pantry" },
+  { match: "protein shake", category: "Drinks" },
+  { match: "coffee filter", category: "Household" },
+  { match: "plastic wrap", category: "Household" },
+  { match: "black pepper", category: "Pantry" },
+  { match: "white pepper", category: "Pantry" },
+  { match: "peppercorn", category: "Pantry" },
+  { match: "chili powder", category: "Pantry" },
+  { match: "chili flakes", category: "Pantry" },
+  { match: "chili crisp", category: "Pantry" },
+  { match: "onion powder", category: "Pantry" },
+  { match: "garlic powder", category: "Pantry" },
+  { match: "garlic salt", category: "Pantry" },
+  { match: "lemon extract", category: "Pantry" },
+  { match: "vanilla extract", category: "Pantry" },
+  { match: "almond extract", category: "Pantry" },
+  { match: "mint extract", category: "Pantry" },
+  { match: "orange extract", category: "Pantry" },
+  { match: "vanilla bean", category: "Pantry" },
+  { match: "rose water", category: "Pantry" },
+  { match: "orange blossom water", category: "Pantry" },
+  { match: "mustard greens", category: "Produce" },
+  { match: "collard greens", category: "Produce" },
+  { match: "turnip greens", category: "Produce" },
+  { match: "beet greens", category: "Produce" },
+  { match: "butter lettuce", category: "Produce" },
+  { match: "butterhead", category: "Produce" },
+  { match: "sugar snap", category: "Produce" },
+  { match: "water chestnut", category: "Produce" },
+  { match: "bamboo shoot", category: "Produce" },
+  { match: "hearts of palm", category: "Produce" },
+  { match: "palm hearts", category: "Produce" },
+  { match: "stone fruit", category: "Produce" },
+  { match: "eggplant", category: "Produce" },
+  { match: "veggie burger", category: "Produce" },
+  { match: "veggie patty", category: "Produce" },
+  { match: "plant-based", category: "Produce" },
+  { match: "tofurky", category: "Produce" },
+  { match: "green bean", category: "Produce" },
+  { match: "wax bean", category: "Produce" },
+  { match: "orange juice", category: "Drinks" },
+  { match: "apple juice", category: "Drinks" },
+  { match: "apple cider", category: "Drinks" },
+  { match: "grape juice", category: "Drinks" },
+  { match: "cranberry juice", category: "Drinks" },
+  { match: "hot chocolate", category: "Drinks" },
+  { match: "eggnog", category: "Drinks" },
+  { match: "ginger ale", category: "Drinks" },
+  { match: "coconut water", category: "Drinks" },
+  { match: "milk shake", category: "Drinks" },
+  { match: "milkshake", category: "Drinks" },
+  { match: "ice cream", category: "Frozen" },
+  { match: "frozen yogurt", category: "Frozen" },
+  { match: "egg roll", category: "Frozen" },
+  { match: "egg rolls", category: "Frozen" },
+  { match: "corn dog", category: "Frozen" },
+  { match: "corn dogs", category: "Frozen" },
+  { match: "french toast", category: "Frozen" },
+  { match: "pot pie", category: "Frozen" },
+  { match: "chicken pot pie", category: "Frozen" },
+  { match: "tortilla chips", category: "Snacks" },
+  { match: "pita chips", category: "Snacks" },
+  { match: "potato chips", category: "Snacks" },
+  { match: "potato chip", category: "Snacks" },
+  { match: "kale chips", category: "Snacks" },
+  { match: "kale chip", category: "Snacks" },
+  { match: "granola bar", category: "Snacks" },
+  { match: "protein bar", category: "Snacks" },
+  { match: "beef jerky", category: "Snacks" },
+  { match: "turkey jerky", category: "Snacks" },
+  { match: "caramel corn", category: "Snacks" },
+  { match: "kettle corn", category: "Snacks" },
+  { match: "veggie straws", category: "Snacks" },
+  { match: "veggie straw", category: "Snacks" },
+  { match: "veggie sticks", category: "Snacks" },
+  { match: "seaweed snacks", category: "Snacks" },
+  { match: "seaweed snack", category: "Snacks" },
+  { match: "jelly beans", category: "Snacks" },
+  { match: "jelly bean", category: "Snacks" },
+  { match: "breath mints", category: "Snacks" },
+  { match: "mint gum", category: "Snacks" },
+  { match: "rice cakes", category: "Snacks" },
+  { match: "rice cake", category: "Snacks" },
+  { match: "ramen", category: "Pantry" },
+  { match: "chicken ramen", category: "Pantry" },
+  { match: "beef ramen", category: "Pantry" },
+  { match: "chicken curry", category: "Pantry" },
+  { match: "green curry", category: "Pantry" },
+  { match: "red curry", category: "Pantry" },
+  { match: "macaroni and cheese", category: "Pantry" },
+  { match: "mac and cheese", category: "Pantry" },
+  { match: "chili dog", category: "Meat & Fish" },
+  { match: "cough syrup", category: "Personal Care" },
+  { match: "fish oil", category: "Personal Care" },
+  { match: "shaving cream", category: "Personal Care" },
+  { match: "dried fruit", category: "Snacks" },
+  { match: "dried cranberries", category: "Snacks" },
+  { match: "dried cranberry", category: "Snacks" },
+  { match: "dried mango", category: "Snacks" },
+  { match: "dried apricots", category: "Snacks" },
+  { match: "dried apricot", category: "Snacks" },
+  { match: "dried apple", category: "Snacks" },
+  { match: "dried pineapple", category: "Snacks" },
+  { match: "dried banana", category: "Snacks" },
+  { match: "dried beans", category: "Pantry" },
+  { match: "dried lentils", category: "Pantry" },
+  { match: "dried chickpeas", category: "Pantry" },
+  { match: "sun-dried", category: "Pantry" },
+  { match: "sun dried", category: "Pantry" },
+  { match: "fruit cups", category: "Pantry" },
+  { match: "fruit cup", category: "Pantry" },
+  { match: "vegetable oil", category: "Pantry" },
+  { match: "vegetable shortening", category: "Pantry" },
+  { match: "vegetable juice", category: "Drinks" },
+  { match: "veggie chips", category: "Snacks" },
+  { match: "fruit snacks", category: "Snacks" },
+  { match: "fruit snack", category: "Snacks" },
+  { match: "fruit leather", category: "Snacks" }
+];
+
+/* Keyword lists, matched on whole words (word boundaries) so short words
+   can't misfire — e.g. "ham" won't match "shampoo", "tea" won't match "steak". */
 const CATEGORY_KEYWORDS = {
-  "Produce": ["apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons", "lime", "limes", "avocado", "avocados", "tomato", "tomatoes", "potato", "potatoes", "onion", "onions", "garlic", "lettuce", "spinach", "kale", "broccoli", "cauliflower", "carrot", "carrots", "celery", "cucumber", "cucumbers", "pepper", "peppers", "mushroom", "mushrooms", "zucchini", "eggplant", "cabbage", "corn", "peas", "berries", "strawberry", "strawberries", "blueberry", "blueberries", "raspberry", "raspberries", "cranberry", "cranberries", "grape", "grapes", "watermelon", "melon", "pineapple", "mango", "peach", "peaches", "pear", "pears", "plum", "plums", "cilantro", "parsley", "basil", "mint", "herbs"],
-  "Dairy & Eggs": ["milk", "cream", "half and half", "half-and-half", "cheese", "cheddar", "mozzarella", "parmesan", "yogurt", "yoghurt", "butter", "eggs", "egg", "sour cream", "cottage cheese", "cream cheese", "whipped cream"],
-  "Meat & Fish": ["chicken", "beef", "steak", "ground beef", "hamburger", "burger", "turkey", "pork", "ham", "bacon", "sausage", "hot dog", "hot dogs", "salami", "pastrami", "meat", "fish", "salmon", "tuna", "cod", "tilapia", "shrimp", "lobster", "crab", "meatballs", "lamb"],
-  "Bakery": ["bread", "bagel", "bagels", "roll", "rolls", "bun", "buns", "croissant", "croissants", "muffin", "muffins", "tortilla", "tortillas", "pita", "pitas", "cake", "cakes", "cookie", "cookies", "donut", "donuts"],
-  "Pantry": ["rice", "pasta", "noodles", "flour", "sugar", "salt", "pepper", "oil", "olive oil", "vinegar", "sauce", "tomato sauce", "marinara", "ketchup", "mustard", "mayonnaise", "mayo", "relish", "soy sauce", "hot sauce", "spices", "cereal", "oatmeal", "oats", "beans", "lentils", "chickpeas", "peanut butter", "jelly", "jam", "honey", "maple syrup", "baking soda", "baking powder", "canned", "can of", "soup", "broth", "stock", "crackers"],
-  "Frozen": ["frozen", "ice cream", "icecream", "frozen pizza", "frozen vegetables", "frozen fruit", "frozen chicken", "frozen fries", "fries", "tater tots", "frozen waffles", "frozen pancakes"],
-  "Drinks": ["water", "sparkling water", "seltzer", "soda", "juice", "orange juice", "apple juice", "coffee", "tea", "iced tea", "lemonade", "sports drink", "energy drink", "drink", "drinks"],
-  "Snacks": ["chips", "pretzels", "popcorn", "nuts", "almonds", "cashews", "peanuts", "trail mix", "granola bar", "granola bars", "protein bar", "protein bars", "candy", "chocolate", "gummy", "gummies", "snack", "snacks"],
-  "Household": ["paper towel", "paper towels", "toilet paper", "tissues", "napkins", "trash bag", "trash bags", "garbage bag", "garbage bags", "foil", "aluminum foil", "plastic wrap", "ziplock", "ziploc", "dish soap", "dishwasher", "detergent", "laundry", "bleach", "cleaner", "cleaning", "sponge", "sponges", "broom", "mop", "vacuum", "light bulb", "batteries"],
-  "Personal Care": ["shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss", "deodorant", "razor", "razors", "shaving", "lotion", "sunscreen", "mouthwash", "diapers", "wipes", "baby wipes", "baby lotion", "baby soap"]
+  "Frozen": ["frozen", "icecream", "froyo", "gelato", "sorbet", "popsicles", "popsicle", "ice pop", "ice pops", "taquitos", "taquito", "potstickers", "potsticker", "wontons", "wonton", "dumplings", "dumpling", "pierogies", "pierogi", "pizza rolls", "pizza roll", "hot pockets", "hot pocket", "french fries", "fries", "hash browns", "hash brown", "tater tots", "tater tot", "waffles", "waffle", "pancakes", "pancake", "cool whip", "tv dinner", "frozen meal", "frozen dinners", "frozen dinner", "dry ice", "bag of ice", "ice cubes", "ice cube", "crushed ice", "pizza"],
+  "Meat & Fish": ["chicken", "beef", "steak", "ground beef", "turkey", "pork", "ham", "bacon", "sausage", "sausages", "pepperoni", "prosciutto", "chorizo", "pancetta", "capicola", "mortadella", "bratwurst", "kielbasa", "andouille", "salami", "pastrami", "hot dogs", "hot dog", "veal", "venison", "bison", "duck", "goose", "rabbit", "lamb", "meatballs", "meatball", "meatloaf", "meat", "hamburger", "hamburgers", "burger", "burgers", "fish", "salmon", "tuna", "cod", "tilapia", "halibut", "trout", "bass", "catfish", "snapper", "mahi", "swordfish", "flounder", "sole", "haddock", "pollock", "grouper", "sardines", "sardine", "anchovies", "anchovy", "clams", "clam", "mussels", "mussel", "oysters", "oyster", "scallops", "scallop", "shrimp", "prawns", "prawn", "lobster", "crab", "crawfish", "calamari", "squid", "octopus", "lox", "sashimi", "sushi", "surimi", "caviar", "whitefish", "ahi", "spam", "ribs", "rib", "ribeye", "sirloin", "brisket", "tenderloin", "filet", "oxtail", "deli meat", "lunch meat", "rotisserie"],
+  "Dairy & Eggs": ["milk", "cream", "half and half", "half-and-half", "whipping cream", "whipped cream", "sour cream", "cheese", "cheddar", "mozzarella", "parmesan", "provolone", "gouda", "feta", "ricotta", "queso", "halloumi", "burrata", "mascarpone", "cottage cheese", "cream cheese", "string cheese", "blue cheese", "goat cheese", "yogurt", "yoghurt", "kefir", "butter", "margarine", "ghee", "eggs", "egg", "custard", "flan"],
+  "Bakery": ["bread", "toast", "wraps", "wrap", "bagels", "bagel", "fruitcake", "fruitcakes", "rolls", "roll", "buns", "bun", "croissants", "croissant", "muffins", "muffin", "english muffin", "tortillas", "tortilla", "pitas", "pita", "cakes", "cake", "cupcakes", "cupcake", "cheesecake", "cheesecakes", "cookies", "cookie", "brownies", "brownie", "cobbler", "turnovers", "turnover", "shortcake", "donuts", "donut", "doughnuts", "doughnut", "danishes", "danish", "strudels", "strudel", "eclairs", "eclair", "scones", "scone", "biscuits", "biscuit", "sourdough", "brioche", "ciabatta", "challah", "focaccia", "naan", "baguette", "baguettes", "cornbread", "rye", "pumpernickel", "multigrain", "flatbread", "pie", "pies"],
+  "Produce": ["fruits", "fruit", "vegetables", "vegetable", "veggies", "veggie", "produce", "greens", "salad", "apples", "apple", "bananas", "banana", "oranges", "orange", "tangerines", "tangerine", "clementines", "clementine", "mandarins", "mandarin", "tangelos", "tangelo", "kumquats", "kumquat", "lemons", "lemon", "limes", "lime", "grapefruits", "grapefruit", "grapes", "grape", "avocados", "avocado", "tomatoes", "tomato", "potatoes", "potato", "sweet potatoes", "sweet potato", "onions", "onion", "red onions", "red onion", "shallots", "shallot", "scallions", "scallion", "leeks", "leek", "chives", "garlic", "lettuce", "romaine", "spinach", "kale", "arugula", "endive", "escarole", "radicchio", "bok choy", "broccoli", "cauliflower", "carrots", "carrot", "celery", "cucumbers", "cucumber", "peppers", "pepper", "bell peppers", "bell pepper", "chilies", "chili", "jalapeños", "jalapeño", "habaneros", "habanero", "serranos", "serrano", "poblanos", "poblano", "mushrooms", "mushroom", "zucchini", "squash", "butternut", "pumpkin", "acorn squash", "eggplants", "cabbage", "corn", "sweet corn", "peas", "snap peas", "snap pea", "snow peas", "snow pea", "edamame", "asparagus", "artichokes", "artichoke", "brussels sprouts", "brussels sprout", "beets", "beet", "radishes", "radish", "turnips", "turnip", "parsnips", "parsnip", "rutabaga", "rutabagas", "jicama", "kohlrabi", "okra", "taro", "cassava", "yuca", "ginger", "lemongrass", "turmeric root", "herbs", "herb", "basil", "cilantro", "parsley", "mint", "dill", "berries", "strawberries", "strawberry", "raspberries", "raspberry", "blackberries", "blackberry", "blueberries", "blueberry", "cranberries", "cranberry", "boysenberries", "boysenberry", "currants", "currant", "cherries", "cherry", "peaches", "peach", "nectarines", "nectarine", "apricots", "apricot", "plums", "plum", "pears", "pear", "melon", "watermelon", "cantaloupe", "honeydew", "mangoes", "mango", "papayas", "papaya", "pineapples", "pineapple", "kiwis", "kiwi", "coconut", "coconuts", "pomegranates", "pomegranate", "figs", "fig", "dates", "date", "persimmons", "persimmon", "guavas", "guava", "lychees", "lychee", "plantains", "plantain", "rhubarb", "sprouts", "sprout", "microgreens", "tofu", "tempeh", "seitan", "hummus", "guacamole", "tzatziki", "salsa fresca", "pico de gallo"],
+  "Drinks": ["water", "sparkling water", "seltzer", "soda", "club soda", "cola", "coke", "pepsi", "dr pepper", "sprite", "fanta", "root beer", "tonic", "juice", "cider", "lemonade", "limeade", "coffee", "espresso", "latte", "cappuccino", "mocha", "macchiato", "cold brew", "matcha", "tea", "iced tea", "chai", "kombucha", "beer", "lager", "ale", "ipa", "stout", "pilsner", "porter", "wine", "champagne", "prosecco", "cava", "sake", "soju", "whiskey", "whisky", "bourbon", "vodka", "gin", "rum", "tequila", "mezcal", "cognac", "brandy", "liqueur", "bitters", "smoothie", "smoothies", "boba", "bubble tea", "horchata", "agua fresca", "electrolytes", "electrolyte", "gatorade", "powerade", "pedialyte", "k-cup", "k-cups", "sports drink", "energy drink", "drinks", "drink"],
+  "Snacks": ["chips", "pretzels", "pretzel", "popcorn", "nuts", "nut", "almonds", "almond", "cashews", "cashew", "peanuts", "peanut", "pistachios", "pistachio", "pecans", "pecan", "walnuts", "walnut", "hazelnuts", "hazelnut", "macadamias", "macadamia", "chestnuts", "chestnut", "brazil nuts", "trail mix", "candy", "chocolate", "gummies", "gummy", "marshmallows", "marshmallow", "oreos", "oreo", "goldfish", "raisins", "raisin", "craisins", "craisin", "cheez-it", "cheez-its", "gum", "chewing gum", "mints", "licorice", "jerky", "snacks", "snack"],
+  "Household": ["paper towels", "paper towel", "toilet paper", "tissues", "tissue", "napkins", "napkin", "trash bags", "trash bag", "garbage bags", "garbage bag", "foil", "aluminum foil", "parchment", "wax paper", "plastic wrap", "sandwich bags", "sandwich bag", "freezer bags", "freezer bag", "storage bags", "ziplock", "ziploc", "paper plates", "paper plate", "plastic cups", "plastic cup", "plastic plates", "plastic plate", "paper bowls", "paper bowl", "coffee filters", "coffee filter", "dish soap", "dishwasher", "detergent", "fabric softener", "softener", "dryer sheets", "dryer sheet", "laundry", "bleach", "cleaners", "cleaner", "cleaning", "stain remover", "air freshener", "sponges", "sponge", "broom", "mop", "vacuum", "light bulbs", "light bulb", "lightbulbs", "lightbulb", "batteries", "battery", "charcoal", "lighter fluid"],
+  "Pet Supplies": ["cat food", "dog food", "pet food", "puppy food", "kitten food", "cat litter", "kitty litter", "dog treats", "dog treat", "cat treats", "cat treat", "pet treats", "pet treat", "bird seed", "poop bags", "poop bag", "puppy pads", "puppy pad", "puppy", "kitten"],
+  "Personal Care": ["shampoo", "conditioner", "soap", "body wash", "toothpaste", "toothbrush", "floss", "mouthwash", "deodorant", "razors", "razor", "shaving", "shave", "lotion", "sunscreen", "diapers", "diaper", "wipes", "baby wipes", "baby food", "baby formula", "infant formula", "diaper cream", "lip balm", "chapstick", "contact solution", "eye drops", "hand sanitizer", "sanitizer", "cotton balls", "cotton ball", "cotton swabs", "cotton swab", "q-tips", "q-tip", "bandages", "bandage", "band-aid", "gauze", "vitamins", "vitamin", "medicine", "medicines", "ibuprofen", "advil", "tylenol", "aleve", "antacid", "tums", "benadryl", "zyrtec", "claritin", "neosporin", "vaseline", "hydrogen peroxide", "rubbing alcohol", "perfume", "cologne", "makeup", "mascara", "lipstick", "nail polish", "tampons", "tampon"],
+  "Pantry": ["rice", "jasmine rice", "white rice", "brown rice", "wild rice", "spices", "spice", "pasta", "noodles", "spaghetti", "macaroni", "penne", "lasagna", "ravioli", "tortellini", "fettuccine", "linguine", "orzo", "udon", "soba", "couscous", "quinoa", "bulgur", "farro", "barley", "oats", "oatmeal", "cereal", "granola", "flour", "sugar", "brown sugar", "powdered sugar", "salt", "kosher salt", "sea salt", "baking soda", "baking powder", "yeast", "cocoa", "cocoa powder", "vanilla", "extract", "cinnamon", "cumin", "paprika", "nutmeg", "oregano", "thyme", "rosemary", "sage", "tarragon", "marjoram", "bay leaves", "bay leaf", "curry", "turmeric", "cayenne", "allspice", "cardamom", "coriander", "cloves", "clove", "saffron", "seasoning", "italian seasoning", "taco seasoning", "old bay", "msg", "oil", "olive oil", "olives", "olive", "canola oil", "avocado oil", "sesame oil", "vegetable oil", "coconut oil", "truffle oil", "nonstick spray", "vinegar", "balsamic", "red wine vinegar", "rice vinegar", "apple cider vinegar", "sauce", "marinara", "alfredo", "pesto", "gravy", "au jus", "ketchup", "mustard", "dijon", "mayonnaise", "mayo", "relish", "salsa", "dressing", "taco", "tacos", "tostadas", "tostada", "enchilada", "hoisin", "teriyaki", "sriracha", "tabasco", "soy sauce", "miso", "nori", "seaweed", "bouillon", "beans", "black beans", "kidney beans", "baked beans", "refried beans", "pinto beans", "navy beans", "cannellini", "lentils", "chickpeas", "split peas", "peanut butter", "nutella", "tahini", "honey", "maple syrup", "syrup", "molasses", "agave", "jelly", "jam", "preserves", "marmalade", "canned", "can of", "soup", "broth", "stock", "stew", "crackers", "saltines", "pudding", "jello", "gelatin", "frosting", "icing", "sprinkles", "food coloring", "pickles", "pickle", "capers", "pepperoncini", "croutons", "crouton", "stuffing", "panko", "matzo", "masa", "cornstarch", "corn starch", "starch", "cornmeal", "polenta", "grits", "masa harina", "liquid smoke", "sweet and sour", "cookie butter", "pumpkin spice"]
 };
 
 const ITEM_RULES = [
@@ -646,11 +836,29 @@ const ITEM_RULES = [
    HELPERS
 ========================================================= */
 
+/* Precompiled whole-word patterns per category (built once). Word boundaries
+   stop short words from misfiring: "ham" won't match "shampoo",
+   "tea" won't match "steak", "egg" won't match "eggplant". */
+let _categoryPatterns = null;
+function getCategoryPatterns() {
+  if (_categoryPatterns) return _categoryPatterns;
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  _categoryPatterns = {};
+  for (const cat of Object.keys(CATEGORY_KEYWORDS)) {
+    _categoryPatterns[cat] = CATEGORY_KEYWORDS[cat].map(kw => new RegExp("\\b" + esc(kw) + "\\b"));
+  }
+  return _categoryPatterns;
+}
+
 function categorizeItem(item) {
   const text = item.toLowerCase().trim();
-  const priority = ["Meat & Fish", "Dairy & Eggs", "Frozen", "Bakery", "Produce", "Drinks", "Snacks", "Personal Care", "Household", "Pantry"];
+  for (const rule of CATEGORY_PHRASES) {
+    if (rule.exact ? text === rule.match : text.includes(rule.match)) return rule.category;
+  }
+  const patterns = getCategoryPatterns();
+  const priority = ["Frozen", "Meat & Fish", "Dairy & Eggs", "Bakery", "Produce", "Drinks", "Snacks", "Household", "Pet Supplies", "Personal Care", "Pantry"];
   for (const category of priority) {
-    if (CATEGORY_KEYWORDS[category].some(kw => text.includes(kw))) return category;
+    if (patterns[category].some(re => re.test(text))) return category;
   }
   return "Other";
 }
@@ -876,10 +1084,17 @@ async function load(options = {}) {
       const newActive = [];
       const newTrash = [];
       const expired = [];
+      const orphanRows = [];
 
       values.forEach((row, index) => {
         const val = String(row[0] ?? "").trim();
-        if (!val) return;
+        if (!val) {
+          // Orphan metadata (legacy deletes cleared col A only) — wipe it
+          if (row.slice(1).some(cell => String(cell ?? "").trim() !== "")) {
+            orphanRows.push(index + 1);
+          }
+          return;
+        }
         const item = {
           row: index + 1,
           value: val,
@@ -921,6 +1136,11 @@ async function load(options = {}) {
       if (expired.length) {
         // Permanently erase rows expired in trash (fire-and-forget, no status noise)
         cleanupExpiredTrash(expired);
+      }
+
+      if (orphanRows.length) {
+        // Wipe rows with metadata but no item name (fire-and-forget)
+        cleanupOrphanRows(orphanRows);
       }
 
     } else if (currentTab === 'bike') {
@@ -1256,6 +1476,22 @@ async function cleanupExpiredTrash(expiredList) {
     if (!ok) return;
     await Promise.all(expiredList.map(item =>
       sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + item.row + ":E" + item.row)}:clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      }).catch(() => {})
+    ));
+    await load({ silent: true });
+  } catch {}
+}
+
+async function cleanupOrphanRows(rowNums) {
+  if (!rowNums || !rowNums.length) return;
+  try {
+    const ok = await ensureValidToken(false);
+    if (!ok) return;
+    await Promise.all(rowNums.map(rowNum =>
+      sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + rowNum + ":E" + rowNum)}:clear`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}"
