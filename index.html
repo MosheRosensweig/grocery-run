@@ -42,6 +42,14 @@
     .tab{flex:1;padding:12px;border:none;border-radius:10px;font-size:1rem;font-weight:600;background:#e5e7eb;color:#4b5563;cursor:pointer;transition:all 0.2s}
     .tab.active{background:#111827;color:#ffffff}
 
+    .sub-tabs{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+    .sub-tab{flex:1;padding:9px;border:none;border-radius:10px;font-size:.9rem;font-weight:700;background:#ece9e1;color:#4b5563;cursor:pointer;transition:all 0.2s}
+    .sub-tab.active{background:#24231f;color:#ffffff}
+    .undo-btn{flex:0 0 auto;padding:9px 14px;border:1.5px solid #d7d3ca;border-radius:10px;background:#fff;color:#24231f;font-size:.9rem;font-weight:700;cursor:pointer}
+    .danger-btn{padding:11px;border:none;border-radius:10px;font-size:.9rem;font-weight:700;background:#fee2e2;color:#991b1b;cursor:pointer;transition:background 0.2s}
+    .danger-btn:hover{background:#fecaca}
+    .restore{flex:0 0 auto;min-width:76px;min-height:44px;border:0;border-radius:11px;background:#24231f;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+
     .status{min-height:22px;padding:2px 4px 6px;font-size:13px;opacity:.55}
     .status.error{color:#a33;opacity:1}
 
@@ -203,6 +211,12 @@
         </div>
       </form>
 
+      <div id="listTrashTabs" class="sub-tabs" hidden>
+        <button id="subTabList" class="sub-tab active" type="button">List</button>
+        <button id="subTabTrash" class="sub-tab" type="button">🗑️ Trash (0)</button>
+        <button id="undoBtn" class="undo-btn" type="button" title="Restore most recently deleted item">↩ Undo</button>
+      </div>
+
       <section
         id="list"
         class="list"
@@ -211,6 +225,21 @@
 
       <p id="empty" class="empty" hidden>
         Your grocery list is empty.
+      </p>
+
+      <div id="trashHeader" hidden style="margin-bottom:10px">
+        <button id="emptyTrashBtn" class="danger-btn" type="button" style="width:100%">Empty Trash</button>
+      </div>
+
+      <section
+        id="trashList"
+        class="list"
+        aria-live="polite"
+        hidden>
+      </section>
+
+      <p id="trashEmpty" class="empty" hidden>
+        Trash is empty.
       </p>
     </div>
 
@@ -254,6 +283,21 @@
     </div>
   </div>
 
+  <!-- CONFIRM MODAL -->
+  <div id="confirmModal" class="icon-modal-overlay" hidden>
+    <div class="icon-modal" style="width:min(380px,100%)">
+      <div class="icon-modal-header">
+        <h3 id="confirmModalTitle" style="margin:0;">Are you sure?</h3>
+        <button type="button" id="confirmModalClose" class="icon-modal-close" aria-label="Close confirmation">✕</button>
+      </div>
+      <p id="confirmModalText" style="margin:0 0 18px;opacity:.75"></p>
+      <div style="display:flex;gap:10px">
+        <button type="button" id="confirmModalNo" class="cancel-btn" style="flex:1">No, keep it</button>
+        <button type="button" id="confirmModalYes" class="save-btn" style="flex:1;background:#991b1b">Yes, delete</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 
@@ -282,9 +326,12 @@ let tokenClient = null;
 let accessToken = null;
 
 let items = [];
+let trashItems = [];
 let bikeDates = [];
 let statCardsData = [];
 let editingItemRow = null;
+let grocerySubTab = 'list';
+const TRASH_EXPIRY_MS = 60 * 60 * 1000;
 
 let userHasManuallyChangedCategory = false;
 let userHasManuallyChangedIcon = false;
@@ -821,34 +868,60 @@ async function load(options = {}) {
 
   try {
     if (currentTab === 'groceries') {
-      const range = encodeURIComponent(`${CONFIG.sheetName}!A:D`);
+      const range = encodeURIComponent(`${CONFIG.sheetName}!A:E`);
       const data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
       const values = data.values || [];
 
-      const newItems = values
-        .map((row, index) => {
-          const val = String(row[0] ?? "").trim();
-          if (!val) return null;
-          return {
-            row: index + 1,
-            value: val,
-            category: String(row[1] ?? "").trim() || null,
-            icon: String(row[2] ?? "").trim() || null,
-            color: String(row[3] ?? "").trim() || null
-          };
-        })
-        .filter(Boolean);
+      const now = Date.now();
+      const newActive = [];
+      const newTrash = [];
+      const expired = [];
 
-      const changed = newItems.length !== items.length || newItems.some((item, index) => {
-        const existing = items[index];
-        if (!existing) return true;
-        return item.value !== existing.value || item.category !== existing.category || item.icon !== existing.icon || item.color !== existing.color;
+      values.forEach((row, index) => {
+        const val = String(row[0] ?? "").trim();
+        if (!val) return;
+        const item = {
+          row: index + 1,
+          value: val,
+          category: String(row[1] ?? "").trim() || null,
+          icon: String(row[2] ?? "").trim() || null,
+          color: String(row[3] ?? "").trim() || null,
+          deletedAt: String(row[4] ?? "").trim() || null
+        };
+        if (item.deletedAt) {
+          const t = Date.parse(item.deletedAt);
+          if (!isNaN(t) && now - t > TRASH_EXPIRY_MS) {
+            expired.push(item);
+          } else {
+            newTrash.push(item);
+          }
+        } else {
+          newActive.push(item);
+        }
       });
-      items = newItems;
 
-      if (changed && editingItemRow === null) renderGroceries();
-      localStorage.setItem("cached_groceries", JSON.stringify(items));
+      newTrash.sort((a, b) => Date.parse(a.deletedAt || 0) - Date.parse(b.deletedAt || 0));
+
+      const serialize = arr => JSON.stringify(arr);
+      const changed = serialize(newActive) !== serialize(items) || serialize(newTrash) !== serialize(trashItems);
+      items = newActive;
+      trashItems = newTrash;
+      if (grocerySubTab === 'trash' && !trashItems.length) grocerySubTab = 'list';
+
+      if (changed && editingItemRow === null) {
+        renderGroceries();
+        renderTrash();
+        updateTrashTabs();
+      } else {
+        updateTrashTabs();
+      }
+      persistGroceryCache();
       if (!silent) setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
+
+      if (expired.length) {
+        // Permanently erase rows expired in trash (fire-and-forget, no status noise)
+        cleanupExpiredTrash(expired);
+      }
 
     } else if (currentTab === 'bike') {
       const range = encodeURIComponent(`${CONFIG.bikeSheetName}!A:D`);
@@ -1028,6 +1101,208 @@ function getItemIcon(item) {
 function getItemBgColor(item) {
   if (item.color) return item.color;
   return getItemDetails(item.value).bg;
+}
+
+/* =========================================================
+   TRASH (SOFT DELETE, 1-HOUR EXPIRY, RESTORE + UNDO)
+   Sheet col E = deletedAt ISO timestamp. Blank = active.
+========================================================= */
+
+function persistGroceryCache() {
+  localStorage.setItem("cached_groceries", JSON.stringify(items));
+  localStorage.setItem("cached_trash", JSON.stringify(trashItems));
+}
+
+function switchGrocerySubTab(tab) {
+  grocerySubTab = tab;
+  renderGroceries();
+  renderTrash();
+  updateTrashTabs();
+}
+
+function updateTrashTabs() {
+  const bar = $("listTrashTabs");
+  if (!bar) return;
+  const hasTrash = trashItems.length > 0;
+  bar.hidden = !hasTrash;
+  if (!hasTrash && grocerySubTab === 'trash') grocerySubTab = 'list';
+  $("subTabList").classList.toggle("active", grocerySubTab === 'list');
+  $("subTabTrash").classList.toggle("active", grocerySubTab === 'trash');
+  $("subTabTrash").textContent = `🗑️ Trash (${trashItems.length})`;
+  $("undoBtn").hidden = !hasTrash;
+
+  const showingTrash = grocerySubTab === 'trash' && hasTrash;
+  $("list").hidden = showingTrash;
+  $("empty").hidden = showingTrash || items.length > 0;
+  $("trashList").hidden = !showingTrash;
+  $("trashHeader").hidden = !showingTrash;
+  $("trashEmpty").hidden = !showingTrash || hasTrash;
+}
+
+function renderTrash() {
+  const list = $("trashList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!trashItems.length) return;
+
+  const groups = {};
+  CATEGORY_ORDER.forEach(cat => groups[cat] = []);
+  trashItems.forEach(item => groups[getItemCategory(item)].push(item));
+
+  CATEGORY_ORDER.forEach(category => {
+    const categoryItems = groups[category];
+    if (!categoryItems.length) return;
+
+    const section = document.createElement("section");
+    section.className = "grocery-section";
+
+    const heading = document.createElement("div");
+    heading.className = "grocery-section-heading";
+
+    const icon = document.createElement("span");
+    icon.className = "category-icon";
+    icon.textContent = CATEGORY_ICONS[category];
+
+    const title = document.createElement("span");
+    title.textContent = category;
+
+    heading.append(icon, title);
+    section.append(heading);
+
+    categoryItems.forEach(item => {
+      const details = getItemDetails(item.value);
+      const row = document.createElement("div");
+      row.className = "item";
+      row.style.backgroundColor = getItemBgColor(item);
+      row.style.borderLeft = `5px solid ${details.color}`;
+      row.style.borderRadius = "8px";
+      row.style.margin = "6px 0";
+      row.style.padding = "10px 14px";
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+
+      const itemIcon = document.createElement("span");
+      itemIcon.textContent = getItemIcon(item);
+      itemIcon.style.marginRight = "10px";
+      itemIcon.style.fontSize = "1.2rem";
+
+      const name = document.createElement("span");
+      name.textContent = item.value;
+      name.style.color = details.color;
+      name.style.fontWeight = "600";
+      name.style.flexGrow = "1";
+
+      const restore = document.createElement("button");
+      restore.className = "restore";
+      restore.textContent = "Restore";
+      restore.onclick = (e) => {
+        e.stopPropagation();
+        restoreGroceryItem(item);
+      };
+
+      row.append(itemIcon, name, restore);
+      section.append(row);
+    });
+
+    list.append(section);
+  });
+}
+
+async function restoreGroceryItem(item) {
+  if (!item) return;
+  setStatus("Restoring…");
+  trashItems = trashItems.filter(current => current !== item);
+  delete item.deletedAt;
+  items.push(item);
+  persistGroceryCache();
+  renderGroceries();
+  renderTrash();
+  updateTrashTabs();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Restored locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    const rangeA1 = `${CONFIG.sheetName}!E${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[""]] })
+    });
+    await load();
+  } catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Restored locally. Tap Reconnect to sync with Google.", false);
+    } else {
+      setStatus("Couldn't restore item: " + error.message, true);
+      await load();
+    }
+  }
+}
+
+async function undoLastTrash() {
+  if (!trashItems.length) return;
+  const last = [...trashItems].sort((a, b) => Date.parse(b.deletedAt || 0) - Date.parse(a.deletedAt || 0))[0];
+  await restoreGroceryItem(last);
+}
+
+async function cleanupExpiredTrash(expiredList) {
+  if (!expiredList || !expiredList.length) return;
+  try {
+    const ok = await ensureValidToken(false);
+    if (!ok) return;
+    await Promise.all(expiredList.map(item =>
+      sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + item.row + ":E" + item.row)}:clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      }).catch(() => {})
+    ));
+    await load({ silent: true });
+  } catch {}
+}
+
+async function emptyTrash() {
+  if (!trashItems.length) return;
+  const confirmed = await showConfirm(
+    "Empty Trash?",
+    `Permanently delete ${trashItems.length} item${trashItems.length === 1 ? "" : "s"} from the trash? This cannot be undone.`
+  );
+  if (!confirmed) return;
+  setStatus("Emptying trash…");
+  const toDelete = [...trashItems];
+  trashItems = [];
+  grocerySubTab = 'list';
+  persistGroceryCache();
+  renderGroceries();
+  renderTrash();
+  updateTrashTabs();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Trash cleared locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    await Promise.all(toDelete.map(item =>
+      sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + item.row + ":E" + item.row)}:clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      }).catch(() => {})
+    ));
+    await load();
+  } catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Trash cleared locally. Tap Reconnect to sync with Google.", false);
+    } else {
+      setStatus("Couldn't empty trash: " + error.message, true);
+      await load();
+    }
+  }
 }
 
 function renderGroceries() {
@@ -1289,7 +1564,7 @@ async function updateGroceryItem(item, newValue, newCategory, newIcon, newColor)
   item.category = newCategory || null;
   item.icon = newIcon || null;
   item.color = newColor || null;
-  localStorage.setItem("cached_groceries", JSON.stringify(items));
+  persistGroceryCache();
   renderGroceries();
 
   try {
@@ -1310,7 +1585,7 @@ async function updateGroceryItem(item, newValue, newCategory, newIcon, newColor)
       setStatus("Updated locally. Tap Reconnect to sync with Google.", false);
     } else {
       Object.assign(item, oldState);
-      localStorage.setItem("cached_groceries", JSON.stringify(items));
+      persistGroceryCache();
       renderGroceries();
       setStatus("Couldn't update item: " + error.message, true);
     }
@@ -1436,6 +1711,35 @@ $("iconModal").onclick = (e) => {
   if (e.target === $("iconModal")) closeIconPicker();
 };
 
+function showConfirm(title, message) {
+  return new Promise((resolve) => {
+    $("confirmModalTitle").textContent = title || "Are you sure?";
+    $("confirmModalText").textContent = message || "";
+    $("confirmModal").hidden = false;
+
+    const done = (value) => {
+      $("confirmModal").hidden = true;
+      $("confirmModalYes").onclick = null;
+      $("confirmModalNo").onclick = null;
+      $("confirmModalClose").onclick = null;
+      $("confirmModal").onclick = null;
+      document.removeEventListener("keydown", onKey);
+      resolve(value);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") done(false);
+    };
+
+    $("confirmModalYes").onclick = () => done(true);
+    $("confirmModalNo").onclick = () => done(false);
+    $("confirmModalClose").onclick = () => done(false);
+    $("confirmModal").onclick = (e) => {
+      if (e.target === $("confirmModal")) done(false);
+    };
+    document.addEventListener("keydown", onKey);
+  });
+}
+
 $("iconSearchInput").addEventListener("input", (e) => {
   renderIconGrid(e.target.value.toLowerCase().trim());
 });
@@ -1530,11 +1834,11 @@ async function addGroceryItem(value, category, icon, color) {
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
-    const rangeA1 = `${CONFIG.sheetName}!A${target + 1}:D${target + 1}`;
+    const rangeA1 = `${CONFIG.sheetName}!A${target + 1}:E${target + 1}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value, category || "", icon || "", color || ""]] })
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value, category || "", icon || "", color || "", ""]] })
     });
 
     $("itemInput").value = "";
@@ -1589,29 +1893,40 @@ async function removeGroceryItem(item) {
   if (!item) return;
   setStatus("Removing…");
   const previousItems = [...items];
+  const previousTrash = [...trashItems];
+  const deletedAt = new Date().toISOString();
+  item.deletedAt = deletedAt;
   items = items.filter(current => current !== item);
-  localStorage.setItem("cached_groceries", JSON.stringify(items));
+  trashItems = [...trashItems, item].sort((a, b) => Date.parse(a.deletedAt || 0) - Date.parse(b.deletedAt || 0));
+  persistGroceryCache();
   renderGroceries();
+  renderTrash();
+  updateTrashTabs();
 
   try {
     const ok = await ensureValidToken(true);
     if (!ok) {
-      setStatus("Removed locally. Tap Reconnect to sync.", false);
+      setStatus("Moved to trash locally. Tap Reconnect to sync.", false);
       return;
     }
-    await sheetsFetch(`/values/${encodeURIComponent(CONFIG.sheetName + "!A" + item.row)}:clear`, {
-      method: "POST",
+    const rangeA1 = `${CONFIG.sheetName}!E${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: "{}"
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[deletedAt]] })
     });
     await load();
   } catch (error) {
     if (error.message === "AUTH_PAUSED") {
-      setStatus("Removed locally. Tap Reconnect to sync with Google.", false);
+      setStatus("Moved to trash locally. Tap Reconnect to sync with Google.", false);
     } else {
       items = previousItems;
-      localStorage.setItem("cached_groceries", JSON.stringify(items));
+      trashItems = previousTrash;
+      delete item.deletedAt;
+      persistGroceryCache();
       renderGroceries();
+      renderTrash();
+      updateTrashTabs();
       setStatus("Couldn't delete the item: " + error.message, true);
     }
   }
@@ -1634,11 +1949,15 @@ $("signOutBtn").onclick = () => {
     google.accounts.oauth2.revoke(accessToken, () => {});
   }
   accessToken = null;
+  items = [];
+  trashItems = [];
+  grocerySubTab = 'list';
   localStorage.removeItem("google_access_token");
   localStorage.removeItem("google_token_expiry");
   localStorage.removeItem("autoLogin");
   localStorage.removeItem("has_connected_google");
   localStorage.removeItem("cached_groceries");
+  localStorage.removeItem("cached_trash");
   localStorage.removeItem("cached_bike_dates");
   localStorage.removeItem("cached_bike_stats");
   localStorage.removeItem("cached_last_updated");
@@ -1655,6 +1974,7 @@ $("signOutBtn").onclick = () => {
 function restoreLocalCache() {
   const hasConnected = localStorage.getItem("has_connected_google") === "true" || localStorage.getItem("autoLogin") === "true";
   const cachedGroceries = localStorage.getItem("cached_groceries");
+  const cachedTrash = localStorage.getItem("cached_trash");
   const cachedBikeDates = localStorage.getItem("cached_bike_dates");
   const cachedBikeStats = localStorage.getItem("cached_bike_stats");
   const cachedLastUpdated = localStorage.getItem("cached_last_updated");
@@ -1666,10 +1986,24 @@ function restoreLocalCache() {
     if (cachedGroceries) {
       try {
         items = JSON.parse(cachedGroceries);
+        // Back-compat: old cache has no deletedAt
+        items = items.filter(i => !i.deletedAt);
         renderGroceries();
         setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
       } catch {}
     }
+    if (cachedTrash) {
+      try {
+        const now = Date.now();
+        trashItems = JSON.parse(cachedTrash).filter(i => {
+          if (!i.deletedAt) return false;
+          const t = Date.parse(i.deletedAt);
+          return !isNaN(t) && now - t <= TRASH_EXPIRY_MS;
+        });
+        renderTrash();
+      } catch {}
+    }
+    updateTrashTabs();
     if (cachedBikeDates) {
       try {
         bikeDates = JSON.parse(cachedBikeDates);
@@ -1693,6 +2027,10 @@ restoreLocalCache();
 
 window.addEventListener("load", () => {
   initCategorySelects();
+  $("subTabList").onclick = () => switchGrocerySubTab('list');
+  $("subTabTrash").onclick = () => switchGrocerySubTab('trash');
+  $("undoBtn").onclick = () => undoLastTrash();
+  $("emptyTrashBtn").onclick = () => emptyTrash();
 
   const recBtn = $("reconnectBtn");
   if (recBtn) {
