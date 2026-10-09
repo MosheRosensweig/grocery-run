@@ -1215,6 +1215,28 @@ async function sheetsFetch(path, options = {}, isRetry = false) {
   return response.json();
 }
 
+function escapeSheetName(name) {
+  return `'${String(name).replace(/'/g, "''")}'`;
+}
+
+async function resolveFoodSheetName() {
+  if (CONFIG._resolvedFoodSheetName) return CONFIG._resolvedFoodSheetName;
+  try {
+    const meta = await sheetsFetch("?fields=sheets.properties.title");
+    const titles = (meta.sheets || []).map(s => s.properties?.title || "");
+    const match = titles.find(t => {
+      const norm = t.trim().toLowerCase();
+      return norm === "food options" || norm === "food option" || norm === "lunch options" || norm === "lunch option";
+    });
+    if (match) {
+      CONFIG.foodSheetName = match;
+      CONFIG._resolvedFoodSheetName = match;
+      return match;
+    }
+  } catch {}
+  return CONFIG.foodSheetName;
+}
+
 /* =========================================================
    LOAD
 ========================================================= */
@@ -1340,16 +1362,24 @@ async function load(options = {}) {
       if (!silent) setStatus("");
 
     } else if (currentTab === 'food') {
-      const range = encodeURIComponent(`${CONFIG.foodSheetName}!A:I`);
+      const sheetName = await resolveFoodSheetName();
+      const range = encodeURIComponent(`${escapeSheetName(sheetName)}!A:I`);
       let data = { values: [] };
       try {
         data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
       } catch (err) {
         if (/Unable to parse range|not found/i.test(err.message)) {
-          if (!silent) setStatus("Create tab 'food options' in your Google Sheet to sync.", true);
-          return;
+          CONFIG._resolvedFoodSheetName = null;
+          const retryName = await resolveFoodSheetName();
+          try {
+            data = await sheetsFetch(`/values/${encodeURIComponent(`${escapeSheetName(retryName)}!A:I`)}?majorDimension=ROWS`);
+          } catch (retryErr) {
+            if (!silent) setStatus("Tab 'food options' not found on Google Sheet. Please check tab name.", true);
+            return;
+          }
+        } else {
+          throw err;
         }
-        throw err;
       }
       const rows = data.values || [];
 
@@ -2420,12 +2450,14 @@ async function saveCurrentLunchbox() {
       return;
     }
 
-    const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!F:F")}?majorDimension=ROWS`);
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const values = await sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!F:F")}?majorDimension=ROWS`);
     const rows = values.values || [];
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
-    const rangeA1 = `${CONFIG.foodSheetName}!F${target + 1}:I${target + 1}`;
+    const rangeA1 = `${sheetPrefix}!F${target + 1}:I${target + 1}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -2669,7 +2701,9 @@ async function updateSavedLunchbox(box, newTitle, newColor) {
       setStatus("Updated locally. Tap Reconnect to sync.", false);
       return;
     }
-    const rangeA1 = `${CONFIG.foodSheetName}!F${box.row}:G${box.row}`;
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const rangeA1 = `${sheetPrefix}!F${box.row}:G${box.row}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -2700,7 +2734,9 @@ async function deleteSavedLunchbox(box) {
       setStatus("Deleted locally. Tap Reconnect to sync.", false);
       return;
     }
-    await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!F" + box.row + ":I" + box.row)}:clear`, {
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    await sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!F" + box.row + ":I" + box.row)}:clear`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}"
@@ -2724,7 +2760,9 @@ async function undoDeleteSavedLunchbox() {
   try {
     const ok = await ensureValidToken(true);
     if (!ok) return;
-    const rangeA1 = `${CONFIG.foodSheetName}!F${boxToRestore.row}:I${boxToRestore.row}`;
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const rangeA1 = `${sheetPrefix}!F${boxToRestore.row}:I${boxToRestore.row}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -2958,12 +2996,14 @@ async function addFoodCatalogItem(value, category, icon, color) {
       setStatus("Please tap Reconnect to sync with Google.", true);
       return;
     }
-    const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!A:A")}?majorDimension=ROWS`);
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const values = await sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!A:A")}?majorDimension=ROWS`);
     const rows = values.values || [];
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
-    const rangeA1 = `${CONFIG.foodSheetName}!A${target + 1}:D${target + 1}`;
+    const rangeA1 = `${sheetPrefix}!A${target + 1}:D${target + 1}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -3000,7 +3040,9 @@ async function updateFoodCatalogItem(item, newValue, newCategory, newIcon, newCo
       setStatus("Updated locally. Tap Reconnect to sync.", false);
       return;
     }
-    const rangeA1 = `${CONFIG.foodSheetName}!A${item.row}:D${item.row}`;
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const rangeA1 = `${sheetPrefix}!A${item.row}:D${item.row}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -3029,7 +3071,9 @@ async function removeFoodCatalogItem(item) {
       setStatus("Removed locally. Tap Reconnect to sync.", false);
       return;
     }
-    await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!A" + item.row + ":D" + item.row)}:clear`, {
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    await sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!A" + item.row + ":D" + item.row)}:clear`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}"
