@@ -16,7 +16,7 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
@@ -67,8 +67,9 @@
     .food-primary-btn{height:48px;border:0;border-radius:12px;background:#3b82f6;color:#fff;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:background .2s,transform .1s}
     .food-primary-btn:hover{background:#2563eb}
     .food-save-btn{background:#10b981}
-    .food-save-btn:hover{background:#059669}
-    .food-item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:8px 12px;border-radius:12px;background:#27272a;border:1px solid #3f3f46;margin:6px 0;transition:opacity .2s ease,transform .2s ease}
+    .food-item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:8px 12px;border-radius:12px;background:#27272a;border:1px solid #3f3f46;margin:6px 0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;transition:transform .15s ease,opacity .15s ease}
+    .food-item.holding{transform:scale(.97);opacity:.85}
+    .food-item.editing{user-select:text;-webkit-user-select:text;box-shadow:0 0 0 2px #3b82f6,0 4px 14px rgba(0,0,0,.3);padding:12px}
     .food-item.fade-out{opacity:0;transform:scale(.95)}
     .food-item-name{font-size:16px;font-weight:600;color:#f4f4f5;flex-grow:1}
     .food-replace-btn{padding:8px 12px;border-radius:10px;border:1px solid #3f3f46;background:#18181b;color:#60a5fa;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0}
@@ -1628,13 +1629,27 @@ async function load(options = {}) {
 
       newTrash.sort((a, b) => Date.parse(a.deletedAt || 0) - Date.parse(b.deletedAt || 0));
 
+      const serialize = arr => JSON.stringify(arr);
+      const changed = serialize(newCatalog) !== serialize(foodCatalogItems) ||
+                      serialize(newTrash) !== serialize(foodTrashItems) ||
+                      serialize(newSavedBoxes) !== serialize(savedLunchboxes);
+
       foodCatalogItems = newCatalog;
       foodTrashItems = newTrash;
       savedLunchboxes = newSavedBoxes;
       if (foodCatalogSubTab === 'trash' && !foodTrashItems.length) foodCatalogSubTab = 'catalog';
 
       persistFoodCache();
-      renderFoodActiveView();
+
+      const isEditingFood = (editingFoodCatalogRow !== null || editingLunchboxRow !== null);
+      if (changed && !isEditingFood) {
+        renderFoodActiveView();
+      } else {
+        const catCount = $("catalogCount");
+        if (catCount) catCount.textContent = foodCatalogItems.length;
+        const savedCount = $("savedBoxesCount");
+        if (savedCount) savedCount.textContent = savedLunchboxes.length;
+      }
       if (!silent) setStatus(foodCatalogItems.length ? `${foodCatalogItems.length} food option${foodCatalogItems.length === 1 ? "" : "s"}` : "");
 
       if (expired.length) {
@@ -3140,8 +3155,11 @@ function renderFoodCatalog() {
       row.style.borderLeft = `5px solid ${item.color || details.color}`;
 
       if (editingFoodCatalogRow === item.row) {
+        row.classList.add("editing");
         const editForm = document.createElement("form");
         editForm.className = "edit-form-expanded";
+        editForm.onclick = (e) => e.stopPropagation();
+        editForm.onpointerdown = (e) => e.stopPropagation();
 
         const mainRow = document.createElement("div");
         mainRow.className = "edit-row-main";
@@ -3151,6 +3169,13 @@ function renderFoodCatalog() {
         editInput.className = "edit-input";
         editInput.style.cssText = "background:#18181b;color:#fff;border-color:#3f3f46;";
         editInput.value = item.value;
+        editInput.setAttribute("aria-label", "Edit food option name");
+        editInput.onkeydown = (e) => {
+          if (e.key === "Escape") {
+            editingFoodCatalogRow = null;
+            renderFoodCatalog();
+          }
+        };
 
         const actions = document.createElement("div");
         actions.className = "edit-actions";
@@ -3274,6 +3299,12 @@ function renderFoodCatalog() {
 
         row.append(editForm);
         section.append(row);
+
+        setTimeout(() => {
+          editInput.focus();
+          editInput.select();
+        }, 50);
+
         return;
       }
 
@@ -3290,16 +3321,11 @@ function renderFoodCatalog() {
 
       const itemIsLunch = isItemLunch(item);
       const mealBadge = document.createElement("span");
+      mealBadge.className = "food-type-badge";
       mealBadge.style.cssText = itemIsLunch
-        ? "font-size:11px;padding:3px 7px;border-radius:6px;background:#3b82f622;color:#60a5fa;border:1px solid #3b82f644;font-weight:700;margin-right:8px;cursor:pointer;"
-        : "font-size:11px;padding:3px 7px;border-radius:6px;background:#27272a;color:#a1a1aa;border:1px solid #3f3f46;font-weight:600;margin-right:8px;cursor:pointer;";
+        ? "font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);font-weight:700;margin-right:8px;user-select:none;pointer-events:none;"
+        : "font-size:11px;padding:4px 8px;border-radius:6px;background:#18181b;color:#a1a1aa;border:1px solid #3f3f46;font-weight:600;margin-right:8px;user-select:none;pointer-events:none;";
       mealBadge.textContent = itemIsLunch ? "🥪 Lunch" : "🥨 Snack";
-      mealBadge.title = "Tap to toggle between Lunch and Snack";
-      mealBadge.onclick = (e) => {
-        e.stopPropagation();
-        const nextType = itemIsLunch ? "snack" : "lunch";
-        updateFoodCatalogItem(item, item.value, item.category, item.icon, item.color, nextType);
-      };
 
       const delBtn = document.createElement("button");
       delBtn.className = "remove";
@@ -3318,24 +3344,35 @@ function renderFoodCatalog() {
         if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
         row.classList.remove("holding");
       };
-      row.addEventListener("pointerdown", (e) => {
-        if (e.target.closest("button")) return;
+      const startPress = (e) => {
+        if (e.button && e.button !== 0) return;
+        if (e.target.closest("button") || e.target.closest(".remove")) return;
         cancelPress();
-        startX = e.clientX || 0;
-        startY = e.clientY || 0;
+        startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         row.classList.add("holding");
         pressTimer = setTimeout(() => {
           row.classList.remove("holding");
           if (navigator.vibrate) try { navigator.vibrate(40); } catch {}
           editingFoodCatalogRow = item.row;
           renderFoodCatalog();
-        }, 500);
-      });
+        }, 650);
+      };
+      const movePress = (e) => {
+        if (!pressTimer) return;
+        const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const currentY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        if (Math.abs(currentX - startX) > 8 || Math.abs(currentY - startY) > 8) cancelPress();
+      };
+      row.addEventListener("pointerdown", startPress);
       row.addEventListener("pointerup", cancelPress);
       row.addEventListener("pointercancel", cancelPress);
-      row.addEventListener("pointermove", (e) => {
-        if (!pressTimer) return;
-        if (Math.abs((e.clientX || 0) - startX) > 8 || Math.abs((e.clientY || 0) - startY) > 8) cancelPress();
+      row.addEventListener("pointerleave", cancelPress);
+      row.addEventListener("pointermove", movePress);
+      row.addEventListener("contextmenu", (e) => {
+        if (pressTimer || row.classList.contains("holding")) {
+          e.preventDefault();
+        }
       });
 
       section.append(row);
