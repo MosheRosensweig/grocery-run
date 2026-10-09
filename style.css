@@ -191,7 +191,7 @@ button:active{transform:scale(.97)}
   .food-item .edit-row-main .edit-input{width:100%;flex:1 1 100%}
 }
 
-/* THEME: FOOD OPTIONS DARK (DEV MODE) */
+/* THEME: FOOD OPTIONS DARK */
 body.theme-food-dark{background:#09090b !important;color:#f4f4f5 !important}
 body.theme-food-dark .eyebrow{color:#a1a1aa !important;opacity:.8 !important}
 body.theme-food-dark h1{color:#f4f4f5 !important}

@@ -16,7 +16,7 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
@@ -205,7 +205,7 @@
       .food-item .edit-row-main .edit-input{width:100%;flex:1 1 100%}
     }
 
-    /* THEME: FOOD OPTIONS DARK (DEV MODE) */
+    /* THEME: FOOD OPTIONS DARK */
     body.theme-food-dark{background:#09090b !important;color:#f4f4f5 !important}
     body.theme-food-dark .eyebrow{color:#a1a1aa !important;opacity:.8 !important}
     body.theme-food-dark h1{color:#f4f4f5 !important}
@@ -272,7 +272,7 @@
     <nav class="tabs">
       <button id="tabGroceries" class="tab active">Groceries</button>
       <button id="tabBike" class="tab">Bike Days</button>
-      <button id="tabFood" class="tab" hidden>🍱 Food Options</button>
+      <button id="tabFood" class="tab">🍱 Food Options</button>
     </nav>
 
     <!-- SHARED STATUS -->
@@ -1182,7 +1182,7 @@ $("tabFood").onclick = () => switchTab('food');
 
 function switchTab(tab) {
   currentTab = tab;
-  const isFoodDark = (tab === 'food' && localStorage.getItem("dev_mode") === "true");
+  const isFoodDark = (tab === 'food');
   document.body.classList.toggle("theme-food-dark", isFoodDark);
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) metaTheme.setAttribute("content", isFoodDark ? "#09090b" : "#f6f4ef");
@@ -1230,9 +1230,7 @@ function handleTokenReceived(token, expiresInSeconds = 3600) {
   if (recBtn) recBtn.hidden = true;
   load({ silent: true });
   startAutoSync();
-  if (localStorage.getItem("dev_mode") === "true") {
-    setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
-  }
+  setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
 }
 
 function refreshTokenSilently() {
@@ -2507,28 +2505,21 @@ function checkDevModeTrigger(rawValue) {
   if (!rawValue) return false;
   const clean = rawValue.trim().toLowerCase().replace(/^["']+|["']+$/g, "").trim();
   if (clean === "dev mode" || clean === "devmode" || clean === "dev-mode") {
-    localStorage.setItem("dev_mode", "true");
-    $("tabFood").hidden = false;
     $("itemInput").value = "";
     if ($("foodItemInput")) $("foodItemInput").value = "";
     resetAddFormState();
-    setStatus("Dev mode activated 🛠️");
+    setStatus("Switched to Food Options 🍱");
     switchTab('food');
     return true;
   }
   if (clean === "exit dev mode" || clean === "exit devmode" || clean === "exit-dev-mode") {
-    localStorage.removeItem("dev_mode");
-    $("tabFood").hidden = true;
     $("itemInput").value = "";
     if ($("foodItemInput")) $("foodItemInput").value = "";
     resetAddFormState();
-    document.body.classList.remove("theme-food-dark");
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) metaTheme.setAttribute("content", "#f6f4ef");
     if (currentTab === 'food') {
       switchTab('groceries');
     }
-    setStatus("Exited dev mode");
+    setStatus("Switched to Groceries 🛒");
     return true;
   }
   return false;
@@ -3411,7 +3402,6 @@ async function seedStarterFoods() {
 }
 
 async function ensureFoodSheetSeededIfEmpty() {
-  if (localStorage.getItem("dev_mode") !== "true") return;
   if (localStorage.getItem("food_catalog_cleared_by_user") === "true") return;
   if (!accessToken) return;
   try {
@@ -4103,17 +4093,9 @@ window.addEventListener("load", () => {
 
   // Dev mode toggle check (from localStorage or URL query/hash)
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("dev") === "1" || urlParams.get("dev_mode") === "true" || window.location.hash.toLowerCase() === "#dev") {
-    localStorage.setItem("dev_mode", "true");
-  }
-
-  if (localStorage.getItem("dev_mode") === "true") {
-    const tabFood = $("tabFood");
-    if (tabFood) tabFood.hidden = false;
-    setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
-    if (urlParams.get("tab") === "food" || window.location.hash.toLowerCase() === "#food") {
-      switchTab('food');
-    }
+  setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
+  if (urlParams.get("tab") === "food" || window.location.hash.toLowerCase() === "#food") {
+    switchTab('food');
   }
 
   // Food Sub-Tabs & Controls
