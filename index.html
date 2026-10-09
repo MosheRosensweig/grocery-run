@@ -2429,7 +2429,34 @@ function renderIconGrid(query) {
   }
 }
 
+function checkDevModeTrigger(rawValue) {
+  if (!rawValue) return false;
+  const clean = rawValue.trim().toLowerCase().replace(/^["']+|["']+$/g, "").trim();
+  if (clean === "dev mode" || clean === "devmode" || clean === "dev-mode") {
+    localStorage.setItem("dev_mode", "true");
+    $("tabFood").hidden = false;
+    $("itemInput").value = "";
+    resetAddFormState();
+    setStatus("Dev mode activated 🛠️");
+    switchTab('food');
+    return true;
+  }
+  if (clean === "exit dev mode" || clean === "exit devmode" || clean === "exit-dev-mode") {
+    localStorage.removeItem("dev_mode");
+    $("tabFood").hidden = true;
+    $("itemInput").value = "";
+    resetAddFormState();
+    if (currentTab === 'food') {
+      switchTab('groceries');
+    }
+    setStatus("Exited dev mode");
+    return true;
+  }
+  return false;
+}
+
 $("itemInput").addEventListener("input", () => {
+  if (checkDevModeTrigger($("itemInput").value)) return;
   updateGhostText();
   updateAddFormPreview();
 });
@@ -3816,29 +3843,7 @@ async function removeGroceryItem(item) {
 $("addForm").onsubmit = event => {
   event.preventDefault();
   const rawValue = $("itemInput").value.trim();
-  const lowerVal = rawValue.toLowerCase();
-
-  if (lowerVal === "dev mode") {
-    localStorage.setItem("dev_mode", "true");
-    $("tabFood").hidden = false;
-    $("itemInput").value = "";
-    resetAddFormState();
-    setStatus("Dev mode activated 🛠️");
-    switchTab('food');
-    return;
-  }
-
-  if (lowerVal === "exit dev mode") {
-    localStorage.removeItem("dev_mode");
-    $("tabFood").hidden = true;
-    $("itemInput").value = "";
-    resetAddFormState();
-    if (currentTab === 'food') {
-      switchTab('groceries');
-    }
-    setStatus("Exited dev mode");
-    return;
-  }
+  if (checkDevModeTrigger(rawValue)) return;
 
   const category = $("addCategorySelect").value;
   const icon = currentAddIcon;
@@ -3995,7 +4000,12 @@ window.addEventListener("load", () => {
     seedStarterFoods();
   };
 
-  // Dev mode toggle check
+  // Dev mode toggle check (from localStorage or URL query/hash)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("dev") === "1" || urlParams.get("dev_mode") === "true" || window.location.hash.toLowerCase() === "#dev") {
+    localStorage.setItem("dev_mode", "true");
+  }
+
   if (localStorage.getItem("dev_mode") === "true") {
     const tabFood = $("tabFood");
     if (tabFood) tabFood.hidden = false;
@@ -4035,6 +4045,7 @@ window.addEventListener("load", () => {
   };
 
   $("foodItemInput").addEventListener("input", () => {
+    if (checkDevModeTrigger($("foodItemInput").value)) return;
     updateFoodGhostText();
     updateFoodAddFormPreview();
   });
