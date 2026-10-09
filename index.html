@@ -525,6 +525,8 @@ const INITIAL_STARTER_FOODS = [
   { value: "Cheese Sandwich", category: "Bakery", icon: "🥪", color: "#fef3c7", mealType: "lunch" },
   { value: "Yogurt Tube", category: "Dairy & Eggs", icon: "🥣", color: "#e0e7ff", mealType: "lunch" },
   { value: "Yogurt Cup", category: "Dairy & Eggs", icon: "🥣", color: "#e0e7ff", mealType: "lunch" },
+  { value: "Noodles", category: "Pantry", icon: "🍜", color: "#fef3c7", mealType: "lunch" },
+  { value: "Eggs", category: "Dairy & Eggs", icon: "🥚", color: "#fef3c7", mealType: "lunch" },
   { value: "Grapes", category: "Produce", icon: "🍇", color: "#f3e8ff", mealType: "snack" },
   { value: "Cut Cucumbers", category: "Produce", icon: "🥒", color: "#dcfce7", mealType: "snack" },
   { value: "Cut Grape Tomatoes", category: "Produce", icon: "🍅", color: "#fee2e2", mealType: "snack" },
@@ -537,7 +539,13 @@ const INITIAL_STARTER_FOODS = [
   { value: "Chickpeas", category: "Pantry", icon: "🫛", color: "#fef3c7", mealType: "snack" },
   { value: "Corn", category: "Produce", icon: "🌽", color: "#fef08a", mealType: "snack" },
   { value: "Carrots", category: "Produce", icon: "🥕", color: "#ffedd5", mealType: "snack" },
-  { value: "Raisins", category: "Snacks", icon: "🍇", color: "#ede9fe", mealType: "snack" }
+  { value: "Raisins", category: "Snacks", icon: "🍇", color: "#ede9fe", mealType: "snack" },
+  { value: "Pretzels", category: "Snacks", icon: "🥨", color: "#fef9c3", mealType: "snack" },
+  { value: "Chips", category: "Snacks", icon: "🥔", color: "#fef9c3", mealType: "snack" },
+  { value: "Watermelon", category: "Produce", icon: "🍉", color: "#fee2e2", mealType: "snack" },
+  { value: "Strawberries", category: "Produce", icon: "🍓", color: "#fee2e2", mealType: "snack" },
+  { value: "Apple Slices", category: "Produce", icon: "🍎", color: "#fee2e2", mealType: "snack" },
+  { value: "Applesauce Pouch", category: "Snacks", icon: "🍏", color: "#dcfce7", mealType: "snack" }
 ];
 let expandedLunchboxRow = null;
 let editingFoodCatalogRow = null;
@@ -548,7 +556,7 @@ let userHasManuallyChangedFoodIcon = false;
 let userHasManuallyChangedFoodMealType = false;
 
 function getItemDefaultMealType(name) {
-  if (/sandwich|yogurt|burger|wrap|salad|pasta|burrito|lunch/i.test(name)) {
+  if (/sandwich|yogurt|burger|wrap|salad|pasta|noodle|egg|burrito|lunch/i.test(name)) {
     return "lunch";
   }
   return "snack";
@@ -3280,12 +3288,26 @@ async function ensureFoodSheetSeededIfEmpty() {
   if (!accessToken) return;
   try {
     const sheetName = await resolveFoodSheetName();
-    const range = encodeURIComponent(`${escapeSheetName(sheetName)}!A1:A5`);
+    const range = encodeURIComponent(`${escapeSheetName(sheetName)}!A:A`);
     const data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
     const rows = data.values || [];
-    const hasItems = rows.some(r => String(r[0] ?? "").trim() !== "");
-    if (!hasItems) {
+    const existingNames = new Set(rows.map(r => String(r[0] ?? "").trim().toLowerCase()).filter(Boolean));
+    if (existingNames.size === 0) {
       await seedStarterFoods();
+    } else {
+      const missing = INITIAL_STARTER_FOODS.filter(it => !existingNames.has(it.value.toLowerCase()));
+      if (missing.length > 0) {
+        let target = rows.findIndex(row => !String(row[0] ?? "").trim());
+        if (target < 0) target = rows.length;
+        const appendRows = missing.map(item => [item.value, item.category, item.icon, item.color, item.mealType || "snack", ""]);
+        const appendRange = `${escapeSheetName(sheetName)}!A${target + 1}:F${target + appendRows.length}`;
+        await sheetsFetch(`/values/${encodeURIComponent(appendRange)}?valueInputOption=USER_ENTERED`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ range: appendRange, majorDimension: "ROWS", values: appendRows })
+        });
+        await load({ silent: true });
+      }
     }
   } catch {}
 }
@@ -3902,9 +3924,18 @@ function restoreLocalCache() {
         foodCatalogItems = JSON.parse(cachedCatalog);
         $("catalogCount").textContent = foodCatalogItems.length;
       } catch {}
-    } else if (!localStorage.getItem("food_catalog_seeded_v2")) {
+    } else if (!localStorage.getItem("food_catalog_cleared_by_user")) {
       foodCatalogItems = INITIAL_STARTER_FOODS.map((item, idx) => ({ ...item, row: idx + 1 }));
       $("catalogCount").textContent = foodCatalogItems.length;
+    }
+
+    if (foodCatalogItems.length && !localStorage.getItem("food_catalog_cleared_by_user")) {
+      const existingNames = new Set(foodCatalogItems.map(it => it.value.toLowerCase()));
+      const missing = INITIAL_STARTER_FOODS.filter(it => !existingNames.has(it.value.toLowerCase()));
+      if (missing.length) {
+        missing.forEach(item => foodCatalogItems.push({ ...item, row: foodCatalogItems.length + 1 }));
+        $("catalogCount").textContent = foodCatalogItems.length;
+      }
     }
 
     if (cachedFoodTrash) {
