@@ -16,7 +16,7 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
@@ -49,6 +49,48 @@
     .danger-btn{padding:11px;border:none;border-radius:10px;font-size:.9rem;font-weight:700;background:#fee2e2;color:#991b1b;cursor:pointer;transition:background 0.2s}
     .danger-btn:hover{background:#fecaca}
     .restore{flex:0 0 auto;min-width:76px;min-height:44px;border:0;border-radius:11px;background:#24231f;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+
+    /* FOOD OPTIONS (DARK THEME) */
+    .food-dark-view{background:#18181b;color:#f4f4f5;border-radius:20px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,.35);border:1px solid #27272a;margin-top:4px}
+    .food-sub-tabs{display:flex;gap:8px;margin-bottom:16px}
+    .food-sub-tab{flex:1;padding:10px 6px;border:1px solid #3f3f46;border-radius:12px;font-size:.85rem;font-weight:700;background:#27272a;color:#a1a1aa;cursor:pointer;transition:all .2s;text-align:center}
+    .food-sub-tab.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+    .food-gen-controls{background:#27272a;padding:16px;border-radius:16px;border:1px solid #3f3f46;margin-bottom:16px;display:flex;flex-direction:column;gap:12px}
+    .food-stepper-row{display:flex;align-items:center;justify-content:space-between}
+    .food-stepper-label{font-weight:700;font-size:15px;color:#e4e4e7}
+    .food-stepper{display:flex;align-items:center;gap:12px;background:#18181b;padding:4px 8px;border-radius:12px;border:1px solid #3f3f46}
+    .food-stepper-btn{width:32px;height:32px;border-radius:8px;border:0;background:#3f3f46;color:#fff;font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .food-stepper-value{font-size:18px;font-weight:800;min-width:24px;text-align:center;color:#60a5fa}
+    .food-primary-btn{height:48px;border:0;border-radius:12px;background:#3b82f6;color:#fff;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:background .2s,transform .1s}
+    .food-primary-btn:hover{background:#2563eb}
+    .food-save-btn{background:#10b981}
+    .food-save-btn:hover{background:#059669}
+    .food-item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:8px 12px;border-radius:12px;background:#27272a;border:1px solid #3f3f46;margin:6px 0;transition:opacity .2s ease,transform .2s ease}
+    .food-item.fade-out{opacity:0;transform:scale(.95)}
+    .food-item-name{font-size:16px;font-weight:600;color:#f4f4f5;flex-grow:1}
+    .food-replace-btn{padding:8px 12px;border-radius:10px;border:1px solid #3f3f46;background:#18181b;color:#60a5fa;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0}
+    .food-replace-btn:hover{background:#27272a}
+    .food-accordion-card{background:#27272a;border:1px solid #3f3f46;border-radius:14px;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+    .food-accordion-card.open{border-color:#3b82f6}
+    .food-accordion-header{padding:14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+    .food-accordion-title{font-size:16px;font-weight:700;color:#f4f4f5;display:flex;align-items:center;gap:8px}
+    .food-accordion-meta{font-size:12px;color:#a1a1aa;margin-top:2px}
+    .food-accordion-actions{display:flex;align-items:center;gap:8px}
+    .food-accordion-arrow{font-size:12px;color:#a1a1aa;transition:transform .2s}
+    .food-accordion-card.open .food-accordion-arrow{transform:rotate(180deg)}
+    .food-accordion-body{padding:12px 14px;background:#18181b;border-top:1px solid #3f3f46}
+    .food-accordion-items{display:flex;flex-direction:column;gap:6px}
+    .food-pill-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#27272a;font-size:14px;color:#e4e4e7}
+    .food-add-form{background:#27272a;border-color:#3f3f46}
+    .food-add-form input{color:#f4f4f5 !important;border-color:#3f3f46 !important}
+    .food-add-form input:focus{border-color:#3b82f6 !important}
+    .food-ghost-text{background:#27272a !important}
+    .food-ghost-badge{background:#3f3f46 !important;color:#e4e4e7 !important;border-color:#52525b !important}
+    .food-category-select{background-color:#27272a !important;color:#f4f4f5 !important;border-color:#3f3f46 !important}
+    .food-icon-btn,.food-color-wrapper{background:#27272a !important;border-color:#3f3f46 !important}
+    .food-empty{color:#a1a1aa}
+    .food-undo-row{margin-bottom:12px}
+    .food-undo-btn{width:100%;padding:10px;border-radius:10px;background:#3f3f46;color:#fff;border:0;font-weight:700;cursor:pointer}
 
     .status{min-height:22px;padding:2px 4px 6px;font-size:13px;opacity:.55}
     .status.error{color:#a33;opacity:1}
@@ -172,6 +214,7 @@
     <nav class="tabs">
       <button id="tabGroceries" class="tab active">Groceries</button>
       <button id="tabBike" class="tab">Bike Days</button>
+      <button id="tabFood" class="tab" hidden>🍱 Food Options</button>
     </nav>
 
     <!-- SHARED STATUS -->
@@ -258,6 +301,96 @@
     </div>
 
 
+    <!-- FOOD OPTIONS VIEW (DARK THEME) -->
+    <div id="foodView" class="food-dark-view" hidden>
+      <!-- SUB TABS -->
+      <div class="food-sub-tabs">
+        <button id="foodSubTabGen" class="food-sub-tab active" type="button">🍱 Generator</button>
+        <button id="foodSubTabSaved" class="food-sub-tab" type="button">💾 Saved Boxes (<span id="savedBoxesCount">0</span>)</button>
+        <button id="foodSubTabCatalog" class="food-sub-tab" type="button">📋 Food Catalog (<span id="catalogCount">0</span>)</button>
+      </div>
+
+      <!-- 1. GENERATOR SUB VIEW -->
+      <div id="foodGenView">
+        <div class="food-gen-controls">
+          <div class="food-stepper-row">
+            <span class="food-stepper-label">Number of items:</span>
+            <div class="food-stepper">
+              <button type="button" id="foodCountMinus" class="food-stepper-btn" aria-label="Decrease items">−</button>
+              <span id="foodCountDisplay" class="food-stepper-value">5</span>
+              <button type="button" id="foodCountPlus" class="food-stepper-btn" aria-label="Increase items">+</button>
+            </div>
+          </div>
+          <button type="button" id="generateLunchBtn" class="food-primary-btn">
+            ✨ Generate Lunchbox
+          </button>
+        </div>
+
+        <section id="generatedList" class="list" aria-live="polite"></section>
+
+        <p id="genEmptyPrompt" class="empty food-empty">
+          Pick how many items and tap <strong>Generate Lunchbox</strong>!
+        </p>
+
+        <div id="saveLunchBoxRow" style="margin-top:16px;" hidden>
+          <button type="button" id="saveLunchBoxBtn" class="food-primary-btn food-save-btn">
+            💾 Save Lunchbox
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. SAVED LUNCHBOXES SUB VIEW -->
+      <div id="foodSavedView" hidden>
+        <div id="savedBoxesUndoRow" class="food-undo-row" hidden>
+          <button type="button" id="undoSavedBoxBtn" class="food-undo-btn">↩ Undo Delete</button>
+        </div>
+        <section id="savedBoxesList" class="food-accordion-list" aria-live="polite"></section>
+        <p id="savedBoxesEmpty" class="empty food-empty" hidden>
+          No saved lunchboxes yet. Generate one and tap <strong>Save Lunchbox</strong>!
+        </p>
+      </div>
+
+      <!-- 3. FOOD CATALOG SUB VIEW -->
+      <div id="foodCatalogView" hidden>
+        <form id="foodAddForm" class="add-form-container food-add-form">
+          <div class="add-input-row">
+            <div class="input-autocomplete-wrapper">
+              <div id="foodGhostTextOverlay" class="ghost-text-overlay food-ghost-text" aria-hidden="true"></div>
+              <input
+                id="foodItemInput"
+                autocomplete="off"
+                autocapitalize="words"
+                placeholder="Add a food option (e.g. Turkey Wrap)…"
+                aria-label="New food option"
+                required
+              >
+              <button type="button" id="foodGhostTextBadge" class="ghost-text-badge food-ghost-badge" hidden title="Tap to accept suggestion">⇥</button>
+            </div>
+            <button type="submit" class="food-primary-btn" style="flex:0 0 auto;width:auto;padding:0 20px;">
+              Add
+            </button>
+          </div>
+          <div id="foodAddPreviewBar" class="add-preview-bar">
+            <label class="preview-field food-preview-field">
+              <span class="preview-label" style="color:#a1a1aa;">Category:</span>
+              <select id="foodCategorySelect" class="category-select food-category-select" aria-label="Select category"></select>
+            </label>
+            <button type="button" id="foodAddIconBtn" class="icon-picker-btn food-icon-btn" title="Choose Icon">🍱</button>
+            <label class="color-picker-wrapper food-color-wrapper" title="Choose Custom Color">
+              <input type="color" id="foodColorInput" value="#3f3f46">
+              <span id="foodColorSwatch" class="color-swatch">🎨</span>
+            </label>
+          </div>
+        </form>
+
+        <section id="foodCatalogList" class="list" aria-live="polite"></section>
+        <p id="foodCatalogEmpty" class="empty food-empty" hidden>
+          Your food catalog is empty. Add your favorite lunch items above!
+        </p>
+      </div>
+    </div>
+
+
     <!-- SHARED FOOTER -->
     <p
       id="lastUpdated"
@@ -312,6 +445,7 @@ const CONFIG = {
   spreadsheetId: "1-XOzxPjaJz8PYoA5WTlNOBa5fkl_Kn2pr1iVcgHW_mM",
   sheetName: "grocery run",
   bikeSheetName: "Days I biked in",
+  foodSheetName: "food options",
   scope: "https://www.googleapis.com/auth/spreadsheets",
   syncInterval: 2000
 };
@@ -332,6 +466,21 @@ let statCardsData = [];
 let editingItemRow = null;
 let grocerySubTab = 'list';
 const TRASH_EXPIRY_MS = 60 * 60 * 1000;
+
+// Food Options state
+let foodCatalogItems = [];
+let savedLunchboxes = [];
+let currentGeneratedBox = [];
+let foodSubTab = 'generator';
+let foodGenItemCount = 5;
+let expandedLunchboxRow = null;
+let editingFoodCatalogRow = null;
+let editingLunchboxRow = null;
+let lastDeletedSavedBox = null;
+let userHasManuallyChangedFoodCategory = false;
+let userHasManuallyChangedFoodIcon = false;
+let userCustomFoodColor = null;
+let currentAddFoodIcon = "🍱";
 
 let userHasManuallyChangedCategory = false;
 let userHasManuallyChangedIcon = false;
@@ -887,14 +1036,26 @@ function updateLastUpdated() {
 
 $("tabGroceries").onclick = () => switchTab('groceries');
 $("tabBike").onclick = () => switchTab('bike');
+$("tabFood").onclick = () => switchTab('food');
 
 function switchTab(tab) {
   currentTab = tab;
   $("tabGroceries").classList.toggle("active", tab === 'groceries');
   $("tabBike").classList.toggle("active", tab === 'bike');
+  $("tabFood").classList.toggle("active", tab === 'food');
   $("groceryView").hidden = (tab !== 'groceries');
   $("bikeView").hidden = (tab !== 'bike');
-  $("headerTitle").textContent = (tab === 'groceries') ? "What do we need?" : "Bike Log";
+  $("foodView").hidden = (tab !== 'food');
+
+  if (tab === 'groceries') {
+    $("headerTitle").textContent = "What do we need?";
+  } else if (tab === 'bike') {
+    $("headerTitle").textContent = "Bike Log";
+  } else if (tab === 'food') {
+    $("headerTitle").textContent = "Food & Lunch";
+    renderFoodActiveView();
+  }
+
   setStatus("");
   load();
 }
@@ -1176,6 +1337,64 @@ async function load(options = {}) {
       renderBikeList();
       localStorage.setItem("cached_bike_dates", JSON.stringify(bikeDates));
       localStorage.setItem("cached_bike_stats", JSON.stringify(statCardsData));
+      if (!silent) setStatus("");
+
+    } else if (currentTab === 'food') {
+      const range = encodeURIComponent(`${CONFIG.foodSheetName}!A:I`);
+      let data = { values: [] };
+      try {
+        data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
+      } catch (err) {
+        if (/Unable to parse range|not found/i.test(err.message)) {
+          if (!silent) setStatus("Create tab 'food options' in your Google Sheet to sync.", true);
+          return;
+        }
+        throw err;
+      }
+      const rows = data.values || [];
+
+      let newCatalog = [];
+      let newSavedBoxes = [];
+
+      rows.forEach((row, index) => {
+        // Col A-D: Food catalog item
+        const catVal = String(row[0] ?? "").trim();
+        if (catVal) {
+          newCatalog.push({
+            row: index + 1,
+            value: catVal,
+            category: String(row[1] ?? "").trim() || null,
+            icon: String(row[2] ?? "").trim() || null,
+            color: String(row[3] ?? "").trim() || null
+          });
+        }
+
+        // Col F-I (indices 5, 6, 7, 8): Saved lunchbox
+        const boxTitle = String(row[5] ?? "").trim();
+        if (boxTitle) {
+          let boxItems = [];
+          try {
+            const rawItems = String(row[7] ?? "").trim();
+            if (rawItems.startsWith("[")) {
+              boxItems = JSON.parse(rawItems);
+            } else if (rawItems) {
+              boxItems = rawItems.split(",").map(s => s.trim()).filter(Boolean);
+            }
+          } catch {}
+          newSavedBoxes.push({
+            row: index + 1,
+            title: boxTitle,
+            color: String(row[6] ?? "").trim() || "#10b981",
+            items: boxItems,
+            savedAt: String(row[8] ?? "").trim() || ""
+          });
+        }
+      });
+
+      foodCatalogItems = newCatalog;
+      savedLunchboxes = newSavedBoxes;
+      persistFoodCache();
+      renderFoodActiveView();
       if (!silent) setStatus("");
     }
 
@@ -1846,14 +2065,25 @@ function renderBikeList() {
 
 function initCategorySelects() {
   const sel = $("addCategorySelect");
-  if (!sel) return;
-  sel.innerHTML = "";
-  CATEGORY_ORDER.forEach(cat => {
-    const opt = document.createElement("option");
-    opt.value = cat;
-    opt.textContent = cat;
-    sel.append(opt);
-  });
+  if (sel) {
+    sel.innerHTML = "";
+    CATEGORY_ORDER.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat;
+      sel.append(opt);
+    });
+  }
+  const foodSel = $("foodCategorySelect");
+  if (foodSel) {
+    foodSel.innerHTML = "";
+    CATEGORY_ORDER.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat;
+      foodSel.append(opt);
+    });
+  }
 }
 
 function updateAddFormPreview() {
@@ -2054,6 +2284,828 @@ $("addIconBtn").onclick = () => {
 };
 
 /* =========================================================
+   FOOD OPTIONS (DARK THEME TAB LOGIC)
+========================================================= */
+
+function persistFoodCache() {
+  localStorage.setItem("cached_food_catalog", JSON.stringify(foodCatalogItems));
+  localStorage.setItem("cached_saved_lunchboxes", JSON.stringify(savedLunchboxes));
+}
+
+function switchFoodSubTab(tab) {
+  foodSubTab = tab;
+  $("foodSubTabGen").classList.toggle("active", tab === 'generator');
+  $("foodSubTabSaved").classList.toggle("active", tab === 'saved');
+  $("foodSubTabCatalog").classList.toggle("active", tab === 'catalog');
+
+  $("foodGenView").hidden = (tab !== 'generator');
+  $("foodSavedView").hidden = (tab !== 'saved');
+  $("foodCatalogView").hidden = (tab !== 'catalog');
+
+  renderFoodActiveView();
+}
+
+function renderFoodActiveView() {
+  $("savedBoxesCount").textContent = savedLunchboxes.length;
+  $("catalogCount").textContent = foodCatalogItems.length;
+
+  if (foodSubTab === 'generator') {
+    renderGeneratedList();
+  } else if (foodSubTab === 'saved') {
+    renderSavedBoxes();
+  } else if (foodSubTab === 'catalog') {
+    renderFoodCatalog();
+  }
+}
+
+// 1. Generator Functions
+function generateLunchbox() {
+  if (!foodCatalogItems.length) {
+    setStatus("Add food options in the Food Catalog tab first!", true);
+    switchFoodSubTab('catalog');
+    return;
+  }
+  const pool = [...foodCatalogItems];
+  const count = Math.min(foodGenItemCount, pool.length);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  currentGeneratedBox = pool.slice(0, count);
+  renderGeneratedList();
+}
+
+function renderGeneratedList() {
+  const container = $("generatedList");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!currentGeneratedBox.length) {
+    $("genEmptyPrompt").hidden = false;
+    $("saveLunchBoxRow").hidden = true;
+    return;
+  }
+  $("genEmptyPrompt").hidden = true;
+  $("saveLunchBoxRow").hidden = false;
+
+  currentGeneratedBox.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "food-item";
+    const details = getItemDetails(item.value);
+    row.style.borderLeft = `5px solid ${item.color || details.color}`;
+
+    const iconSpan = document.createElement("span");
+    iconSpan.textContent = getItemIcon(item);
+    iconSpan.style.fontSize = "1.3rem";
+    iconSpan.style.marginRight = "6px";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "food-item-name";
+    nameSpan.textContent = item.value;
+
+    const catBadge = document.createElement("span");
+    catBadge.style.cssText = "font-size:11px;padding:3px 8px;border-radius:6px;background:#3f3f46;color:#a1a1aa;margin-right:6px;font-weight:600;";
+    catBadge.textContent = getItemCategory(item);
+
+    const replaceBtn = document.createElement("button");
+    replaceBtn.type = "button";
+    replaceBtn.className = "food-replace-btn";
+    replaceBtn.innerHTML = "🔄 Replace";
+    replaceBtn.title = "Replace with another random item";
+    replaceBtn.onclick = (e) => {
+      e.stopPropagation();
+      replaceGeneratedItem(index, row);
+    };
+
+    row.append(iconSpan, nameSpan, catBadge, replaceBtn);
+    container.append(row);
+  });
+}
+
+function replaceGeneratedItem(index, rowElement) {
+  const currentNames = new Set(currentGeneratedBox.map(it => it.value));
+  const available = foodCatalogItems.filter(it => !currentNames.has(it.value));
+
+  if (!available.length) {
+    setStatus("No other items available in catalog to replace with!", true);
+    return;
+  }
+
+  const replacement = available[Math.floor(Math.random() * available.length)];
+  rowElement.classList.add("fade-out");
+
+  setTimeout(() => {
+    currentGeneratedBox[index] = replacement;
+    renderGeneratedList();
+  }, 180);
+}
+
+async function saveCurrentLunchbox() {
+  if (!currentGeneratedBox.length) return;
+  const defaultTitle = `Lunch ${savedLunchboxes.length + 1}`;
+  const now = new Date();
+  const timestamp = `${now.getMonth() + 1}/${now.getDate()} ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  const color = "#10b981";
+  const itemsArray = currentGeneratedBox.map(it => ({
+    name: it.value,
+    icon: getItemIcon(it),
+    category: getItemCategory(it)
+  }));
+
+  setStatus("Saving lunchbox…");
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+      return;
+    }
+
+    const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!F:F")}?majorDimension=ROWS`);
+    const rows = values.values || [];
+    let target = rows.findIndex(row => !String(row[0] ?? "").trim());
+    if (target < 0) target = rows.length;
+
+    const rangeA1 = `${CONFIG.foodSheetName}!F${target + 1}:I${target + 1}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        range: rangeA1,
+        majorDimension: "ROWS",
+        values: [[defaultTitle, color, JSON.stringify(itemsArray), timestamp]]
+      })
+    });
+
+    confettiExplosion($("saveLunchBoxBtn"));
+    setStatus("Saved lunchbox! 🎉");
+    await load();
+    switchFoodSubTab('saved');
+  } catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+    } else {
+      setStatus("Error saving lunchbox: " + error.message, true);
+    }
+  }
+}
+
+// 2. Saved Lunchboxes View & Operations
+function renderSavedBoxes() {
+  const container = $("savedBoxesList");
+  if (!container) return;
+  container.innerHTML = "";
+  $("savedBoxesCount").textContent = savedLunchboxes.length;
+
+  if (!savedLunchboxes.length) {
+    $("savedBoxesEmpty").hidden = false;
+    return;
+  }
+  $("savedBoxesEmpty").hidden = true;
+
+  savedLunchboxes.forEach(box => {
+    const card = document.createElement("div");
+    card.className = "food-accordion-card" + (expandedLunchboxRow === box.row ? " open" : "");
+    if (box.color) card.style.borderLeft = `5px solid ${box.color}`;
+
+    if (editingLunchboxRow === box.row) {
+      const editForm = document.createElement("form");
+      editForm.className = "edit-form-expanded";
+      editForm.style.padding = "12px";
+
+      const mainRow = document.createElement("div");
+      mainRow.className = "edit-row-main";
+
+      const titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.className = "edit-input";
+      titleInput.style.cssText = "background:#18181b;color:#fff;border-color:#3f3f46;";
+      titleInput.value = box.title;
+
+      const actions = document.createElement("div");
+      actions.className = "edit-actions";
+
+      const saveBtn = document.createElement("button");
+      saveBtn.type = "submit";
+      saveBtn.className = "save-btn";
+      saveBtn.textContent = "Save";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "cancel-btn";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = (e) => {
+        e.stopPropagation();
+        editingLunchboxRow = null;
+        renderSavedBoxes();
+      };
+
+      actions.append(saveBtn, cancelBtn);
+      mainRow.append(titleInput, actions);
+
+      const colorRow = document.createElement("div");
+      colorRow.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:8px;";
+
+      let editBoxColor = box.color || "#10b981";
+      const colorLabel = document.createElement("label");
+      colorLabel.className = "color-picker-wrapper";
+      colorLabel.style.background = "#18181b";
+      colorLabel.style.borderColor = "#3f3f46";
+
+      const colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.value = editBoxColor;
+
+      const colorSwatch = document.createElement("span");
+      colorSwatch.className = "color-swatch";
+      colorSwatch.style.backgroundColor = editBoxColor;
+      colorSwatch.textContent = "🎨";
+
+      colorInput.oninput = (e) => {
+        editBoxColor = e.target.value;
+        colorSwatch.style.backgroundColor = editBoxColor;
+      };
+
+      colorLabel.append(colorInput, colorSwatch);
+      colorRow.append(colorLabel);
+
+      editForm.append(mainRow, colorRow);
+      editForm.onsubmit = (e) => {
+        e.preventDefault();
+        const newTitle = titleInput.value.trim();
+        if (newTitle) {
+          updateSavedLunchbox(box, newTitle, editBoxColor);
+        } else {
+          editingLunchboxRow = null;
+          renderSavedBoxes();
+        }
+      };
+
+      card.append(editForm);
+      container.append(card);
+      return;
+    }
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "food-accordion-header";
+
+    const info = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "food-accordion-title";
+    title.textContent = box.title;
+
+    const meta = document.createElement("div");
+    meta.className = "food-accordion-meta";
+    meta.textContent = `${box.items.length} items • ${box.savedAt || "Saved"}`;
+    info.append(title, meta);
+
+    const actDiv = document.createElement("div");
+    actDiv.className = "food-accordion-actions";
+
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "icon-button";
+    delBtn.style.cssText = "width:34px;height:34px;font-size:15px;background:#3f3f46;color:#fff;border-radius:8px;border:0;cursor:pointer;";
+    delBtn.textContent = "🗑️";
+    delBtn.title = "Delete lunchbox";
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteSavedLunchbox(box);
+    };
+
+    const arrow = document.createElement("span");
+    arrow.className = "food-accordion-arrow";
+    arrow.textContent = "▼";
+
+    actDiv.append(delBtn, arrow);
+    header.append(info, actDiv);
+
+    header.onclick = () => {
+      expandedLunchboxRow = (expandedLunchboxRow === box.row) ? null : box.row;
+      renderSavedBoxes();
+    };
+
+    let pressTimer = null;
+    let startX = 0, startY = 0;
+    const cancelPress = () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      card.classList.remove("holding");
+    };
+    header.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button")) return;
+      cancelPress();
+      startX = e.clientX || 0;
+      startY = e.clientY || 0;
+      card.classList.add("holding");
+      pressTimer = setTimeout(() => {
+        card.classList.remove("holding");
+        if (navigator.vibrate) try { navigator.vibrate(40); } catch {}
+        editingLunchboxRow = box.row;
+        renderSavedBoxes();
+      }, 500);
+    });
+    header.addEventListener("pointerup", cancelPress);
+    header.addEventListener("pointercancel", cancelPress);
+    header.addEventListener("pointermove", (e) => {
+      if (!pressTimer) return;
+      if (Math.abs((e.clientX || 0) - startX) > 8 || Math.abs((e.clientY || 0) - startY) > 8) cancelPress();
+    });
+
+    card.append(header);
+
+    // Expanded Body
+    if (expandedLunchboxRow === box.row) {
+      const body = document.createElement("div");
+      body.className = "food-accordion-body";
+
+      const itemsWrap = document.createElement("div");
+      itemsWrap.className = "food-accordion-items";
+
+      box.items.forEach(it => {
+        const itemRow = document.createElement("div");
+        itemRow.className = "food-pill-item";
+
+        const itName = typeof it === "string" ? it : it.name;
+        const itIcon = (typeof it === "object" && it.icon) ? it.icon : getItemIcon({ value: itName });
+        const itCat = (typeof it === "object" && it.category) ? it.category : getItemCategory({ value: itName });
+
+        const iconSpan = document.createElement("span");
+        iconSpan.textContent = itIcon;
+        iconSpan.style.fontSize = "18px";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = itName;
+        nameSpan.style.flex = "1";
+
+        const catSpan = document.createElement("span");
+        catSpan.textContent = itCat;
+        catSpan.style.cssText = "font-size:11px;opacity:0.7;";
+
+        itemRow.append(iconSpan, nameSpan, catSpan);
+        itemsWrap.append(itemRow);
+      });
+
+      body.append(itemsWrap);
+      card.append(body);
+    }
+
+    container.append(card);
+  });
+}
+
+async function updateSavedLunchbox(box, newTitle, newColor) {
+  editingLunchboxRow = null;
+  setStatus("Saving…");
+  const oldTitle = box.title;
+  const oldColor = box.color;
+  box.title = newTitle;
+  box.color = newColor;
+  persistFoodCache();
+  renderSavedBoxes();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Updated locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    const rangeA1 = `${CONFIG.foodSheetName}!F${box.row}:G${box.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[newTitle, newColor]] })
+    });
+    await load();
+  } catch (err) {
+    box.title = oldTitle;
+    box.color = oldColor;
+    persistFoodCache();
+    renderSavedBoxes();
+    setStatus("Couldn't update lunchbox: " + err.message, true);
+  }
+}
+
+async function deleteSavedLunchbox(box) {
+  setStatus("Deleting lunchbox…");
+  const prev = [...savedLunchboxes];
+  lastDeletedSavedBox = { ...box };
+  savedLunchboxes = savedLunchboxes.filter(b => b.row !== box.row);
+  persistFoodCache();
+  renderSavedBoxes();
+  $("savedBoxesUndoRow").hidden = false;
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Deleted locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!F" + box.row + ":I" + box.row)}:clear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    });
+    await load();
+  } catch (err) {
+    savedLunchboxes = prev;
+    persistFoodCache();
+    renderSavedBoxes();
+    setStatus("Couldn't delete lunchbox: " + err.message, true);
+  }
+}
+
+async function undoDeleteSavedLunchbox() {
+  if (!lastDeletedSavedBox) return;
+  const boxToRestore = lastDeletedSavedBox;
+  lastDeletedSavedBox = null;
+  $("savedBoxesUndoRow").hidden = true;
+  setStatus("Restoring lunchbox…");
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) return;
+    const rangeA1 = `${CONFIG.foodSheetName}!F${boxToRestore.row}:I${boxToRestore.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        range: rangeA1,
+        majorDimension: "ROWS",
+        values: [[boxToRestore.title, boxToRestore.color, JSON.stringify(boxToRestore.items), boxToRestore.savedAt]]
+      })
+    });
+    await load();
+    setStatus("Restored lunchbox! ↩");
+  } catch (err) {
+    setStatus("Couldn't restore lunchbox: " + err.message, true);
+  }
+}
+
+// 3. Food Catalog View & Operations
+function renderFoodCatalog() {
+  const list = $("foodCatalogList");
+  if (!list) return;
+  list.innerHTML = "";
+  $("catalogCount").textContent = foodCatalogItems.length;
+
+  if (!foodCatalogItems.length) {
+    $("foodCatalogEmpty").hidden = false;
+    return;
+  }
+  $("foodCatalogEmpty").hidden = true;
+
+  const groups = {};
+  CATEGORY_ORDER.forEach(cat => groups[cat] = []);
+  foodCatalogItems.forEach(item => {
+    const cat = getItemCategory(item);
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(item);
+  });
+
+  CATEGORY_ORDER.forEach(category => {
+    const categoryItems = groups[category];
+    if (!categoryItems || !categoryItems.length) return;
+
+    const section = document.createElement("section");
+    section.className = "grocery-section";
+
+    const heading = document.createElement("div");
+    heading.className = "grocery-section-heading";
+    heading.style.color = "#a1a1aa";
+
+    const icon = document.createElement("span");
+    icon.className = "category-icon";
+    icon.textContent = CATEGORY_ICONS[category] || "🛒";
+
+    const title = document.createElement("span");
+    title.textContent = category;
+
+    heading.append(icon, title);
+    section.append(heading);
+
+    categoryItems.forEach(item => {
+      const details = getItemDetails(item.value);
+      const row = document.createElement("div");
+      row.className = "food-item";
+      row.style.borderLeft = `5px solid ${item.color || details.color}`;
+
+      if (editingFoodCatalogRow === item.row) {
+        const editForm = document.createElement("form");
+        editForm.className = "edit-form-expanded";
+
+        const mainRow = document.createElement("div");
+        mainRow.className = "edit-row-main";
+
+        const editInput = document.createElement("input");
+        editInput.type = "text";
+        editInput.className = "edit-input";
+        editInput.style.cssText = "background:#18181b;color:#fff;border-color:#3f3f46;";
+        editInput.value = item.value;
+
+        const actions = document.createElement("div");
+        actions.className = "edit-actions";
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "submit";
+        saveBtn.className = "save-btn";
+        saveBtn.textContent = "Save";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "cancel-btn";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.onclick = (e) => {
+          e.stopPropagation();
+          editingFoodCatalogRow = null;
+          renderFoodCatalog();
+        };
+
+        actions.append(saveBtn, cancelBtn);
+        mainRow.append(editInput, actions);
+
+        const controlsRow = document.createElement("div");
+        controlsRow.className = "edit-row-controls";
+
+        const catLabel = document.createElement("label");
+        catLabel.className = "preview-field food-preview-field";
+        const catSpan = document.createElement("span");
+        catSpan.className = "preview-label";
+        catSpan.style.color = "#a1a1aa";
+        catSpan.textContent = "Cat:";
+
+        const catSelect = document.createElement("select");
+        catSelect.className = "category-select food-category-select";
+        CATEGORY_ORDER.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          if (c === getItemCategory(item)) opt.selected = true;
+          catSelect.append(opt);
+        });
+        catLabel.append(catSpan, catSelect);
+
+        let selectedEditIcon = getItemIcon(item);
+        const iconBtn = document.createElement("button");
+        iconBtn.type = "button";
+        iconBtn.className = "icon-picker-btn food-icon-btn";
+        iconBtn.textContent = selectedEditIcon;
+        iconBtn.onclick = (e) => {
+          e.stopPropagation();
+          openIconPicker((newIcon) => {
+            selectedEditIcon = newIcon;
+            iconBtn.textContent = newIcon;
+          });
+        };
+
+        let selectedEditColor = item.color || "#3f3f46";
+        const colorLabel = document.createElement("label");
+        colorLabel.className = "color-picker-wrapper food-color-wrapper";
+
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = selectedEditColor.startsWith("#") && selectedEditColor.length === 7 ? selectedEditColor : "#3f3f46";
+
+        const colorSwatch = document.createElement("span");
+        colorSwatch.className = "color-swatch";
+        colorSwatch.style.backgroundColor = selectedEditColor;
+        colorSwatch.textContent = "🎨";
+
+        colorInput.oninput = (e) => {
+          selectedEditColor = e.target.value;
+          colorSwatch.style.backgroundColor = selectedEditColor;
+        };
+
+        colorLabel.append(colorInput, colorSwatch);
+        controlsRow.append(catLabel, iconBtn, colorLabel);
+        editForm.append(mainRow, controlsRow);
+
+        editForm.onsubmit = (e) => {
+          e.preventDefault();
+          const newValue = editInput.value.trim();
+          if (newValue) {
+            updateFoodCatalogItem(item, newValue, catSelect.value, selectedEditIcon, selectedEditColor);
+          } else {
+            editingFoodCatalogRow = null;
+            renderFoodCatalog();
+          }
+        };
+
+        row.append(editForm);
+        section.append(row);
+        return;
+      }
+
+      const itemIcon = document.createElement("span");
+      itemIcon.textContent = getItemIcon(item);
+      itemIcon.style.marginRight = "10px";
+      itemIcon.style.fontSize = "1.2rem";
+
+      const name = document.createElement("span");
+      name.textContent = item.value;
+      name.style.fontWeight = "600";
+      name.style.flexGrow = "1";
+      name.style.color = "#f4f4f5";
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "remove";
+      delBtn.style.cssText = "background:#3f3f46;color:#fff;border-radius:10px;";
+      delBtn.textContent = "Remove";
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        removeFoodCatalogItem(item);
+      };
+
+      row.append(itemIcon, name, delBtn);
+
+      let pressTimer = null;
+      let startX = 0, startY = 0;
+      const cancelPress = () => {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+        row.classList.remove("holding");
+      };
+      row.addEventListener("pointerdown", (e) => {
+        if (e.target.closest("button")) return;
+        cancelPress();
+        startX = e.clientX || 0;
+        startY = e.clientY || 0;
+        row.classList.add("holding");
+        pressTimer = setTimeout(() => {
+          row.classList.remove("holding");
+          if (navigator.vibrate) try { navigator.vibrate(40); } catch {}
+          editingFoodCatalogRow = item.row;
+          renderFoodCatalog();
+        }, 500);
+      });
+      row.addEventListener("pointerup", cancelPress);
+      row.addEventListener("pointercancel", cancelPress);
+      row.addEventListener("pointermove", (e) => {
+        if (!pressTimer) return;
+        if (Math.abs((e.clientX || 0) - startX) > 8 || Math.abs((e.clientY || 0) - startY) > 8) cancelPress();
+      });
+
+      section.append(row);
+    });
+
+    list.append(section);
+  });
+}
+
+async function addFoodCatalogItem(value, category, icon, color) {
+  setStatus("Adding food…");
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+      return;
+    }
+    const values = await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!A:A")}?majorDimension=ROWS`);
+    const rows = values.values || [];
+    let target = rows.findIndex(row => !String(row[0] ?? "").trim());
+    if (target < 0) target = rows.length;
+
+    const rangeA1 = `${CONFIG.foodSheetName}!A${target + 1}:D${target + 1}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value, category || "", icon || "", color || ""]] })
+    });
+
+    $("foodItemInput").value = "";
+    resetFoodAddFormState();
+    await load();
+  } catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Please tap Reconnect to sync with Google.", true);
+    } else {
+      setStatus("Error adding food: " + error.message, true);
+    }
+  }
+}
+
+async function updateFoodCatalogItem(item, newValue, newCategory, newIcon, newColor) {
+  if (!item || !newValue) return;
+  editingFoodCatalogRow = null;
+  setStatus("Saving…");
+  const oldState = { ...item };
+  item.value = newValue;
+  item.category = newCategory || null;
+  item.icon = newIcon || null;
+  item.color = newColor || null;
+  persistFoodCache();
+  renderFoodCatalog();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Updated locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    const rangeA1 = `${CONFIG.foodSheetName}!A${item.row}:D${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[newValue, newCategory || "", newIcon || "", newColor || ""]] })
+    });
+    await load();
+  } catch (err) {
+    Object.assign(item, oldState);
+    persistFoodCache();
+    renderFoodCatalog();
+    setStatus("Couldn't update item: " + err.message, true);
+  }
+}
+
+async function removeFoodCatalogItem(item) {
+  if (!item) return;
+  setStatus("Removing…");
+  const prev = [...foodCatalogItems];
+  foodCatalogItems = foodCatalogItems.filter(it => it !== item);
+  persistFoodCache();
+  renderFoodCatalog();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Removed locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    await sheetsFetch(`/values/${encodeURIComponent(CONFIG.foodSheetName + "!A" + item.row + ":D" + item.row)}:clear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    });
+    await load();
+  } catch (err) {
+    foodCatalogItems = prev;
+    persistFoodCache();
+    renderFoodCatalog();
+    setStatus("Couldn't remove item: " + err.message, true);
+  }
+}
+
+function updateFoodAddFormPreview() {
+  const text = $("foodItemInput").value.trim();
+  if (!userHasManuallyChangedFoodCategory) {
+    const autoCat = text ? categorizeItem(text) : "Produce";
+    $("foodCategorySelect").value = autoCat;
+  }
+  if (!userHasManuallyChangedFoodIcon) {
+    currentAddFoodIcon = text ? getItemDetails(text).icon : "🍱";
+    $("foodAddIconBtn").textContent = currentAddFoodIcon;
+  }
+}
+
+function resetFoodAddFormState() {
+  userHasManuallyChangedFoodCategory = false;
+  userHasManuallyChangedFoodIcon = false;
+  userCustomFoodColor = null;
+  currentAddFoodIcon = "🍱";
+  $("foodAddIconBtn").textContent = "🍱";
+  $("foodColorInput").value = "#3f3f46";
+  $("foodColorSwatch").style.backgroundColor = "#3f3f46";
+  $("foodGhostTextOverlay").innerHTML = "";
+  $("foodGhostTextBadge").hidden = true;
+  updateFoodAddFormPreview();
+}
+
+let currentFoodSuggestion = null;
+
+function updateFoodGhostText() {
+  const input = $("foodItemInput");
+  const typed = input.value;
+  const overlay = $("foodGhostTextOverlay");
+  const badge = $("foodGhostTextBadge");
+
+  if (!typed || !typed.trim()) {
+    overlay.innerHTML = "";
+    badge.hidden = true;
+    currentFoodSuggestion = null;
+    return;
+  }
+
+  const match = getSuggestion(typed);
+  if (match) {
+    currentFoodSuggestion = match;
+    const suffix = match.slice(typed.length);
+    overlay.innerHTML = `<span class="ghost-text-typed">${escapeHtml(typed)}</span><span class="ghost-text-suffix">${escapeHtml(suffix)}</span>`;
+    badge.hidden = false;
+    badge.textContent = `⇥ ${match}`;
+  } else {
+    overlay.innerHTML = "";
+    badge.hidden = true;
+    currentFoodSuggestion = null;
+  }
+}
+
+function acceptFoodSuggestion() {
+  if (currentFoodSuggestion) {
+    $("foodItemInput").value = currentFoodSuggestion;
+    updateFoodGhostText();
+    updateFoodAddFormPreview();
+  }
+}
+
+/* =========================================================
    ACTIONS
 ========================================================= */
 
@@ -2170,11 +3222,34 @@ async function removeGroceryItem(item) {
 
 $("addForm").onsubmit = event => {
   event.preventDefault();
-  const value = $("itemInput").value.trim();
+  const rawValue = $("itemInput").value.trim();
+  const lowerVal = rawValue.toLowerCase();
+
+  if (lowerVal === "dev mode") {
+    localStorage.setItem("dev_mode", "true");
+    $("tabFood").hidden = false;
+    $("itemInput").value = "";
+    resetAddFormState();
+    setStatus("Dev mode activated 🛠️");
+    return;
+  }
+
+  if (lowerVal === "exit dev mode") {
+    localStorage.removeItem("dev_mode");
+    $("tabFood").hidden = true;
+    $("itemInput").value = "";
+    resetAddFormState();
+    if (currentTab === 'food') {
+      switchTab('groceries');
+    }
+    setStatus("Exited dev mode");
+    return;
+  }
+
   const category = $("addCategorySelect").value;
   const icon = currentAddIcon;
   const color = userCustomColor;
-  if (value) addGroceryItem(value, category, icon, color);
+  if (rawValue) addGroceryItem(rawValue, category, icon, color);
 };
 
 $("refreshBtn").onclick = () => load();
@@ -2188,12 +3263,17 @@ $("signOutBtn").onclick = () => {
   items = [];
   trashItems = [];
   grocerySubTab = 'list';
+  foodCatalogItems = [];
+  savedLunchboxes = [];
+  currentGeneratedBox = [];
   localStorage.removeItem("google_access_token");
   localStorage.removeItem("google_token_expiry");
   localStorage.removeItem("autoLogin");
   localStorage.removeItem("has_connected_google");
   localStorage.removeItem("cached_groceries");
   localStorage.removeItem("cached_trash");
+  localStorage.removeItem("cached_food_catalog");
+  localStorage.removeItem("cached_saved_lunchboxes");
   localStorage.removeItem("cached_bike_dates");
   localStorage.removeItem("cached_bike_stats");
   localStorage.removeItem("cached_last_updated");
@@ -2211,18 +3291,19 @@ function restoreLocalCache() {
   const hasConnected = localStorage.getItem("has_connected_google") === "true" || localStorage.getItem("autoLogin") === "true";
   const cachedGroceries = localStorage.getItem("cached_groceries");
   const cachedTrash = localStorage.getItem("cached_trash");
+  const cachedCatalog = localStorage.getItem("cached_food_catalog");
+  const cachedBoxes = localStorage.getItem("cached_saved_lunchboxes");
   const cachedBikeDates = localStorage.getItem("cached_bike_dates");
   const cachedBikeStats = localStorage.getItem("cached_bike_stats");
   const cachedLastUpdated = localStorage.getItem("cached_last_updated");
 
-  if (hasConnected || cachedGroceries) {
+  if (hasConnected || cachedGroceries || cachedCatalog) {
     loginCard.hidden = true;
     appPanel.hidden = false;
 
     if (cachedGroceries) {
       try {
         items = JSON.parse(cachedGroceries);
-        // Back-compat: old cache has no deletedAt
         items = items.filter(i => !i.deletedAt);
         renderGroceries();
         setStatus(items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "");
@@ -2240,6 +3321,20 @@ function restoreLocalCache() {
       } catch {}
     }
     updateTrashTabs();
+
+    if (cachedCatalog) {
+      try {
+        foodCatalogItems = JSON.parse(cachedCatalog);
+        $("catalogCount").textContent = foodCatalogItems.length;
+      } catch {}
+    }
+    if (cachedBoxes) {
+      try {
+        savedLunchboxes = JSON.parse(cachedBoxes);
+        $("savedBoxesCount").textContent = savedLunchboxes.length;
+      } catch {}
+    }
+
     if (cachedBikeDates) {
       try {
         bikeDates = JSON.parse(cachedBikeDates);
@@ -2267,6 +3362,81 @@ window.addEventListener("load", () => {
   $("subTabTrash").onclick = () => switchGrocerySubTab('trash');
   $("undoBtn").onclick = () => undoLastTrash();
   $("emptyTrashBtn").onclick = () => emptyTrash();
+
+  // Dev mode toggle check
+  if (localStorage.getItem("dev_mode") === "true") {
+    const tabFood = $("tabFood");
+    if (tabFood) tabFood.hidden = false;
+  }
+
+  // Food Sub-Tabs & Controls
+  $("foodSubTabGen").onclick = () => switchFoodSubTab('generator');
+  $("foodSubTabSaved").onclick = () => switchFoodSubTab('saved');
+  $("foodSubTabCatalog").onclick = () => switchFoodSubTab('catalog');
+
+  $("foodCountMinus").onclick = () => {
+    if (foodGenItemCount > 1) {
+      foodGenItemCount--;
+      $("foodCountDisplay").textContent = foodGenItemCount;
+    }
+  };
+  $("foodCountPlus").onclick = () => {
+    if (foodGenItemCount < 15) {
+      foodGenItemCount++;
+      $("foodCountDisplay").textContent = foodGenItemCount;
+    }
+  };
+  $("generateLunchBtn").onclick = () => generateLunchbox();
+  $("saveLunchBoxBtn").onclick = () => saveCurrentLunchbox();
+  $("undoSavedBoxBtn").onclick = () => undoDeleteSavedLunchbox();
+
+  // Food Catalog Form Handlers
+  $("foodAddForm").onsubmit = (e) => {
+    e.preventDefault();
+    const val = $("foodItemInput").value.trim();
+    const cat = $("foodCategorySelect").value;
+    const ic = currentAddFoodIcon;
+    const col = userCustomFoodColor;
+    if (val) addFoodCatalogItem(val, cat, ic, col);
+  };
+
+  $("foodItemInput").addEventListener("input", () => {
+    updateFoodGhostText();
+    updateFoodAddFormPreview();
+  });
+
+  $("foodItemInput").addEventListener("keydown", (e) => {
+    if ((e.key === "Tab" || e.key === "ArrowRight") && currentFoodSuggestion) {
+      const input = $("foodItemInput");
+      if (e.key === "Tab" || input.selectionStart === input.value.length) {
+        e.preventDefault();
+        acceptFoodSuggestion();
+      }
+    }
+  });
+
+  $("foodGhostTextBadge").onclick = (e) => {
+    e.preventDefault();
+    acceptFoodSuggestion();
+    $("foodItemInput").focus();
+  };
+
+  $("foodCategorySelect").addEventListener("change", () => {
+    userHasManuallyChangedFoodCategory = true;
+  });
+
+  $("foodColorInput").addEventListener("input", (e) => {
+    userCustomFoodColor = e.target.value;
+    $("foodColorSwatch").style.backgroundColor = userCustomFoodColor;
+  });
+
+  $("foodAddIconBtn").onclick = () => {
+    openIconPicker((selectedIcon) => {
+      currentAddFoodIcon = selectedIcon;
+      userHasManuallyChangedFoodIcon = true;
+      $("foodAddIconBtn").textContent = selectedIcon;
+    });
+  };
 
   const recBtn = $("reconnectBtn");
   if (recBtn) {
