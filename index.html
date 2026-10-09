@@ -16,7 +16,7 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
@@ -91,6 +91,13 @@
     .food-empty{color:#a1a1aa}
     .food-undo-row{margin-bottom:12px}
     .food-undo-btn{width:100%;padding:10px;border-radius:10px;background:#3f3f46;color:#fff;border:0;font-weight:700;cursor:pointer}
+    .food-trash-tabs{margin-bottom:14px}
+    .food-trash-tabs .sub-tab{background:#27272a;color:#a1a1aa;border:1px solid #3f3f46}
+    .food-trash-tabs .sub-tab.active{background:#3f3f46;color:#ffffff;border-color:#52525b}
+    .food-trash-tabs .undo-btn{background:#27272a;color:#f4f4f5;border:1.5px solid #3f3f46}
+    .food-trash-tabs .undo-btn:hover{background:#3f3f46}
+    .food-danger-btn{background:#7f1d1d !important;color:#fca5a5 !important;border:1px solid #991b1b !important}
+    .food-danger-btn:hover{background:#991b1b !important}
 
     .status{min-height:22px;padding:2px 4px 6px;font-size:13px;opacity:.55}
     .status.error{color:#a33;opacity:1}
@@ -383,9 +390,29 @@
           </div>
         </form>
 
+        <!-- Food Trash Sub-Tabs -->
+        <div id="foodTrashTabs" class="sub-tabs food-trash-tabs" hidden>
+          <button id="subTabFoodCatalog" class="sub-tab active" type="button">Catalog (<span id="catalogCount">0</span>)</button>
+          <button id="subTabFoodTrash" class="sub-tab" type="button">🗑️ Trash (0)</button>
+          <button id="foodUndoBtn" class="undo-btn" type="button" title="Restore most recently deleted food">↩ Undo</button>
+        </div>
+
         <section id="foodCatalogList" class="list" aria-live="polite"></section>
         <p id="foodCatalogEmpty" class="empty food-empty" hidden>
           Your food catalog is empty. Add your favorite lunch items above!
+          <br>
+          <button id="seedFoodBtn" type="button" class="food-replace-btn" style="margin:12px auto 0;display:inline-flex">
+            ✨ Load Starter Food Options
+          </button>
+        </p>
+
+        <div id="foodTrashHeader" hidden style="margin-bottom:10px">
+          <button id="emptyFoodTrashBtn" class="danger-btn food-danger-btn" type="button" style="width:100%">Empty Food Trash</button>
+        </div>
+
+        <section id="foodTrashList" class="list" aria-live="polite" hidden></section>
+        <p id="foodTrashEmpty" class="empty food-empty" hidden>
+          Food trash is empty.
         </p>
       </div>
     </div>
@@ -469,10 +496,31 @@ const TRASH_EXPIRY_MS = 60 * 60 * 1000;
 
 // Food Options state
 let foodCatalogItems = [];
+let foodTrashItems = [];
 let savedLunchboxes = [];
 let currentGeneratedBox = [];
 let foodSubTab = 'generator';
+let foodCatalogSubTab = 'catalog'; // 'catalog' | 'trash'
 let foodGenItemCount = 5;
+
+const INITIAL_STARTER_FOODS = [
+  { value: "Hummus Sandwich", category: "Bakery", icon: "🥪", color: "#fef3c7" },
+  { value: "Grapes", category: "Produce", icon: "🍇", color: "#f3e8ff" },
+  { value: "Cut Cucumbers", category: "Produce", icon: "🥒", color: "#dcfce7" },
+  { value: "Cut Grape Tomatoes", category: "Produce", icon: "🍅", color: "#fee2e2" },
+  { value: "Veggie Straws", category: "Snacks", icon: "🥨", color: "#fef9c3" },
+  { value: "Banana", category: "Produce", icon: "🍌", color: "#fef08a" },
+  { value: "Blueberries", category: "Produce", icon: "🫐", color: "#dbeafe" },
+  { value: "Granola Bar", category: "Snacks", icon: "🍫", color: "#fed7aa" },
+  { value: "Cheese Stick", category: "Dairy & Eggs", icon: "🧀", color: "#fef3c7" },
+  { value: "Cheese Square", category: "Dairy & Eggs", icon: "🧀", color: "#fef3c7" },
+  { value: "Chickpeas", category: "Pantry", icon: "🫛", color: "#fef3c7" },
+  { value: "Corn", category: "Produce", icon: "🌽", color: "#fef08a" },
+  { value: "Yogurt", category: "Dairy & Eggs", icon: "🥣", color: "#e0e7ff" },
+  { value: "Carrots", category: "Produce", icon: "🥕", color: "#ffedd5" },
+  { value: "Cheese Sandwich", category: "Bakery", icon: "🥪", color: "#fef3c7" },
+  { value: "Raisins", category: "Snacks", icon: "🍇", color: "#ede9fe" }
+];
 let expandedLunchboxRow = null;
 let editingFoodCatalogRow = null;
 let editingLunchboxRow = null;
@@ -1384,19 +1432,33 @@ async function load(options = {}) {
       const rows = data.values || [];
 
       let newCatalog = [];
+      let newTrash = [];
+      let expired = [];
       let newSavedBoxes = [];
+      const now = Date.now();
 
       rows.forEach((row, index) => {
-        // Col A-D: Food catalog item
+        // Col A-E: Food catalog item
         const catVal = String(row[0] ?? "").trim();
         if (catVal) {
-          newCatalog.push({
+          const item = {
             row: index + 1,
             value: catVal,
             category: String(row[1] ?? "").trim() || null,
             icon: String(row[2] ?? "").trim() || null,
-            color: String(row[3] ?? "").trim() || null
-          });
+            color: String(row[3] ?? "").trim() || null,
+            deletedAt: String(row[4] ?? "").trim() || null
+          };
+          if (item.deletedAt) {
+            const t = Date.parse(item.deletedAt);
+            if (!isNaN(t) && now - t > TRASH_EXPIRY_MS) {
+              expired.push(item);
+            } else {
+              newTrash.push(item);
+            }
+          } else {
+            newCatalog.push(item);
+          }
         }
 
         // Col F-I (indices 5, 6, 7, 8): Saved lunchbox
@@ -1421,11 +1483,25 @@ async function load(options = {}) {
         }
       });
 
+      if (!localStorage.getItem("food_catalog_seeded") && newCatalog.length === 0 && newTrash.length === 0) {
+        await seedStarterFoods();
+        return;
+      }
+
+      newTrash.sort((a, b) => Date.parse(a.deletedAt || 0) - Date.parse(b.deletedAt || 0));
+
       foodCatalogItems = newCatalog;
+      foodTrashItems = newTrash;
       savedLunchboxes = newSavedBoxes;
+      if (foodCatalogSubTab === 'trash' && !foodTrashItems.length) foodCatalogSubTab = 'catalog';
+
       persistFoodCache();
       renderFoodActiveView();
-      if (!silent) setStatus("");
+      if (!silent) setStatus(foodCatalogItems.length ? `${foodCatalogItems.length} food option${foodCatalogItems.length === 1 ? "" : "s"}` : "");
+
+      if (expired.length) {
+        cleanupExpiredFoodTrash(expired);
+      }
     }
 
     updateLastUpdated();
@@ -2858,7 +2934,18 @@ function renderFoodCatalog() {
           renderFoodCatalog();
         };
 
-        actions.append(saveBtn, cancelBtn);
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "cancel-btn";
+        delBtn.style.cssText = "background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;border-radius:10px;padding:0 12px;font-weight:700;";
+        delBtn.textContent = "🗑️ Delete";
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          editingFoodCatalogRow = null;
+          removeFoodCatalogItem(item);
+        };
+
+        actions.append(saveBtn, cancelBtn, delBtn);
         mainRow.append(editInput, actions);
 
         const controlsRow = document.createElement("div");
@@ -2947,7 +3034,7 @@ function renderFoodCatalog() {
       const delBtn = document.createElement("button");
       delBtn.className = "remove";
       delBtn.style.cssText = "background:#3f3f46;color:#fff;border-radius:10px;";
-      delBtn.textContent = "Remove";
+      delBtn.textContent = "🗑️ Delete";
       delBtn.onclick = (e) => {
         e.stopPropagation();
         removeFoodCatalogItem(item);
@@ -2988,6 +3075,34 @@ function renderFoodCatalog() {
   });
 }
 
+async function seedStarterFoods() {
+  setStatus("Initializing food options…");
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      foodCatalogItems = INITIAL_STARTER_FOODS.map((item, idx) => ({ ...item, row: idx + 1 }));
+      persistFoodCache();
+      renderFoodActiveView();
+      setStatus("Loaded starter foods locally. Reconnect to sync.", false);
+      return;
+    }
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const rows = INITIAL_STARTER_FOODS.map(item => [item.value, item.category, item.icon, item.color, ""]);
+    const rangeA1 = `${sheetPrefix}!A1:E${rows.length}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: rows })
+    });
+    localStorage.setItem("food_catalog_seeded", "true");
+    setStatus("Loaded starter foods! 🍱");
+    await load();
+  } catch (err) {
+    setStatus("Couldn't seed foods: " + err.message, true);
+  }
+}
+
 async function addFoodCatalogItem(value, category, icon, color) {
   setStatus("Adding food…");
   try {
@@ -3003,11 +3118,11 @@ async function addFoodCatalogItem(value, category, icon, color) {
     let target = rows.findIndex(row => !String(row[0] ?? "").trim());
     if (target < 0) target = rows.length;
 
-    const rangeA1 = `${sheetPrefix}!A${target + 1}:D${target + 1}`;
+    const rangeA1 = `${sheetPrefix}!A${target + 1}:E${target + 1}`;
     await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value, category || "", icon || "", color || ""]] })
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[value, category || "", icon || "", color || "", ""]] })
     });
 
     $("foodItemInput").value = "";
@@ -3060,31 +3175,242 @@ async function updateFoodCatalogItem(item, newValue, newCategory, newIcon, newCo
 async function removeFoodCatalogItem(item) {
   if (!item) return;
   setStatus("Removing…");
-  const prev = [...foodCatalogItems];
-  foodCatalogItems = foodCatalogItems.filter(it => it !== item);
+  const previousCatalog = [...foodCatalogItems];
+  const previousTrash = [...foodTrashItems];
+  const deletedAt = new Date().toISOString();
+  item.deletedAt = deletedAt;
+  foodCatalogItems = foodCatalogItems.filter(current => current !== item);
+  foodTrashItems = [...foodTrashItems, item].sort((a, b) => Date.parse(a.deletedAt || 0) - Date.parse(b.deletedAt || 0));
   persistFoodCache();
   renderFoodCatalog();
+  renderFoodTrash();
+  updateFoodTrashTabs();
 
   try {
     const ok = await ensureValidToken(true);
     if (!ok) {
-      setStatus("Removed locally. Tap Reconnect to sync.", false);
+      setStatus("Moved to trash locally. Tap Reconnect to sync.", false);
       return;
     }
     const sheetName = await resolveFoodSheetName();
     const sheetPrefix = escapeSheetName(sheetName);
-    await sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!A" + item.row + ":D" + item.row)}:clear`, {
-      method: "POST",
+    const rangeA1 = `${sheetPrefix}!E${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: "{}"
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[deletedAt]] })
     });
     await load();
   } catch (err) {
-    foodCatalogItems = prev;
+    foodCatalogItems = previousCatalog;
+    foodTrashItems = previousTrash;
     persistFoodCache();
     renderFoodCatalog();
+    renderFoodTrash();
+    updateFoodTrashTabs();
     setStatus("Couldn't remove item: " + err.message, true);
   }
+}
+
+async function restoreFoodCatalogItem(item) {
+  if (!item) return;
+  setStatus("Restoring…");
+  foodTrashItems = foodTrashItems.filter(current => current !== item);
+  delete item.deletedAt;
+  foodCatalogItems.push(item);
+  persistFoodCache();
+  renderFoodCatalog();
+  renderFoodTrash();
+  updateFoodTrashTabs();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Restored locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    const rangeA1 = `${sheetPrefix}!E${item.row}`;
+    await sheetsFetch(`/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: [[""]] })
+    });
+    await load();
+  } catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Restored locally. Tap Reconnect to sync with Google.", false);
+    } else {
+      setStatus("Couldn't restore item: " + error.message, true);
+      await load();
+    }
+  }
+}
+
+async function undoLastFoodTrash() {
+  if (!foodTrashItems.length) return;
+  const last = [...foodTrashItems].sort((a, b) => Date.parse(b.deletedAt || 0) - Date.parse(a.deletedAt || 0))[0];
+  await restoreFoodCatalogItem(last);
+}
+
+async function emptyFoodTrash() {
+  if (!foodTrashItems.length) return;
+  const confirmed = await showConfirm(
+    "Empty Food Trash?",
+    `Permanently delete ${foodTrashItems.length} item${foodTrashItems.length === 1 ? "" : "s"} from the food trash? This cannot be undone.`
+  );
+  if (!confirmed) return;
+  setStatus("Emptying food trash…");
+  const toDelete = [...foodTrashItems];
+  foodTrashItems = [];
+  foodCatalogSubTab = 'catalog';
+  persistFoodCache();
+  renderFoodCatalog();
+  renderFoodTrash();
+  updateFoodTrashTabs();
+
+  try {
+    const ok = await ensureValidToken(true);
+    if (!ok) {
+      setStatus("Food trash cleared locally. Tap Reconnect to sync.", false);
+      return;
+    }
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    await Promise.all(toDelete.map(item =>
+      sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!A" + item.row + ":E" + item.row)}:clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      }).catch(() => {})
+    ));
+    await load();
+  } catch (error) {
+    if (error.message === "AUTH_PAUSED") {
+      setStatus("Food trash cleared locally. Tap Reconnect to sync with Google.", false);
+    } else {
+      setStatus("Couldn't empty food trash: " + error.message, true);
+      await load();
+    }
+  }
+}
+
+async function cleanupExpiredFoodTrash(expiredList) {
+  if (!expiredList || !expiredList.length) return;
+  try {
+    const ok = await ensureValidToken(false);
+    if (!ok) return;
+    const sheetName = await resolveFoodSheetName();
+    const sheetPrefix = escapeSheetName(sheetName);
+    await Promise.all(expiredList.map(item =>
+      sheetsFetch(`/values/${encodeURIComponent(sheetPrefix + "!A" + item.row + ":E" + item.row)}:clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      }).catch(() => {})
+    ));
+    await load({ silent: true });
+  } catch {}
+}
+
+function switchFoodCatalogSubTab(tab) {
+  foodCatalogSubTab = tab;
+  renderFoodCatalog();
+  renderFoodTrash();
+  updateFoodTrashTabs();
+}
+
+function updateFoodTrashTabs() {
+  const bar = $("foodTrashTabs");
+  if (!bar) return;
+  const hasTrash = foodTrashItems.length > 0;
+  bar.hidden = !hasTrash;
+  if (!hasTrash && foodCatalogSubTab === 'trash') foodCatalogSubTab = 'catalog';
+
+  $("subTabFoodCatalog").classList.toggle("active", foodCatalogSubTab === 'catalog');
+  $("subTabFoodTrash").classList.toggle("active", foodCatalogSubTab === 'trash');
+  $("subTabFoodTrash").textContent = `🗑️ Trash (${foodTrashItems.length})`;
+  $("foodUndoBtn").hidden = !hasTrash;
+
+  const showingTrash = foodCatalogSubTab === 'trash' && hasTrash;
+  $("foodAddForm").hidden = showingTrash;
+  $("foodCatalogList").hidden = showingTrash;
+  $("foodCatalogEmpty").hidden = showingTrash || foodCatalogItems.length > 0;
+  $("foodTrashList").hidden = !showingTrash;
+  $("foodTrashHeader").hidden = !showingTrash;
+  $("foodTrashEmpty").hidden = !showingTrash || hasTrash;
+}
+
+function renderFoodTrash() {
+  const list = $("foodTrashList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!foodTrashItems.length) return;
+
+  const groups = {};
+  CATEGORY_ORDER.forEach(cat => groups[cat] = []);
+  foodTrashItems.forEach(item => {
+    const cat = getItemCategory(item);
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(item);
+  });
+
+  CATEGORY_ORDER.forEach(category => {
+    const categoryItems = groups[category];
+    if (!categoryItems || !categoryItems.length) return;
+
+    const section = document.createElement("section");
+    section.className = "grocery-section";
+
+    const heading = document.createElement("div");
+    heading.className = "grocery-section-heading";
+    heading.style.color = "#a1a1aa";
+
+    const icon = document.createElement("span");
+    icon.className = "category-icon";
+    icon.textContent = CATEGORY_ICONS[category] || "🛒";
+
+    const title = document.createElement("span");
+    title.textContent = category;
+
+    heading.append(icon, title);
+    section.append(heading);
+
+    categoryItems.forEach(item => {
+      const details = getItemDetails(item.value);
+      const row = document.createElement("div");
+      row.className = "food-item";
+      row.style.borderLeft = `5px solid ${item.color || details.color}`;
+
+      const itemIcon = document.createElement("span");
+      itemIcon.textContent = getItemIcon(item);
+      itemIcon.style.marginRight = "10px";
+      itemIcon.style.fontSize = "1.2rem";
+
+      const name = document.createElement("span");
+      name.textContent = item.value;
+      name.style.fontWeight = "600";
+      name.style.flexGrow = "1";
+      name.style.color = "#a1a1aa";
+      name.style.textDecoration = "line-through";
+
+      const restore = document.createElement("button");
+      restore.className = "food-replace-btn";
+      restore.style.color = "#34d399";
+      restore.style.borderColor = "#059669";
+      restore.textContent = "Restore ↩";
+      restore.onclick = (e) => {
+        e.stopPropagation();
+        restoreFoodCatalogItem(item);
+      };
+
+      row.append(itemIcon, name, restore);
+      section.append(row);
+    });
+
+    list.append(section);
+  });
 }
 
 function updateFoodAddFormPreview() {
@@ -3308,6 +3634,7 @@ $("signOutBtn").onclick = () => {
   trashItems = [];
   grocerySubTab = 'list';
   foodCatalogItems = [];
+  foodTrashItems = [];
   savedLunchboxes = [];
   currentGeneratedBox = [];
   localStorage.removeItem("google_access_token");
@@ -3317,6 +3644,7 @@ $("signOutBtn").onclick = () => {
   localStorage.removeItem("cached_groceries");
   localStorage.removeItem("cached_trash");
   localStorage.removeItem("cached_food_catalog");
+  localStorage.removeItem("cached_food_trash");
   localStorage.removeItem("cached_saved_lunchboxes");
   localStorage.removeItem("cached_bike_dates");
   localStorage.removeItem("cached_bike_stats");
@@ -3336,6 +3664,7 @@ function restoreLocalCache() {
   const cachedGroceries = localStorage.getItem("cached_groceries");
   const cachedTrash = localStorage.getItem("cached_trash");
   const cachedCatalog = localStorage.getItem("cached_food_catalog");
+  const cachedFoodTrash = localStorage.getItem("cached_food_trash");
   const cachedBoxes = localStorage.getItem("cached_saved_lunchboxes");
   const cachedBikeDates = localStorage.getItem("cached_bike_dates");
   const cachedBikeStats = localStorage.getItem("cached_bike_stats");
@@ -3371,7 +3700,22 @@ function restoreLocalCache() {
         foodCatalogItems = JSON.parse(cachedCatalog);
         $("catalogCount").textContent = foodCatalogItems.length;
       } catch {}
+    } else if (!localStorage.getItem("food_catalog_seeded")) {
+      foodCatalogItems = INITIAL_STARTER_FOODS.map((item, idx) => ({ ...item, row: idx + 1 }));
+      $("catalogCount").textContent = foodCatalogItems.length;
     }
+
+    if (cachedFoodTrash) {
+      try {
+        const now = Date.now();
+        foodTrashItems = JSON.parse(cachedFoodTrash).filter(i => {
+          if (!i.deletedAt) return false;
+          const t = Date.parse(i.deletedAt);
+          return !isNaN(t) && now - t <= TRASH_EXPIRY_MS;
+        });
+      } catch {}
+    }
+
     if (cachedBoxes) {
       try {
         savedLunchboxes = JSON.parse(cachedBoxes);
@@ -3406,6 +3750,14 @@ window.addEventListener("load", () => {
   $("subTabTrash").onclick = () => switchGrocerySubTab('trash');
   $("undoBtn").onclick = () => undoLastTrash();
   $("emptyTrashBtn").onclick = () => emptyTrash();
+
+  // Food Trash & Sub-Tabs
+  $("subTabFoodCatalog").onclick = () => switchFoodCatalogSubTab('catalog');
+  $("subTabFoodTrash").onclick = () => switchFoodCatalogSubTab('trash');
+  $("foodUndoBtn").onclick = () => undoLastFoodTrash();
+  $("emptyFoodTrashBtn").onclick = () => emptyFoodTrash();
+  const seedBtn = $("seedFoodBtn");
+  if (seedBtn) seedBtn.onclick = () => seedStarterFoods();
 
   // Dev mode toggle check
   if (localStorage.getItem("dev_mode") === "true") {

@@ -147,3 +147,10 @@ p{line-height:1.45}
 button:active{transform:scale(.97)}
 @media(min-width:600px){.app{padding-top:48px}}
 
+.food-trash-tabs{margin-bottom:14px}
+.food-trash-tabs .sub-tab{background:#27272a;color:#a1a1aa;border:1px solid #3f3f46}
+.food-trash-tabs .sub-tab.active{background:#3f3f46;color:#ffffff;border-color:#52525b}
+.food-trash-tabs .undo-btn{background:#27272a;color:#f4f4f5;border:1.5px solid #3f3f46}
+.food-trash-tabs .undo-btn:hover{background:#3f3f46}
+.food-danger-btn{background:#7f1d1d !important;color:#fca5a5 !important;border:1px solid #991b1b !important}
+.food-danger-btn:hover{background:#991b1b !important}
