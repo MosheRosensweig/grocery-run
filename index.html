@@ -1128,8 +1128,13 @@ function switchTab(tab) {
 
   if (tab === 'groceries') {
     $("headerTitle").textContent = "What do we need?";
+    renderGroceries();
+    renderTrash();
+    updateTrashTabs();
   } else if (tab === 'bike') {
     $("headerTitle").textContent = "Bike Log";
+    renderStatsGrid();
+    renderBikeList();
   } else if (tab === 'food') {
     $("headerTitle").textContent = "Food & Lunch";
     renderFoodActiveView();
@@ -1157,6 +1162,9 @@ function handleTokenReceived(token, expiresInSeconds = 3600) {
   if (recBtn) recBtn.hidden = true;
   load({ silent: true });
   startAutoSync();
+  if (localStorage.getItem("dev_mode") === "true") {
+    setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
+  }
 }
 
 function refreshTokenSilently() {
@@ -1305,7 +1313,8 @@ async function resolveFoodSheetName() {
     const titles = (meta.sheets || []).map(s => s.properties?.title || "");
     const match = titles.find(t => {
       const norm = t.trim().toLowerCase();
-      return norm === "food options" || norm === "food option" || norm === "lunch options" || norm === "lunch option";
+      return norm === "food options" || norm === "food option" || norm === "lunch options" || norm === "lunch option" ||
+             norm.includes("food option") || norm.includes("lunch option") || norm === "food" || norm === "lunch";
     });
     if (match) {
       CONFIG.foodSheetName = match;
@@ -1545,7 +1554,7 @@ async function load(options = {}) {
         }
       });
 
-      if (!localStorage.getItem("food_catalog_seeded_v2") && newCatalog.length === 0 && newTrash.length === 0) {
+      if (newCatalog.length === 0 && newTrash.length === 0 && !localStorage.getItem("food_catalog_cleared_by_user")) {
         await seedStarterFoods();
         return;
       }
@@ -2852,6 +2861,7 @@ function renderSavedBoxes() {
         const itName = typeof it === "string" ? it : it.name;
         const itIcon = (typeof it === "object" && it.icon) ? it.icon : getItemIcon({ value: itName });
         const itCat = (typeof it === "object" && it.category) ? it.category : getItemCategory({ value: itName });
+        const itMeal = (typeof it === "object" && it.mealType) ? it.mealType : (isItemLunch({ value: itName }) ? "lunch" : "snack");
 
         const iconSpan = document.createElement("span");
         iconSpan.textContent = itIcon;
@@ -2861,11 +2871,17 @@ function renderSavedBoxes() {
         nameSpan.textContent = itName;
         nameSpan.style.flex = "1";
 
+        const mealBadge = document.createElement("span");
+        mealBadge.style.cssText = itMeal === "lunch"
+          ? "font-size:10px;padding:2px 6px;border-radius:5px;background:#3b82f622;color:#60a5fa;border:1px solid #3b82f644;font-weight:700;margin-right:6px;"
+          : "font-size:10px;padding:2px 6px;border-radius:5px;background:#27272a;color:#a1a1aa;border:1px solid #3f3f46;font-weight:600;margin-right:6px;";
+        mealBadge.textContent = itMeal === "lunch" ? "🥪 Lunch" : "🥨 Snack";
+
         const catSpan = document.createElement("span");
         catSpan.textContent = itCat;
         catSpan.style.cssText = "font-size:11px;opacity:0.7;";
 
-        itemRow.append(iconSpan, nameSpan, catSpan);
+        itemRow.append(iconSpan, nameSpan, mealBadge, catSpan);
         itemsWrap.append(itemRow);
       });
 
@@ -3250,12 +3266,28 @@ async function seedStarterFoods() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ range: rangeA1, majorDimension: "ROWS", values: rows })
     });
-    localStorage.setItem("food_catalog_seeded_v2", "true");
+    localStorage.removeItem("food_catalog_cleared_by_user");
     setStatus("Loaded starter foods! 🍱");
     await load();
   } catch (err) {
     setStatus("Couldn't seed foods: " + err.message, true);
   }
+}
+
+async function ensureFoodSheetSeededIfEmpty() {
+  if (localStorage.getItem("dev_mode") !== "true") return;
+  if (localStorage.getItem("food_catalog_cleared_by_user") === "true") return;
+  if (!accessToken) return;
+  try {
+    const sheetName = await resolveFoodSheetName();
+    const range = encodeURIComponent(`${escapeSheetName(sheetName)}!A1:A5`);
+    const data = await sheetsFetch(`/values/${range}?majorDimension=ROWS`);
+    const rows = data.values || [];
+    const hasItems = rows.some(r => String(r[0] ?? "").trim() !== "");
+    if (!hasItems) {
+      await seedStarterFoods();
+    }
+  } catch {}
 }
 
 async function addFoodCatalogItem(value, category, icon, color, mealType = "snack") {
@@ -3421,6 +3453,7 @@ async function emptyFoodTrash() {
   const toDelete = [...foodTrashItems];
   foodTrashItems = [];
   foodCatalogSubTab = 'catalog';
+  localStorage.setItem("food_catalog_cleared_by_user", "true");
   persistFoodCache();
   renderFoodCatalog();
   renderFoodTrash();
@@ -3769,6 +3802,7 @@ $("addForm").onsubmit = event => {
     $("itemInput").value = "";
     resetAddFormState();
     setStatus("Dev mode activated 🛠️");
+    switchTab('food');
     return;
   }
 
@@ -3925,12 +3959,16 @@ window.addEventListener("load", () => {
   $("foodUndoBtn").onclick = () => undoLastFoodTrash();
   $("emptyFoodTrashBtn").onclick = () => emptyFoodTrash();
   const seedBtn = $("seedFoodBtn");
-  if (seedBtn) seedBtn.onclick = () => seedStarterFoods();
+  if (seedBtn) seedBtn.onclick = () => {
+    localStorage.removeItem("food_catalog_cleared_by_user");
+    seedStarterFoods();
+  };
 
   // Dev mode toggle check
   if (localStorage.getItem("dev_mode") === "true") {
     const tabFood = $("tabFood");
     if (tabFood) tabFood.hidden = false;
+    setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
   }
 
   // Food Sub-Tabs & Controls
