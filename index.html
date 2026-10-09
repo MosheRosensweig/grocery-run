@@ -16,12 +16,12 @@
   <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Stuff%20To%20Buy%22%2C%22short_name%22%3A%22StuffToBuy%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f6f4ef%22%2C%22theme_color%22%3A%22%23f6f4ef%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Ccircle%2520cx%253D%2527256%2527%2520cy%253D%2527256%2527%2520r%253D%2527256%2527%2520fill%253D%2527%2523ffffff%2527%252F%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%2523111827%2527%2520stroke-width%253D%252724%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Cpath%2520d%253D%2527M120%2520140h40l44%2520140h172l36-100H180%2527%252F%253E%253Ccircle%2520cx%253D%2527220%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253Ccircle%2520cx%253D%2527350%2527%2520cy%253D%2527320%2527%2520r%253D%252720%2527%2520fill%253D%2527%2523111827%2527%252F%253E%253C%252Fg%253E%253Cg%2520fill%253D%2527none%2527%2520stroke%253D%2527%25232563eb%2527%2520stroke-width%253D%252722%2527%2520stroke-linecap%253D%2527round%2527%2520stroke-linejoin%253D%2527round%2527%253E%253Ccircle%2520cx%253D%2527170%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Ccircle%2520cx%253D%2527342%2527%2520cy%253D%2527390%2527%2520r%253D%252750%2527%252F%253E%253Cpath%2520d%253D%2527M170%2520390l60-90h70l50%252090M230%2520300l40-60h50M270%2520240l-50%252040M250%2520220h50%2527%252F%253E%253C%252Fg%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
   <title>Stuff To Buy</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *{box-sizing:border-box}
     :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#24231f;background:#f6f4ef}
-    body{margin:0;min-height:100vh;background:#f6f4ef;-webkit-font-smoothing:antialiased}
+    body{margin:0;min-height:100vh;background:#f6f4ef;-webkit-font-smoothing:antialiased;transition:background-color .2s ease,color .2s ease}
     [hidden]{display:none !important}
     .app{width:min(680px,100%);margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 16px 40px}
     header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
@@ -83,14 +83,17 @@
     .food-accordion-card.open .food-accordion-arrow{transform:rotate(180deg)}
     .food-accordion-body{padding:12px 14px;background:#18181b;border-top:1px solid #3f3f46}
     .food-accordion-items{display:flex;flex-direction:column;gap:6px}
-    .food-pill-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#27272a;font-size:14px;color:#e4e4e7}
-    .food-add-form{background:#27272a;border-color:#3f3f46}
-    .food-add-form input{color:#f4f4f5 !important;border-color:#3f3f46 !important}
-    .food-add-form input:focus{border-color:#3b82f6 !important}
-    .food-ghost-text{background:#27272a !important}
+    /* FOOD ADD FORM (DARK) */
+    form#foodAddForm.add-form-container,
+    .food-add-form{background:#27272a !important;border:1px solid #3f3f46 !important;box-shadow:none !important}
+    .food-add-form .input-autocomplete-wrapper input{background:transparent !important;border-color:#3f3f46 !important;color:#f4f4f5 !important}
+    .food-add-form .input-autocomplete-wrapper input::placeholder{color:#71717a !important}
+    .food-add-form .input-autocomplete-wrapper input:focus{border-color:#3b82f6 !important;box-shadow:0 0 0 3px rgba(59,130,246,0.2) !important}
+    .food-ghost-text{background:#18181b !important;border:1.5px solid #3f3f46 !important}
     .food-ghost-badge{background:#3f3f46 !important;color:#e4e4e7 !important;border-color:#52525b !important}
-    .food-category-select{background-color:#27272a !important;color:#f4f4f5 !important;border-color:#3f3f46 !important}
-    .food-icon-btn,.food-color-wrapper{background:#27272a !important;border-color:#3f3f46 !important}
+    .food-category-select{background-color:#18181b !important;color:#f4f4f5 !important;border-color:#3f3f46 !important;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important}
+    .food-category-select:focus{border-color:#3b82f6 !important}
+    .food-icon-btn,.food-color-wrapper{background:#18181b !important;border-color:#3f3f46 !important}
     .food-empty{color:#a1a1aa}
     .food-undo-row{margin-bottom:12px}
     .food-undo-btn{width:100%;padding:10px;border-radius:10px;background:#3f3f46;color:#fff;border:0;font-weight:700;cursor:pointer}
@@ -175,6 +178,50 @@
 
     .signout{display:block;margin:24px auto 0;border:0;background:none;font-size:14px;opacity:.55;cursor:pointer}
     .empty{margin:45px 0;text-align:center;opacity:.5}
+    /* FOOD PREVIEW BAR */
+    .food-preview-bar{display:flex;align-items:center;gap:10px;width:100%}
+    .food-preview-selects{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+    .food-field-type{flex:0 0 135px;min-width:0}
+    .food-field-cat{flex:1;min-width:0}
+    .food-preview-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .food-actions-label{display:none}
+    .food-action-btns{display:flex;align-items:center;gap:8px}
+
+    @media(max-width:520px){
+      .food-preview-bar{flex-direction:column;align-items:stretch;gap:10px}
+      .food-preview-selects{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+      .food-preview-field{flex-direction:column;align-items:flex-start;gap:4px;width:100%;flex:unset;min-width:0}
+      .food-preview-field .preview-label{font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.05em}
+      .food-field-type,.food-field-cat{flex:unset;max-width:none}
+      .food-category-select{width:100%;height:42px}
+      .food-preview-actions{display:flex;align-items:center;justify-content:space-between;width:100%;padding-top:2px}
+      .food-actions-label{display:inline-block;font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.05em}
+      .food-action-btns{display:flex;align-items:center;gap:10px}
+      .food-icon-btn,.food-color-wrapper{width:44px;height:44px;min-width:44px;border-radius:12px}
+      .food-item .edit-row-controls{flex-wrap:wrap;gap:8px}
+      .food-item .edit-row-controls .food-preview-field{flex:1 1 120px;max-width:none !important}
+      .food-item .edit-row-main{flex-wrap:wrap;gap:8px}
+      .food-item .edit-row-main .edit-input{width:100%;flex:1 1 100%}
+    }
+
+    /* THEME: FOOD OPTIONS DARK (DEV MODE) */
+    body.theme-food-dark{background:#09090b !important;color:#f4f4f5 !important}
+    body.theme-food-dark .eyebrow{color:#a1a1aa !important;opacity:.8 !important}
+    body.theme-food-dark h1{color:#f4f4f5 !important}
+    body.theme-food-dark .icon-button{background:#18181b !important;color:#f4f4f5 !important;box-shadow:0 2px 10px rgba(0,0,0,.4) !important;border:1px solid #27272a !important}
+    body.theme-food-dark .icon-button:hover{background:#27272a !important}
+    body.theme-food-dark .tabs .tab{background:#18181b !important;color:#a1a1aa !important;border:1px solid #27272a !important}
+    body.theme-food-dark .tabs .tab:hover{color:#f4f4f5 !important;background:#27272a !important}
+    body.theme-food-dark .tabs .tab.active{background:#27272a !important;color:#ffffff !important;border-color:#3f3f46 !important}
+    body.theme-food-dark .status{color:#a1a1aa !important}
+    body.theme-food-dark .signout{color:#71717a !important}
+    body.theme-food-dark .signout:hover{color:#e4e4e7 !important}
+    body.theme-food-dark .icon-modal{background:#18181b !important;color:#f4f4f5 !important;border:1px solid #27272a !important}
+    body.theme-food-dark .icon-modal-close{background:#27272a !important;color:#f4f4f5 !important}
+    body.theme-food-dark .icon-search-input{background:#27272a !important;color:#f4f4f5 !important;border-color:#3f3f46 !important}
+    body.theme-food-dark .icon-search-input:focus{border-color:#3b82f6 !important}
+    body.theme-food-dark .icon-item{background:#27272a !important;border-color:#3f3f46 !important}
+    body.theme-food-dark .icon-item:hover{background:#3f3f46 !important}
     button:active{transform:scale(.97)}
     @media(min-width:600px){.app{padding-top:48px}}
   </style>
@@ -387,23 +434,30 @@
               Add
             </button>
           </div>
-          <div id="foodAddPreviewBar" class="add-preview-bar">
-            <label class="preview-field food-preview-field" style="max-width:130px;flex:0 0 130px;">
-              <span class="preview-label" style="color:#a1a1aa;">Type:</span>
-              <select id="foodMealTypeSelect" class="category-select food-category-select" aria-label="Select meal type">
-                <option value="snack">🥨 Snack</option>
-                <option value="lunch">🥪 Lunch</option>
-              </select>
-            </label>
-            <label class="preview-field food-preview-field">
-              <span class="preview-label" style="color:#a1a1aa;">Category:</span>
-              <select id="foodCategorySelect" class="category-select food-category-select" aria-label="Select category"></select>
-            </label>
-            <button type="button" id="foodAddIconBtn" class="icon-picker-btn food-icon-btn" title="Choose Icon">🍱</button>
-            <label class="color-picker-wrapper food-color-wrapper" title="Choose Custom Color">
-              <input type="color" id="foodColorInput" value="#3f3f46">
-              <span id="foodColorSwatch" class="color-swatch">🎨</span>
-            </label>
+          <div id="foodAddPreviewBar" class="add-preview-bar food-preview-bar">
+            <div class="food-preview-selects">
+              <label class="preview-field food-preview-field food-field-type">
+                <span class="preview-label">Type:</span>
+                <select id="foodMealTypeSelect" class="category-select food-category-select" aria-label="Select meal type">
+                  <option value="snack">🥨 Snack</option>
+                  <option value="lunch">🥪 Lunch</option>
+                </select>
+              </label>
+              <label class="preview-field food-preview-field food-field-cat">
+                <span class="preview-label">Category:</span>
+                <select id="foodCategorySelect" class="category-select food-category-select" aria-label="Select category"></select>
+              </label>
+            </div>
+            <div class="food-preview-actions">
+              <span class="preview-label food-actions-label">Icon & Color:</span>
+              <div class="food-action-btns">
+                <button type="button" id="foodAddIconBtn" class="icon-picker-btn food-icon-btn" title="Choose Icon">🍱</button>
+                <label class="color-picker-wrapper food-color-wrapper" title="Choose Custom Color">
+                  <input type="color" id="foodColorInput" value="#3f3f46">
+                  <span id="foodColorSwatch" class="color-swatch">🎨</span>
+                </label>
+              </div>
+            </div>
           </div>
         </form>
 
@@ -1127,6 +1181,11 @@ $("tabFood").onclick = () => switchTab('food');
 
 function switchTab(tab) {
   currentTab = tab;
+  const isFoodDark = (tab === 'food' && localStorage.getItem("dev_mode") === "true");
+  document.body.classList.toggle("theme-food-dark", isFoodDark);
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute("content", isFoodDark ? "#09090b" : "#f6f4ef");
+
   $("tabGroceries").classList.toggle("active", tab === 'groceries');
   $("tabBike").classList.toggle("active", tab === 'bike');
   $("tabFood").classList.toggle("active", tab === 'food');
@@ -2436,6 +2495,7 @@ function checkDevModeTrigger(rawValue) {
     localStorage.setItem("dev_mode", "true");
     $("tabFood").hidden = false;
     $("itemInput").value = "";
+    if ($("foodItemInput")) $("foodItemInput").value = "";
     resetAddFormState();
     setStatus("Dev mode activated 🛠️");
     switchTab('food');
@@ -2445,7 +2505,11 @@ function checkDevModeTrigger(rawValue) {
     localStorage.removeItem("dev_mode");
     $("tabFood").hidden = true;
     $("itemInput").value = "";
+    if ($("foodItemInput")) $("foodItemInput").value = "";
     resetAddFormState();
+    document.body.classList.remove("theme-food-dark");
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute("content", "#f6f4ef");
     if (currentTab === 'food') {
       switchTab('groceries');
     }
@@ -4010,6 +4074,9 @@ window.addEventListener("load", () => {
     const tabFood = $("tabFood");
     if (tabFood) tabFood.hidden = false;
     setTimeout(() => ensureFoodSheetSeededIfEmpty(), 600);
+    if (urlParams.get("tab") === "food" || window.location.hash.toLowerCase() === "#food") {
+      switchTab('food');
+    }
   }
 
   // Food Sub-Tabs & Controls
